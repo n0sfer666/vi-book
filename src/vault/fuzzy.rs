@@ -1,14 +1,18 @@
+fn fold(c: char) -> char {
+    c.to_lowercase().next().unwrap_or(c)
+}
+
 pub fn score(query: &str, candidate: &str) -> Option<i32> {
-    let q: Vec<char> = query.chars().flat_map(char::to_lowercase).collect();
+    let q: Vec<char> = query.chars().map(fold).collect();
     if q.is_empty() {
         return Some(0);
     }
     let c: Vec<char> = candidate.chars().collect();
-    let lower: Vec<char> = candidate.chars().flat_map(char::to_lowercase).collect();
     let mut qi = 0;
     let mut total = 0;
     let mut prev_match: Option<usize> = None;
-    for (i, &ch) in lower.iter().enumerate() {
+    for (i, &orig) in c.iter().enumerate() {
+        let ch = fold(orig);
         if qi < q.len() && ch == q[qi] {
             let mut bonus = 0;
             if prev_match == Some(i.wrapping_sub(1)) {

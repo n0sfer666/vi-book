@@ -53,15 +53,12 @@ fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
         width,
         height,
     };
-    let items = picker.filtered();
+    let (offset, items) = picker.window(height.saturating_sub(2) as usize);
     let mut lines = vec![Line::from(format!("> {}", picker.query()))];
-    for (i, item) in items
-        .iter()
-        .take(height.saturating_sub(2) as usize)
-        .enumerate()
-    {
-        let marker = if i == picker.selected() { "› " } else { "  " };
-        let style = if i == picker.selected() {
+    for (i, item) in items.iter().enumerate() {
+        let selected = offset + i == picker.selected();
+        let marker = if selected { "› " } else { "  " };
+        let style = if selected {
             TuiStyle::default().add_modifier(Modifier::REVERSED)
         } else {
             TuiStyle::default()

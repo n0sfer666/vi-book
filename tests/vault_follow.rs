@@ -98,6 +98,26 @@ fn picker_selection_clamps_on_filter_change() {
 }
 
 #[test]
+fn picker_window_keeps_selection_visible() {
+    let mut picker = Picker::new((0..5).map(|i| format!("item{i}")).collect());
+    for _ in 0..4 {
+        picker.move_down();
+    }
+    let (offset, visible) = picker.window(3);
+    assert_eq!(offset, 2);
+    assert_eq!(visible, vec!["item2", "item3", "item4"]);
+    assert!(visible.contains(&picker.current().as_deref().unwrap()));
+}
+
+#[test]
+fn picker_window_starts_at_top_when_selection_fits() {
+    let picker = Picker::new((0..5).map(|i| format!("item{i}")).collect());
+    let (offset, visible) = picker.window(3);
+    assert_eq!(offset, 0);
+    assert_eq!(visible, vec!["item0", "item1", "item2"]);
+}
+
+#[test]
 fn picker_navigation_stays_in_bounds() {
     let mut picker = Picker::new(vec!["a".to_string(), "b".to_string()]);
     picker.move_up();

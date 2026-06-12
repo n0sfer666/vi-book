@@ -57,6 +57,20 @@ impl Picker {
         self.filtered().get(self.selected).map(|s| s.to_string())
     }
 
+    pub fn window(&self, height: usize) -> (usize, Vec<&str>) {
+        if height == 0 {
+            return (0, Vec::new());
+        }
+        let offset = (self.selected + 1).saturating_sub(height);
+        let visible = self
+            .filtered()
+            .into_iter()
+            .skip(offset)
+            .take(height)
+            .collect();
+        (offset, visible)
+    }
+
     fn clamp(&mut self) {
         let len = self.filtered().len();
         self.selected = self.selected.min(len.saturating_sub(1));
