@@ -7,6 +7,7 @@ use ratatui::layout::Rect;
 use crate::io::error::Error;
 use crate::ui::picker::Picker;
 use crate::ui::session::Session;
+use crate::ui::theme::Theme;
 use crate::ui::view::View;
 use crate::ui::{command_line, event_map, link_follow, read_view, render};
 use crate::vim::editor::Editor;
@@ -26,6 +27,7 @@ pub struct App {
     pub text_area: Rect,
     pub session: Session,
     pub picker: Option<Picker>,
+    pub theme: Theme,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -61,6 +63,7 @@ impl App {
             text_area: Rect::new(0, 0, 80, 24),
             session: Session::in_memory(),
             picker: None,
+            theme: Theme::default(),
         }
     }
 

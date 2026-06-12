@@ -7,8 +7,8 @@ use ratatui::widgets::Paragraph;
 use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
+use crate::ui::read_view;
 use crate::ui::view::View;
-use crate::ui::{read_view, theme};
 use crate::vim::mode::Mode;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
@@ -89,12 +89,18 @@ fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
         .enumerate()
         .skip(app.top)
         .take(area.height as usize)
-        .map(|(idx, line)| styled_line(line, highlights.get(idx).map_or(&[][..], Vec::as_slice)))
+        .map(|(idx, line)| {
+            styled_line(
+                line,
+                highlights.get(idx).map_or(&[][..], Vec::as_slice),
+                app,
+            )
+        })
         .collect();
     frame.render_widget(Paragraph::new(lines), area);
 }
 
-fn styled_line<'l>(line: &'l str, spans: &[SourceSpan]) -> Line<'l> {
+fn styled_line<'l>(line: &'l str, spans: &[SourceSpan], app: &App) -> Line<'l> {
     let chars: Vec<char> = line.chars().collect();
     let mut parts: Vec<TuiSpan<'l>> = Vec::new();
     let mut run = String::new();
@@ -104,7 +110,7 @@ fn styled_line<'l>(line: &'l str, spans: &[SourceSpan]) -> Line<'l> {
             .iter()
             .filter(|span| span.start <= col && col < span.end)
             .min_by_key(|span| span.end - span.start)
-            .map_or_else(TuiStyle::default, |span| theme::style_for(span.style));
+            .map_or_else(TuiStyle::default, |span| app.theme.tui(span.style));
         if style != run_style && !run.is_empty() {
             parts.push(TuiSpan::styled(std::mem::take(&mut run), run_style));
         }

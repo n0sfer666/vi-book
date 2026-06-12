@@ -7,8 +7,8 @@ use ratatui::widgets::Paragraph;
 use crate::markdown::render::render;
 use crate::markdown::rendered::Rendered;
 use crate::ui::app::App;
+use crate::ui::event_map;
 use crate::ui::view::View;
-use crate::ui::{event_map, theme};
 use crate::vim::key::Key;
 
 const MAX_COLUMN: usize = 90;
@@ -100,7 +100,7 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
             Line::from(
                 line.spans
                     .iter()
-                    .map(|span| TuiSpan::styled(span.text.clone(), theme::style_for(span.style)))
+                    .map(|span| TuiSpan::styled(span.text.clone(), app.theme.tui(span.style)))
                     .collect::<Vec<_>>(),
             )
         })

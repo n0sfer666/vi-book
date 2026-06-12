@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Style {
     Text,
     Heading1,
@@ -15,6 +15,26 @@ pub enum Style {
     QuoteBar,
     Frontmatter,
     ImagePlaceholder,
+}
+
+impl Style {
+    pub const ALL: [Style; 15] = [
+        Style::Text,
+        Style::Heading1,
+        Style::Heading2,
+        Style::Heading3,
+        Style::Bold,
+        Style::Italic,
+        Style::CodeSpan,
+        Style::CodeBlock,
+        Style::Frame,
+        Style::Link,
+        Style::Tag,
+        Style::Quote,
+        Style::QuoteBar,
+        Style::Frontmatter,
+        Style::ImagePlaceholder,
+    ];
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
