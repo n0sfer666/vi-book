@@ -9,6 +9,7 @@ pub mod list_nav;
 pub mod overlay;
 pub mod panel;
 pub mod picker;
+pub mod plugin;
 pub mod read_view;
 pub mod render;
 pub mod session;

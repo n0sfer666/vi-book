@@ -1,8 +1,8 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::ui::app::App;
-use crate::ui::daily_cmd;
 use crate::ui::panel::Panel;
+use crate::ui::{daily_cmd, plugin};
 
 pub fn handle(app: &mut App, event: KeyEvent) {
     let Some(command) = app.command.as_mut() else {
@@ -42,7 +42,11 @@ fn execute(app: &mut App, command: &str) {
         "tree" => toggle_panel(app, PanelKind::Tree),
         "backlinks" => toggle_panel(app, PanelKind::Backlinks),
         "" => {}
-        other => app.message = format!("not an editor command: {other}"),
+        other => {
+            if !plugin::run_command(app, other) {
+                app.message = format!("not an editor command: {other}");
+            }
+        }
     }
 }
 
@@ -81,6 +85,7 @@ fn save(app: &mut App) -> bool {
         Ok(()) => {
             app.saved_text = app.editor.text();
             app.message = String::from("written");
+            plugin::fire(app, "note_save");
             true
         }
         Err(err) => {

@@ -5,6 +5,7 @@ use ratatui::DefaultTerminal;
 use ratatui::layout::Rect;
 
 use crate::io::error::Error;
+use crate::lua::host::PluginHost;
 use crate::notebook::date::Date;
 use crate::notebook::history::History;
 use crate::ui::panel::Panel;
@@ -12,7 +13,7 @@ use crate::ui::picker::Picker;
 use crate::ui::session::Session;
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{command_line, event_map, input, link_follow, read_view, render};
+use crate::ui::{command_line, event_map, input, link_follow, plugin, read_view, render};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
@@ -35,6 +36,8 @@ pub struct App {
     pub today: Date,
     pub panel: Option<Panel>,
     pub panel_focus: bool,
+    pub host: Option<PluginHost>,
+    pub firing: bool,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -43,6 +46,7 @@ pub fn run() -> Result<(), Error> {
     let mut app = App::new(Editor::new(""), String::new());
     app.session = session;
     app.today = crate::ui::clock::today();
+    app.load_config();
     if let Some(rel) = open {
         app.open_rel(&rel);
     } else {
@@ -76,6 +80,8 @@ impl App {
             today: Date::new(1970, 1, 1),
             panel: None,
             panel_focus: false,
+            host: None,
+            firing: false,
         }
     }
 
@@ -101,7 +107,12 @@ impl App {
         self.load(rel);
         if self.path == rel {
             self.history.visit(rel);
+            plugin::fire(self, "note_open");
         }
+    }
+
+    pub fn load_config(&mut self) {
+        plugin::load_config(self);
     }
 
     pub fn open_picker(&mut self) {

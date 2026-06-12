@@ -105,6 +105,22 @@ impl Editor {
         self.set_cursor(self.buffer.char_to_pos(idx));
     }
 
+    pub fn replace_all(&mut self, text: &str) {
+        let old = self.buffer.text();
+        if old == text {
+            return;
+        }
+        let edit = Edit {
+            at: 0,
+            removed: old,
+            inserted: text.to_string(),
+        };
+        edit.apply(&mut self.buffer);
+        self.commit(vec![edit]);
+        self.cursor = self.buffer.clamp_normal(self.cursor);
+        self.sync_desired();
+    }
+
     pub fn idle_normal(&self) -> bool {
         self.mode == Mode::Normal
             && self.pending.stage == Stage::Start
