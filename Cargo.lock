@@ -818,6 +818,7 @@ dependencies = [
  "thiserror",
  "tree-sitter",
  "tree-sitter-md",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]

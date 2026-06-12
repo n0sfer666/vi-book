@@ -11,6 +11,12 @@ pub fn node_text<'s>(source: &'s str, node: &Node) -> &'s str {
     &source[node.start_byte().min(source.len())..node.end_byte().min(source.len())]
 }
 
+pub fn child_of_kind<'t>(node: Node<'t>, kind: &str) -> Option<Node<'t>> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .find(|child| child.kind() == kind)
+}
+
 pub fn parse(source: &str) -> Option<MarkdownTree> {
     let mut parser = MarkdownParser::default();
     if source.ends_with('\n') || source.is_empty() {

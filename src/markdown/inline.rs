@@ -5,7 +5,7 @@ use tree_sitter_md::MarkdownTree;
 
 use crate::markdown::atom::{Atom, Src};
 use crate::markdown::facts::NoteFacts;
-use crate::markdown::parser;
+use crate::markdown::parser::{self, child_of_kind};
 use crate::markdown::style::Style;
 
 struct Plan {
@@ -111,12 +111,6 @@ fn image(source: &str, node: Node, plan: &mut Plan) {
         .map(|dest| parser::node_text(source, &dest).to_string())
         .unwrap_or_default();
     plan.replace.push((range, format!("\u{1f5bc} [{name}]")));
-}
-
-fn child_of_kind<'t>(node: Node<'t>, kind: &str) -> Option<Node<'t>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor)
-        .find(|child| child.kind() == kind)
 }
 
 fn emit(chars: &[char], range: Range<usize>, base: Style, plan: &Plan) -> Vec<Atom> {

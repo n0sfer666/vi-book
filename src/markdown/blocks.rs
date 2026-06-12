@@ -1,9 +1,10 @@
 use tree_sitter::Node;
 use tree_sitter_md::MarkdownTree;
 
-use crate::markdown::atom::{Atom, split_lines};
+use crate::markdown::atom::{Atom, split_lines, split_lines_trimmed};
 use crate::markdown::extract::extract;
 use crate::markdown::facts::NoteFacts;
+use crate::markdown::parser::child_of_kind as child;
 use crate::markdown::style::Style;
 use crate::markdown::table::{self, TableRow};
 use crate::markdown::{inline, parser};
@@ -130,11 +131,7 @@ fn code(ctx: &Ctx, node: Node) -> Block {
         let start = parser::byte_to_char(ctx.source, content.start_byte());
         let end = parser::byte_to_char(ctx.source, content.end_byte());
         let atoms = inline::verbatim(&ctx.chars, start..end, Style::CodeBlock);
-        let mut lines = split_lines(&atoms);
-        if lines.last().is_some_and(Vec::is_empty) {
-            lines.pop();
-        }
-        lines
+        split_lines_trimmed(&atoms)
     });
     block(node, BlockKind::Code { lang, lines })
 }
@@ -160,10 +157,7 @@ fn verbatim_block(ctx: &Ctx, node: Node, style: Style) -> Block {
     let start = parser::byte_to_char(ctx.source, node.start_byte());
     let end = parser::byte_to_char(ctx.source, node.end_byte());
     let atoms = inline::verbatim(&ctx.chars, start..end, style);
-    let mut lines = split_lines(&atoms);
-    if lines.last().is_some_and(Vec::is_empty) {
-        lines.pop();
-    }
+    let lines = split_lines_trimmed(&atoms);
     block(node, BlockKind::Verbatim { lines })
 }
 
@@ -174,10 +168,4 @@ fn inline_atoms(ctx: &Ctx, node: Node, base: Style) -> Vec<Atom> {
         ),
         None => Vec::new(),
     }
-}
-
-fn child<'t>(node: Node<'t>, kind: &str) -> Option<Node<'t>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor)
-        .find(|child| child.kind() == kind)
 }

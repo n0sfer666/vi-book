@@ -35,3 +35,11 @@ pub fn split_lines(atoms: &[Atom]) -> Vec<Vec<Atom>> {
     }
     lines
 }
+
+pub fn split_lines_trimmed(atoms: &[Atom]) -> Vec<Vec<Atom>> {
+    let mut lines = split_lines(atoms);
+    if lines.last().is_some_and(Vec::is_empty) {
+        lines.pop();
+    }
+    lines
+}

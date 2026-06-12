@@ -1,5 +1,6 @@
 use crate::markdown::atom::{Atom, Src, split_lines};
 use crate::markdown::style::Span;
+use crate::markdown::width::{atoms_width, split_by_width};
 
 pub fn wrap(atoms: &[Atom], width: usize) -> Vec<Vec<Atom>> {
     let mut lines = Vec::new();
@@ -14,19 +15,19 @@ fn wrap_logical(atoms: &[Atom], width: usize, lines: &mut Vec<Vec<Atom>>) {
     for word in words(atoms) {
         match word {
             Word::Space(space) => {
-                if !current.is_empty() && current.len() < width {
+                if !current.is_empty() && atoms_width(&current) < width {
                     current.push(space);
                 }
             }
             Word::Text(text) => {
-                if !current.is_empty() && current.len() + text.len() > width {
+                if !current.is_empty() && atoms_width(&current) + atoms_width(&text) > width {
                     flush(&mut current, lines);
                 }
-                if text.len() <= width {
+                if atoms_width(&text) <= width {
                     current.extend_from_slice(&text);
                 } else {
-                    for chunk in text.chunks(width) {
-                        if current.len() + chunk.len() > width {
+                    for chunk in split_by_width(&text, width) {
+                        if atoms_width(&current) + atoms_width(chunk) > width {
                             flush(&mut current, lines);
                         }
                         current.extend_from_slice(chunk);

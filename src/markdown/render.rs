@@ -3,6 +3,7 @@ use crate::markdown::blocks::{self, Block, BlockKind};
 use crate::markdown::rendered::{Rendered, RenderedLine};
 use crate::markdown::style::{Span, Style};
 use crate::markdown::table::TableRow;
+use crate::markdown::width::{atoms_width, split_by_width};
 use crate::markdown::wrap;
 
 pub fn render(source: &str, width: usize) -> Rendered {
@@ -53,7 +54,7 @@ fn render_block(block: &Block, width: usize, lines: &mut Vec<RenderedLine>) {
 }
 
 fn heading(level: u8, atoms: &[Atom], width: usize, lines: &mut Vec<RenderedLine>) {
-    let title_len = atoms.len();
+    let title_len = atoms_width(atoms);
     match level {
         1 if width >= title_len + 4 => {
             let fill = width - title_len - 2;
@@ -89,11 +90,12 @@ fn heading(level: u8, atoms: &[Atom], width: usize, lines: &mut Vec<RenderedLine
 fn code_block(lang: &[Atom], code: &[Vec<Atom>], width: usize, lines: &mut Vec<RenderedLine>) {
     let width = width.max(6);
     let inner = width - 4;
-    let top = if !lang.is_empty() && width >= lang.len() + 6 {
+    let lang_len = atoms_width(lang);
+    let top = if !lang.is_empty() && width >= lang_len + 6 {
         let mut spans = vec![Span::decoration("\u{250c}\u{2500} ", Style::Frame)];
         spans.extend(wrap::spans(lang));
         spans.push(Span::decoration(
-            format!(" {}\u{2510}", "\u{2500}".repeat(width - lang.len() - 5)),
+            format!(" {}\u{2510}", "\u{2500}".repeat(width - lang_len - 5)),
             Style::Frame,
         ));
         spans
@@ -102,16 +104,11 @@ fn code_block(lang: &[Atom], code: &[Vec<Atom>], width: usize, lines: &mut Vec<R
     };
     lines.push(RenderedLine { spans: top });
     for line in code {
-        let chunks: Vec<&[Atom]> = if line.is_empty() {
-            vec![&[]]
-        } else {
-            line.chunks(inner).collect()
-        };
-        for chunk in chunks {
+        for chunk in split_by_width(line, inner) {
             let mut spans = vec![Span::decoration("\u{2502} ", Style::Frame)];
             spans.extend(wrap::spans(chunk));
             spans.push(Span::decoration(
-                format!("{}\u{2502}", " ".repeat(width - 3 - chunk.len())),
+                format!("{}\u{2502}", " ".repeat(width - 3 - atoms_width(chunk))),
                 Style::Frame,
             ));
             lines.push(RenderedLine { spans });
@@ -135,7 +132,7 @@ fn table(rows: &[TableRow], lines: &mut Vec<RenderedLine>) {
         .map(|i| {
             rows.iter()
                 .filter_map(|row| row.cells.get(i))
-                .map(Vec::len)
+                .map(|cell| atoms_width(cell))
                 .max()
                 .unwrap_or(0)
         })
@@ -152,7 +149,7 @@ fn table(rows: &[TableRow], lines: &mut Vec<RenderedLine>) {
             let cell = row.cells.get(i).map_or(&[][..], Vec::as_slice);
             spans.extend(wrap::spans(cell));
             spans.push(Span::decoration(
-                " ".repeat(cell_width - cell.len() + 1),
+                " ".repeat(cell_width - atoms_width(cell) + 1),
                 Style::Frame,
             ));
         }

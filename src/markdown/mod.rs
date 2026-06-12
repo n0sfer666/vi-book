@@ -10,4 +10,5 @@ pub mod render;
 pub mod rendered;
 pub mod style;
 pub mod table;
+pub mod width;
 pub mod wrap;
