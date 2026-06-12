@@ -1,5 +1,6 @@
 pub mod core;
 pub mod io;
+pub mod markdown;
 pub mod ui;
 pub mod vim;
 
