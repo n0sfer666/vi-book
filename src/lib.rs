@@ -1,5 +1,6 @@
 pub mod core;
 pub mod io;
+pub mod ui;
 pub mod vim;
 
 pub use crate::core::position::Position;

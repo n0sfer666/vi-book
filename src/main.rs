@@ -1,4 +1,11 @@
-fn main() {
-    eprintln!("vi-book: TUI not implemented yet");
-    std::process::exit(1);
+use std::process::ExitCode;
+
+fn main() -> ExitCode {
+    match vi_book::ui::run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            eprintln!("vi-book: {err}");
+            ExitCode::FAILURE
+        }
+    }
 }

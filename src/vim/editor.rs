@@ -93,6 +93,10 @@ impl Editor {
         }
     }
 
+    pub fn search_input(&self) -> Option<&str> {
+        self.search.input.as_deref()
+    }
+
     pub(crate) fn cursor_index(&self) -> usize {
         self.buffer.pos_to_char(self.cursor)
     }
