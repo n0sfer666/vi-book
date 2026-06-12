@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 use crate::markdown::extract::extract;
 use crate::vault::link::{self, Link};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Note {
     pub path: String,
     pub name: String,
