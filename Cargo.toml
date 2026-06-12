@@ -1,0 +1,20 @@
+[package]
+name = "vi-book"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "A terminal note-taking app with vim-style editing"
+repository = "https://github.com/n0sfer/vi-book"
+
+[lib]
+name = "vi_book"
+
+[[bin]]
+name = "vi-book"
+path = "src/main.rs"
+
+[dependencies]
+ropey = "1.6"
+thiserror = "2"
+ratatui = "0.29"
+crossterm = "0.28"
