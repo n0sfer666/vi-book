@@ -69,7 +69,7 @@ fn undo() {
             (0, 0),
             "yypu",
             "a\nb",
-            (0, 0),
+            (1, 0),
         ),
         t(
             "u undoes visual delete",

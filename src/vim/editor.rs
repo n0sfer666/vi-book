@@ -1,48 +1,123 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use crate::core::buffer::Buffer;
+use crate::core::edit::Edit;
+use crate::core::history::History;
 use crate::core::position::Position;
+use crate::core::transaction::Transaction;
 use crate::io::error::Error;
+use crate::io::file;
+use crate::vim::desired_col::DesiredCol;
 use crate::vim::key::{Key, parse_keys};
 use crate::vim::mode::Mode;
+use crate::vim::pending::Pending;
+use crate::vim::register::Registers;
+use crate::vim::search::SearchState;
+use crate::vim::{insert, normal, search, visual};
 
-pub struct Editor;
+pub struct Editor {
+    pub(crate) buffer: Buffer,
+    pub(crate) cursor: Position,
+    pub(crate) desired: DesiredCol,
+    pub(crate) mode: Mode,
+    pub(crate) pending: Pending,
+    pub(crate) registers: Registers,
+    pub(crate) history: History,
+    pub(crate) insert_edits: Vec<Edit>,
+    pub(crate) visual_anchor: Position,
+    pub(crate) search: SearchState,
+    path: Option<PathBuf>,
+}
 
 impl Editor {
-    pub fn new(_text: &str) -> Self {
-        todo!()
+    pub fn new(text: &str) -> Self {
+        Self {
+            buffer: Buffer::new(text),
+            cursor: Position::default(),
+            desired: DesiredCol::default(),
+            mode: Mode::Normal,
+            pending: Pending::default(),
+            registers: Registers::default(),
+            history: History::default(),
+            insert_edits: Vec::new(),
+            visual_anchor: Position::default(),
+            search: SearchState::default(),
+            path: None,
+        }
     }
 
-    pub fn open(_path: impl AsRef<Path>) -> Result<Self, Error> {
-        todo!()
+    pub fn open(path: impl AsRef<Path>) -> Result<Self, Error> {
+        let text = file::read(path.as_ref())?;
+        let mut editor = Self::new(&text);
+        editor.path = Some(path.as_ref().to_path_buf());
+        Ok(editor)
     }
 
     pub fn save(&mut self) -> Result<(), Error> {
-        todo!()
+        let path = self.path.as_ref().ok_or(Error::NoPath)?;
+        file::write(path, &self.buffer.text())
     }
 
     pub fn text(&self) -> String {
-        todo!()
+        self.buffer.text()
     }
 
     pub fn cursor(&self) -> Position {
-        todo!()
+        self.cursor
     }
 
-    pub fn set_cursor(&mut self, _pos: Position) {
-        todo!()
+    pub fn set_cursor(&mut self, pos: Position) {
+        self.cursor = self.buffer.clamp_normal(pos);
+        self.desired = DesiredCol::Col(self.cursor.col);
     }
 
     pub fn mode(&self) -> Mode {
-        todo!()
+        self.mode
     }
 
-    pub fn handle_key(&mut self, _key: Key) {
-        todo!()
+    pub fn handle_key(&mut self, key: Key) {
+        if self.search.input.is_some() {
+            search::handle_input(self, key);
+            return;
+        }
+        match self.mode {
+            Mode::Normal => normal::handle(self, key),
+            Mode::Insert => insert::handle(self, key),
+            Mode::Visual | Mode::VisualLine => visual::handle(self, key),
+        }
     }
 
     pub fn handle_keys(&mut self, notation: &str) {
         for key in parse_keys(notation) {
             self.handle_key(key);
+        }
+    }
+
+    pub(crate) fn cursor_index(&self) -> usize {
+        self.buffer.pos_to_char(self.cursor)
+    }
+
+    pub(crate) fn commit(&mut self, edits: Vec<Edit>) {
+        if edits.is_empty() {
+            return;
+        }
+        self.history.record(Transaction {
+            edits,
+            cursor_after: self.cursor,
+        });
+    }
+
+    pub(crate) fn undo(&mut self) {
+        if let Some(start) = self.history.undo(&mut self.buffer) {
+            self.cursor = self.buffer.clamp_normal(self.buffer.char_to_pos(start));
+            self.desired = DesiredCol::Col(self.cursor.col);
+        }
+    }
+
+    pub(crate) fn redo(&mut self) {
+        if let Some(cursor) = self.history.redo(&mut self.buffer) {
+            self.cursor = self.buffer.clamp_normal(cursor);
+            self.desired = DesiredCol::Col(self.cursor.col);
         }
     }
 }

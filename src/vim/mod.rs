@@ -1,3 +1,15 @@
+pub mod desired_col;
 pub mod editor;
+pub mod insert;
 pub mod key;
 pub mod mode;
+pub mod motion;
+pub mod normal;
+pub mod operator;
+pub mod paste;
+pub mod pending;
+pub mod register;
+pub mod search;
+pub mod text_object;
+pub mod visual;
+pub mod word;
