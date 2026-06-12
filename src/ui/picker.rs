@@ -1,3 +1,4 @@
+use crate::ui::list_nav;
 use crate::vault::fuzzy;
 
 pub struct Picker {
@@ -39,14 +40,11 @@ impl Picker {
     }
 
     pub fn move_down(&mut self) {
-        let len = self.filtered().len();
-        if len > 0 {
-            self.selected = (self.selected + 1).min(len - 1);
-        }
+        self.selected = list_nav::next(self.selected, self.filtered().len());
     }
 
     pub fn move_up(&mut self) {
-        self.selected = self.selected.saturating_sub(1);
+        self.selected = list_nav::prev(self.selected);
     }
 
     pub fn selected(&self) -> usize {
@@ -61,7 +59,7 @@ impl Picker {
         if height == 0 {
             return (0, Vec::new());
         }
-        let offset = (self.selected + 1).saturating_sub(height);
+        let offset = list_nav::scroll_offset(self.selected, height);
         let visible = self
             .filtered()
             .into_iter()

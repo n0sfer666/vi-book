@@ -80,6 +80,10 @@ impl App {
     }
 
     pub fn load(&mut self, rel: &str) {
+        if self.editor.text() != self.saved_text {
+            self.message = String::from("unsaved changes (write with :w or discard)");
+            return;
+        }
         match Editor::open(self.session.absolute(rel)) {
             Ok(editor) => {
                 self.saved_text = editor.text();

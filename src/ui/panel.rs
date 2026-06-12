@@ -1,4 +1,5 @@
 use crate::notebook::tree::{Row, Tree};
+use crate::ui::list_nav;
 
 pub enum Panel {
     Tree { tree: Tree, selected: usize },
@@ -56,12 +57,9 @@ impl Panel {
 
     pub fn move_down(&mut self) {
         let len = self.len();
-        if len == 0 {
-            return;
-        }
         match self {
             Panel::Tree { selected, .. } | Panel::Backlinks { selected, .. } => {
-                *selected = (*selected + 1).min(len - 1);
+                *selected = list_nav::next(*selected, len);
             }
         }
     }
@@ -69,7 +67,7 @@ impl Panel {
     pub fn move_up(&mut self) {
         match self {
             Panel::Tree { selected, .. } | Panel::Backlinks { selected, .. } => {
-                *selected = selected.saturating_sub(1);
+                *selected = list_nav::prev(*selected);
             }
         }
     }

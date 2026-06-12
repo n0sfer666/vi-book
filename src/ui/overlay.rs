@@ -5,6 +5,7 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Paragraph};
 
 use crate::ui::app::App;
+use crate::ui::list_nav;
 
 pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
     let Some(panel) = app.panel.as_ref() else {
@@ -13,7 +14,7 @@ pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
     let rows = panel.rows();
     let inner_height = area.height.saturating_sub(2) as usize;
     let selected = panel.selected();
-    let offset = (selected + 1).saturating_sub(inner_height);
+    let offset = list_nav::scroll_offset(selected, inner_height);
     let lines: Vec<Line> = rows
         .iter()
         .enumerate()
