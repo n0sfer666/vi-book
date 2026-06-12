@@ -56,7 +56,7 @@ impl Index {
         let mut broken = Vec::new();
         for note in &self.notes {
             for link in &note.links {
-                if matches!(self.resolve(&link.target), Resolution::None) {
+                if !self.by_name.contains_key(&link.target) {
                     broken.push((note.path.clone(), link.target.clone()));
                 }
             }
