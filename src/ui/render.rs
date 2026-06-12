@@ -28,11 +28,50 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     }
     draw_status(frame, app, &text, status_area);
     draw_message(frame, app, message_area);
+    if app.picker.is_some() {
+        draw_picker(frame, app, text_area);
+        return;
+    }
     if app.view == View::Edit {
         place_cursor(frame, app, text_area, message_area);
     } else if app.command.is_some() || app.editor.search_input().is_some() {
         place_bottom_cursor(frame, app, message_area);
     }
+}
+
+fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
+    use ratatui::widgets::{Block, Borders};
+
+    let Some(picker) = app.picker.as_ref() else {
+        return;
+    };
+    let width = (area.width.saturating_sub(4)).min(70);
+    let height = (area.height.saturating_sub(2)).min(16);
+    let rect = Rect {
+        x: area.x + (area.width.saturating_sub(width)) / 2,
+        y: area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    };
+    let items = picker.filtered();
+    let mut lines = vec![Line::from(format!("> {}", picker.query()))];
+    for (i, item) in items
+        .iter()
+        .take(height.saturating_sub(2) as usize)
+        .enumerate()
+    {
+        let marker = if i == picker.selected() { "› " } else { "  " };
+        let style = if i == picker.selected() {
+            TuiStyle::default().add_modifier(Modifier::REVERSED)
+        } else {
+            TuiStyle::default()
+        };
+        lines.push(Line::styled(format!("{marker}{item}"), style));
+    }
+    let block = Block::default().borders(Borders::ALL).title(" notes ");
+    frame.render_widget(Paragraph::new(lines).block(block), rect);
+    let cursor_col = rect.x + 3 + picker.query().chars().count() as u16;
+    frame.set_cursor_position(ScreenPosition::new(cursor_col, rect.y + 1));
 }
 
 fn scroll_into_view(app: &mut App, area: Rect) {
