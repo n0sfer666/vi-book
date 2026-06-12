@@ -1,9 +1,30 @@
 use crossterm::event::KeyEvent;
 
 use crate::ui::app::App;
-use crate::ui::event_map;
 use crate::ui::panel::Activation;
+use crate::ui::{event_map, link_follow};
 use crate::vim::key::Key;
+
+pub fn normal_builtin(app: &mut App, mapped: Option<Key>) -> bool {
+    match mapped {
+        Some(Key::Char(':')) => app.command = Some(String::new()),
+        Some(Key::Ctrl('p')) => app.open_picker(),
+        Some(Key::Ctrl('w')) if app.panel.is_some() => app.panel_focus = true,
+        Some(Key::Ctrl('o')) => {
+            if let Some(rel) = app.history.back() {
+                app.load(&rel);
+            }
+        }
+        Some(Key::Ctrl('i')) => {
+            if let Some(rel) = app.history.forward() {
+                app.load(&rel);
+            }
+        }
+        Some(Key::Enter) => link_follow::follow_at_cursor(app),
+        _ => return false,
+    }
+    true
+}
 
 pub fn panel_key(app: &mut App, key: Option<Key>) {
     let Some(panel) = app.panel.as_mut() else {

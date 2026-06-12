@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
@@ -13,7 +14,7 @@ use crate::ui::picker::Picker;
 use crate::ui::session::Session;
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{command_line, event_map, input, link_follow, plugin, read_view, render};
+use crate::ui::{command_line, event_map, input, plugin, read_view, render};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
@@ -38,6 +39,7 @@ pub struct App {
     pub panel_focus: bool,
     pub host: Option<PluginHost>,
     pub firing: bool,
+    pub normal_maps: HashMap<Key, String>,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -47,6 +49,7 @@ pub fn run() -> Result<(), Error> {
     app.session = session;
     app.today = crate::ui::clock::today();
     app.load_config();
+    app.install_keymaps();
     if let Some(rel) = open {
         app.open_rel(&rel);
     } else {
@@ -82,6 +85,7 @@ impl App {
             panel_focus: false,
             host: None,
             firing: false,
+            normal_maps: HashMap::new(),
         }
     }
 
@@ -114,6 +118,10 @@ impl App {
 
     pub fn load_config(&mut self) {
         plugin::load_config(self);
+    }
+
+    pub fn install_keymaps(&mut self) {
+        plugin::install_keymaps(self);
     }
 
     pub fn open_picker(&mut self) {
@@ -149,38 +157,15 @@ impl App {
             input::panel_key(self, mapped);
             return;
         }
-        if self.editor.idle_normal() {
-            match mapped {
-                Some(Key::Char(':')) => {
-                    self.command = Some(String::new());
-                    return;
-                }
-                Some(Key::Ctrl('p')) => {
-                    self.open_picker();
-                    return;
-                }
-                Some(Key::Ctrl('w')) if self.panel.is_some() => {
-                    self.panel_focus = true;
-                    return;
-                }
-                Some(Key::Ctrl('o')) => {
-                    if let Some(rel) = self.history.back() {
-                        self.load(&rel);
-                    }
-                    return;
-                }
-                Some(Key::Ctrl('i')) => {
-                    if let Some(rel) = self.history.forward() {
-                        self.load(&rel);
-                    }
-                    return;
-                }
-                Some(Key::Enter) => {
-                    link_follow::follow_at_cursor(self);
-                    return;
-                }
-                _ => {}
-            }
+        if self.editor.idle_normal() && input::normal_builtin(self, mapped) {
+            return;
+        }
+        if self.view == View::Edit
+            && self.editor.idle_normal()
+            && let Some(rhs) = mapped.and_then(|k| self.normal_maps.get(&k).cloned())
+        {
+            plugin::apply_keymap(self, &rhs);
+            return;
         }
         let width = read_view::column_width(self.text_area);
         if self.view == View::Read {

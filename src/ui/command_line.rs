@@ -18,13 +18,13 @@ pub fn handle(app: &mut App, event: KeyEvent) {
         KeyCode::Esc => app.command = None,
         KeyCode::Enter => {
             let command = app.command.take().unwrap_or_default();
-            execute(app, &command);
+            run(app, &command);
         }
         _ => {}
     }
 }
 
-fn execute(app: &mut App, command: &str) {
+pub fn run(app: &mut App, command: &str) {
     match command {
         "w" => {
             save(app);

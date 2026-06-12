@@ -3,6 +3,33 @@ use std::path::PathBuf;
 
 use crate::lua::host::PluginHost;
 use crate::ui::app::App;
+use crate::ui::command_line;
+use crate::vim::key::parse_keys;
+
+pub fn install_keymaps(app: &mut App) {
+    let Some(host) = &app.host else {
+        return;
+    };
+    app.normal_maps = host
+        .keymaps()
+        .into_iter()
+        .filter(|m| m.mode == "n")
+        .filter_map(|m| match parse_keys(&m.lhs)[..] {
+            [key] => Some((key, m.rhs)),
+            _ => None,
+        })
+        .collect();
+}
+
+pub fn apply_keymap(app: &mut App, rhs: &str) {
+    if let Some(cmd) = rhs.strip_prefix(':') {
+        command_line::run(app, cmd);
+    } else {
+        for key in parse_keys(rhs) {
+            app.editor.handle_key(key);
+        }
+    }
+}
 
 pub fn load_config(app: &mut App) {
     let Some(path) = config_path() else {
