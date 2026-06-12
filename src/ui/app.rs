@@ -5,11 +5,14 @@ use ratatui::DefaultTerminal;
 use ratatui::layout::Rect;
 
 use crate::io::error::Error;
+use crate::notebook::date::Date;
+use crate::notebook::history::History;
+use crate::ui::panel::Panel;
 use crate::ui::picker::Picker;
 use crate::ui::session::Session;
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{command_line, event_map, link_follow, read_view, render};
+use crate::ui::{command_line, event_map, input, link_follow, read_view, render};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
@@ -28,6 +31,10 @@ pub struct App {
     pub session: Session,
     pub picker: Option<Picker>,
     pub theme: Theme,
+    pub history: History,
+    pub today: Date,
+    pub panel: Option<Panel>,
+    pub panel_focus: bool,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -35,6 +42,7 @@ pub fn run() -> Result<(), Error> {
     let (session, open) = Session::open(arg.as_deref())?;
     let mut app = App::new(Editor::new(""), String::new());
     app.session = session;
+    app.today = crate::ui::clock::today();
     if let Some(rel) = open {
         app.open_rel(&rel);
     } else {
@@ -64,10 +72,14 @@ impl App {
             session: Session::in_memory(),
             picker: None,
             theme: Theme::default(),
+            history: History::new(),
+            today: Date::new(1970, 1, 1),
+            panel: None,
+            panel_focus: false,
         }
     }
 
-    pub fn open_rel(&mut self, rel: &str) {
+    pub fn load(&mut self, rel: &str) {
         match Editor::open(self.session.absolute(rel)) {
             Ok(editor) => {
                 self.saved_text = editor.text();
@@ -78,6 +90,13 @@ impl App {
                 self.picker = None;
             }
             Err(err) => self.message = format!("open failed: {err}"),
+        }
+    }
+
+    pub fn open_rel(&mut self, rel: &str) {
+        self.load(rel);
+        if self.path == rel {
+            self.history.visit(rel);
         }
     }
 
@@ -102,7 +121,7 @@ impl App {
     pub fn handle(&mut self, key: KeyEvent) {
         self.message.clear();
         if self.picker.is_some() {
-            self.handle_picker(key);
+            input::picker_key(self, key);
             return;
         }
         if self.command.is_some() {
@@ -110,13 +129,42 @@ impl App {
             return;
         }
         let mapped = event_map::to_key(key);
-        if self.editor.idle_normal() && mapped == Some(Key::Char(':')) {
-            self.command = Some(String::new());
+        if self.panel_focus && self.panel.is_some() {
+            input::panel_key(self, mapped);
             return;
         }
-        if self.editor.idle_normal() && mapped == Some(Key::Ctrl('p')) {
-            self.open_picker();
-            return;
+        if self.editor.idle_normal() {
+            match mapped {
+                Some(Key::Char(':')) => {
+                    self.command = Some(String::new());
+                    return;
+                }
+                Some(Key::Ctrl('p')) => {
+                    self.open_picker();
+                    return;
+                }
+                Some(Key::Ctrl('w')) if self.panel.is_some() => {
+                    self.panel_focus = true;
+                    return;
+                }
+                Some(Key::Ctrl('o')) => {
+                    if let Some(rel) = self.history.back() {
+                        self.load(&rel);
+                    }
+                    return;
+                }
+                Some(Key::Ctrl('i')) => {
+                    if let Some(rel) = self.history.forward() {
+                        self.load(&rel);
+                    }
+                    return;
+                }
+                Some(Key::Enter) => {
+                    link_follow::follow_at_cursor(self);
+                    return;
+                }
+                _ => {}
+            }
         }
         let width = read_view::column_width(self.text_area);
         if self.view == View::Read {
@@ -127,33 +175,8 @@ impl App {
             read_view::enter(self, width);
             return;
         }
-        if self.editor.idle_normal() && mapped == Some(Key::Enter) {
-            link_follow::follow_at_cursor(self);
-            return;
-        }
         if let Some(key) = mapped {
             self.editor.handle_key(key);
-        }
-    }
-
-    fn handle_picker(&mut self, key: KeyEvent) {
-        let Some(picker) = self.picker.as_mut() else {
-            return;
-        };
-        match event_map::to_key(key) {
-            Some(Key::Esc) => self.picker = None,
-            Some(Key::Enter) => {
-                if let Some(rel) = picker.current() {
-                    self.open_rel(&rel);
-                } else {
-                    self.picker = None;
-                }
-            }
-            Some(Key::Backspace) => picker.pop(),
-            Some(Key::Ctrl('n')) => picker.move_down(),
-            Some(Key::Ctrl('p')) => picker.move_up(),
-            Some(Key::Char(c)) => picker.push(c),
-            _ => {}
         }
     }
 }

@@ -1,7 +1,12 @@
 pub mod app;
+pub mod clock;
 pub mod command_line;
+pub mod daily_cmd;
 pub mod event_map;
+pub mod input;
 pub mod link_follow;
+pub mod overlay;
+pub mod panel;
 pub mod picker;
 pub mod read_view;
 pub mod render;

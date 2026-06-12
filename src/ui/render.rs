@@ -7,17 +7,25 @@ use ratatui::widgets::Paragraph;
 use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
-use crate::ui::read_view;
 use crate::ui::view::View;
+use crate::ui::{overlay, read_view};
 use crate::vim::mode::Mode;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
-    let [text_area, status_area, message_area] = Layout::vertical([
+    let [body, status_area, message_area] = Layout::vertical([
         Constraint::Min(1),
         Constraint::Length(1),
         Constraint::Length(1),
     ])
     .areas(frame.area());
+    let text_area = if app.panel.is_some() {
+        let [panel_area, text_area] =
+            Layout::horizontal([Constraint::Length(28), Constraint::Min(1)]).areas(body);
+        overlay::draw_panel(frame, app, panel_area);
+        text_area
+    } else {
+        body
+    };
     app.text_area = text_area;
     let text = app.editor.text();
     if app.view == View::Read {
@@ -29,7 +37,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     draw_status(frame, app, &text, status_area);
     draw_message(frame, app, message_area);
     if app.picker.is_some() {
-        draw_picker(frame, app, text_area);
+        overlay::draw_picker(frame, app, text_area);
         return;
     }
     if app.view == View::Edit {
@@ -37,38 +45,6 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     } else if app.command.is_some() || app.editor.search_input().is_some() {
         place_bottom_cursor(frame, app, message_area);
     }
-}
-
-fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
-    use ratatui::widgets::{Block, Borders};
-
-    let Some(picker) = app.picker.as_ref() else {
-        return;
-    };
-    let width = (area.width.saturating_sub(4)).min(70);
-    let height = (area.height.saturating_sub(2)).min(16);
-    let rect = Rect {
-        x: area.x + (area.width.saturating_sub(width)) / 2,
-        y: area.y + (area.height.saturating_sub(height)) / 2,
-        width,
-        height,
-    };
-    let (offset, items) = picker.window(height.saturating_sub(2) as usize);
-    let mut lines = vec![Line::from(format!("> {}", picker.query()))];
-    for (i, item) in items.iter().enumerate() {
-        let selected = offset + i == picker.selected();
-        let marker = if selected { "› " } else { "  " };
-        let style = if selected {
-            TuiStyle::default().add_modifier(Modifier::REVERSED)
-        } else {
-            TuiStyle::default()
-        };
-        lines.push(Line::styled(format!("{marker}{item}"), style));
-    }
-    let block = Block::default().borders(Borders::ALL).title(" notes ");
-    frame.render_widget(Paragraph::new(lines).block(block), rect);
-    let cursor_col = rect.x + 3 + picker.query().chars().count() as u16;
-    frame.set_cursor_position(ScreenPosition::new(cursor_col, rect.y + 1));
 }
 
 fn scroll_into_view(app: &mut App, area: Rect) {
