@@ -1,5 +1,6 @@
 pub mod core;
 pub mod io;
+pub mod lua;
 pub mod markdown;
 pub mod notebook;
 pub mod ui;
