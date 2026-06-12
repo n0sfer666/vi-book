@@ -58,7 +58,10 @@ impl Rendered {
                     }
                     if start <= source_idx && best_start.is_none_or(|b| start >= b) {
                         best_start = Some(start);
-                        best = (line_no, offset);
+                        best = (
+                            line_no,
+                            offset + (source_idx - start).min(len.saturating_sub(1)),
+                        );
                     }
                 }
                 offset += len;

@@ -1,6 +1,13 @@
+pub mod atom;
+pub mod blocks;
 pub mod extract;
 pub mod facts;
+pub mod frontmatter_scan;
 pub mod highlight;
+pub mod inline;
+pub mod parser;
 pub mod render;
 pub mod rendered;
 pub mod style;
+pub mod table;
+pub mod wrap;
