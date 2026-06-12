@@ -2,6 +2,7 @@ pub mod core;
 pub mod io;
 pub mod markdown;
 pub mod ui;
+pub mod vault;
 pub mod vim;
 
 pub use crate::core::position::Position;
