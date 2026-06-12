@@ -43,4 +43,8 @@ impl Runtime {
     pub fn eval_string(&self, expr: &str) -> Result<String, Error> {
         Ok(self.lua.load(expr).eval()?)
     }
+
+    pub(crate) fn lua(&self) -> &Lua {
+        &self.lua
+    }
 }
