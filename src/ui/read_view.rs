@@ -17,15 +17,28 @@ pub fn column_width(area: Rect) -> usize {
     (area.width as usize).clamp(1, MAX_COLUMN)
 }
 
+pub fn cached_render(app: &mut App, width: usize) -> Rendered {
+    let text = app.editor.text();
+    let hit = matches!(&app.read_cache, Some((t, w, _)) if t == &text && *w == width);
+    if !hit {
+        let rendered = render(&text, width);
+        app.read_cache = Some((text, width, rendered));
+    }
+    app.read_cache
+        .as_ref()
+        .map(|(_, _, r)| r.clone())
+        .unwrap_or_default()
+}
+
 pub fn enter(app: &mut App, width: usize) {
-    let rendered = render(&app.editor.text(), width);
+    let rendered = cached_render(app, width);
     let idx = app.editor.text_index();
     app.read_cursor = rendered.to_rendered(idx);
     app.view = View::Read;
 }
 
 pub fn leave(app: &mut App, width: usize) {
-    let rendered = render(&app.editor.text(), width);
+    let rendered = cached_render(app, width);
     if let Some(idx) = source_at(&rendered, app.read_cursor.0, app.read_cursor.1) {
         app.editor.set_cursor_index(idx);
     }
@@ -36,7 +49,7 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     let Some(key) = event_map::to_key(event) else {
         return;
     };
-    let rendered = render(&app.editor.text(), width);
+    let rendered = cached_render(app, width);
     let last_line = rendered.lines.len().saturating_sub(1);
     let (line, col) = app.read_cursor;
     match key {
@@ -81,7 +94,7 @@ fn source_at(rendered: &Rendered, line: usize, col: usize) -> Option<usize> {
 
 pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     let width = column_width(area);
-    let rendered = render(&app.editor.text(), width);
+    let rendered = cached_render(app, width);
     app.read_cursor = clamp(&rendered, app.read_cursor.0, app.read_cursor.1);
     let height = area.height.max(1) as usize;
     if app.read_cursor.0 < app.top {

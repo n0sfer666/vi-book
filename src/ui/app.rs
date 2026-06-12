@@ -7,6 +7,7 @@ use ratatui::layout::Rect;
 
 use crate::io::error::Error;
 use crate::lua::host::PluginHost;
+use crate::markdown::rendered::Rendered;
 use crate::notebook::date::Date;
 use crate::notebook::history::History;
 use crate::ui::panel::Panel;
@@ -40,6 +41,7 @@ pub struct App {
     pub host: Option<PluginHost>,
     pub firing: bool,
     pub normal_maps: HashMap<Key, String>,
+    pub read_cache: Option<(String, usize, Rendered)>,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -86,6 +88,7 @@ impl App {
             host: None,
             firing: false,
             normal_maps: HashMap::new(),
+            read_cache: None,
         }
     }
 
