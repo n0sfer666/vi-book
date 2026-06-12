@@ -97,6 +97,14 @@ impl Editor {
         self.search.input.as_deref()
     }
 
+    pub fn text_index(&self) -> usize {
+        self.cursor_index()
+    }
+
+    pub fn set_cursor_index(&mut self, idx: usize) {
+        self.set_cursor(self.buffer.char_to_pos(idx));
+    }
+
     pub fn idle_normal(&self) -> bool {
         self.mode == Mode::Normal
             && self.pending.stage == Stage::Start

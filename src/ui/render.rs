@@ -1,10 +1,14 @@
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Position as ScreenPosition, Rect};
-use ratatui::style::{Modifier, Style};
-use ratatui::text::Line;
+use ratatui::style::{Modifier, Style as TuiStyle};
+use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
 
+use crate::markdown::highlight::highlight;
+use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
+use crate::ui::view::View;
+use crate::ui::{read_view, theme};
 use crate::vim::mode::Mode;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
@@ -14,12 +18,21 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         Constraint::Length(1),
     ])
     .areas(frame.area());
-    scroll_into_view(app, text_area);
+    app.text_area = text_area;
     let text = app.editor.text();
-    draw_text(frame, app, &text, text_area);
+    if app.view == View::Read {
+        read_view::draw(frame, app, text_area);
+    } else {
+        scroll_into_view(app, text_area);
+        draw_text(frame, app, &text, text_area);
+    }
     draw_status(frame, app, &text, status_area);
     draw_message(frame, app, message_area);
-    place_cursor(frame, app, text_area, message_area);
+    if app.view == View::Edit {
+        place_cursor(frame, app, text_area, message_area);
+    } else if app.command.is_some() || app.editor.search_input().is_some() {
+        place_bottom_cursor(frame, app, message_area);
+    }
 }
 
 fn scroll_into_view(app: &mut App, area: Rect) {
@@ -34,21 +47,50 @@ fn scroll_into_view(app: &mut App, area: Rect) {
 }
 
 fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
+    let highlights = highlight(text);
     let lines: Vec<Line> = text
         .split('\n')
+        .enumerate()
         .skip(app.top)
         .take(area.height as usize)
-        .map(Line::from)
+        .map(|(idx, line)| styled_line(line, highlights.get(idx).map_or(&[][..], Vec::as_slice)))
         .collect();
     frame.render_widget(Paragraph::new(lines), area);
 }
 
+fn styled_line<'l>(line: &'l str, spans: &[SourceSpan]) -> Line<'l> {
+    let chars: Vec<char> = line.chars().collect();
+    let mut parts: Vec<TuiSpan<'l>> = Vec::new();
+    let mut run = String::new();
+    let mut run_style = TuiStyle::default();
+    for (col, ch) in chars.iter().enumerate() {
+        let style = spans
+            .iter()
+            .filter(|span| span.start <= col && col < span.end)
+            .min_by_key(|span| span.end - span.start)
+            .map_or_else(TuiStyle::default, |span| theme::style_for(span.style));
+        if style != run_style && !run.is_empty() {
+            parts.push(TuiSpan::styled(std::mem::take(&mut run), run_style));
+        }
+        run_style = style;
+        run.push(*ch);
+    }
+    if !run.is_empty() {
+        parts.push(TuiSpan::styled(run, run_style));
+    }
+    Line::from(parts)
+}
+
 fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
-    let mode = match app.editor.mode() {
-        Mode::Normal => "NORMAL",
-        Mode::Insert => "INSERT",
-        Mode::Visual => "VISUAL",
-        Mode::VisualLine => "V-LINE",
+    let mode = if app.view == View::Read {
+        "READ"
+    } else {
+        match app.editor.mode() {
+            Mode::Normal => "NORMAL",
+            Mode::Insert => "INSERT",
+            Mode::Visual => "VISUAL",
+            Mode::VisualLine => "V-LINE",
+        }
     };
     let dirty = if text != app.saved_text { " [+]" } else { "" };
     let cursor = app.editor.cursor();
@@ -58,7 +100,7 @@ fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
         cursor.line + 1,
         cursor.col + 1
     );
-    let style = Style::default().add_modifier(Modifier::REVERSED);
+    let style = TuiStyle::default().add_modifier(Modifier::REVERSED);
     frame.render_widget(Paragraph::new(status).style(style), area);
 }
 
@@ -73,15 +115,19 @@ fn draw_message(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(Paragraph::new(content), area);
 }
 
+fn place_bottom_cursor(frame: &mut Frame, app: &App, message_area: Rect) {
+    let len = app
+        .command
+        .as_deref()
+        .or(app.editor.search_input())
+        .map_or(0, |s| s.chars().count());
+    let col = message_area.x + 1 + len as u16;
+    frame.set_cursor_position(ScreenPosition::new(col, message_area.y));
+}
+
 fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, message_area: Rect) {
-    if let Some(command) = &app.command {
-        let col = message_area.x + 1 + command.chars().count() as u16;
-        frame.set_cursor_position(ScreenPosition::new(col, message_area.y));
-        return;
-    }
-    if let Some(input) = app.editor.search_input() {
-        let col = message_area.x + 1 + input.chars().count() as u16;
-        frame.set_cursor_position(ScreenPosition::new(col, message_area.y));
+    if app.command.is_some() || app.editor.search_input().is_some() {
+        place_bottom_cursor(frame, app, message_area);
         return;
     }
     let cursor = app.editor.cursor();

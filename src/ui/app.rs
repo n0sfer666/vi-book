@@ -3,9 +3,11 @@ use std::io;
 
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use ratatui::DefaultTerminal;
+use ratatui::layout::Rect;
 
 use crate::io::error::Error;
-use crate::ui::{command_line, event_map, render};
+use crate::ui::view::View;
+use crate::ui::{command_line, event_map, read_view, render};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
@@ -17,6 +19,10 @@ pub struct App {
     pub command: Option<String>,
     pub message: String,
     pub quit: bool,
+    pub view: View,
+    pub read_cursor: (usize, usize),
+    pub read_pending_g: bool,
+    pub text_area: Rect,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -44,6 +50,10 @@ impl App {
             command: None,
             message: String::new(),
             quit: false,
+            view: View::default(),
+            read_cursor: (0, 0),
+            read_pending_g: false,
+            text_area: Rect::new(0, 0, 80, 24),
         }
     }
 
@@ -67,11 +77,21 @@ impl App {
             command_line::handle(self, key);
             return;
         }
-        if self.editor.idle_normal() && event_map::to_key(key) == Some(Key::Char(':')) {
+        let mapped = event_map::to_key(key);
+        if self.editor.idle_normal() && mapped == Some(Key::Char(':')) {
             self.command = Some(String::new());
             return;
         }
-        if let Some(key) = event_map::to_key(key) {
+        let width = read_view::column_width(self.text_area);
+        if self.view == View::Read {
+            read_view::handle_key(self, key, width);
+            return;
+        }
+        if self.editor.idle_normal() && mapped == Some(Key::Ctrl('t')) {
+            read_view::enter(self, width);
+            return;
+        }
+        if let Some(key) = mapped {
             self.editor.handle_key(key);
         }
     }
