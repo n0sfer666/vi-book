@@ -108,6 +108,7 @@ impl App {
         if self.path == rel {
             self.history.visit(rel);
             plugin::fire(self, "note_open");
+            self.saved_text = self.editor.text();
         }
     }
 

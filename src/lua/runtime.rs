@@ -16,7 +16,7 @@ impl Runtime {
     pub fn new() -> Result<Self, Error> {
         let libs = StdLib::STRING | StdLib::TABLE | StdLib::MATH | StdLib::UTF8;
         let lua = Lua::new_with(libs, LuaOptions::default())?;
-        for global in ["dofile", "loadfile", "load", "loadstring"] {
+        for global in ["dofile", "loadfile", "load", "loadstring", "print", "warn"] {
             lua.globals().set(global, mlua::Value::Nil)?;
         }
         Ok(Self { lua })
