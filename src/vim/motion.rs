@@ -92,12 +92,12 @@ fn goto_line(ed: &mut Editor, line: usize) {
     ed.desired = DesiredCol::Col(ed.cursor.col);
 }
 
-pub fn op_target(ed: &Editor, motion: Motion, total: usize, had_count: bool) -> OpTarget {
+pub fn op_target(ed: &Editor, motion: Motion, total: usize, had_count: bool) -> Option<OpTarget> {
     let buffer = &ed.buffer;
     let cur = ed.cursor;
     let idx = ed.cursor_index();
     let last_line = buffer.line_count() - 1;
-    match motion {
+    let target = match motion {
         Motion::Left => OpTarget::Chars(idx - total.min(cur.col)..idx),
         Motion::Right => OpTarget::Chars(idx..idx + total.min(buffer.line_len(cur.line) - cur.col)),
         Motion::LineStart => OpTarget::Chars(buffer.line_start(cur.line)..idx),
@@ -119,20 +119,31 @@ pub fn op_target(ed: &Editor, motion: Motion, total: usize, had_count: bool) -> 
             }
             OpTarget::Chars(j..idx)
         }
-        Motion::Down => OpTarget::Lines {
-            first: cur.line,
-            last: (cur.line + total).min(last_line),
-        },
-        Motion::Up => OpTarget::Lines {
-            first: cur.line.saturating_sub(total),
-            last: cur.line,
-        },
+        Motion::Down => {
+            if cur.line == last_line {
+                return None;
+            }
+            OpTarget::Lines {
+                first: cur.line,
+                last: (cur.line + total).min(last_line),
+            }
+        }
+        Motion::Up => {
+            if cur.line == 0 {
+                return None;
+            }
+            OpTarget::Lines {
+                first: cur.line.saturating_sub(total),
+                last: cur.line,
+            }
+        }
         Motion::FirstLine => line_target(cur.line, if had_count { total - 1 } else { 0 }),
         Motion::LastLine => line_target(
             cur.line,
             if had_count { total - 1 } else { last_line }.min(last_line),
         ),
-    }
+    };
+    Some(target)
 }
 
 fn line_target(current: usize, target: usize) -> OpTarget {
@@ -157,20 +168,19 @@ fn word_forward_range(buffer: &Buffer, idx: usize, count: usize) -> Range<usize>
     idx..end.max(idx)
 }
 
-pub fn change_word_target(ed: &Editor, total: usize) -> OpTarget {
+pub fn change_word_target(ed: &Editor, total: usize) -> Option<OpTarget> {
     let idx = ed.cursor_index();
+    if ed.buffer.char_at(idx).is_none_or(|c| c.is_whitespace()) {
+        return op_target(ed, Motion::WordForward, total, false);
+    }
     if total == 1
         && let Some((_, end)) = word::word_run(&ed.buffer, idx)
-        && ed.buffer.char_at(idx).is_some_and(|c| !c.is_whitespace())
     {
-        return OpTarget::Chars(idx..end + 1);
+        return Some(OpTarget::Chars(idx..end + 1));
     }
-    if ed.buffer.char_at(idx).is_some_and(|c| !c.is_whitespace()) {
-        let mut j = idx;
-        for _ in 0..total {
-            j = word::next_word_end(&ed.buffer, j);
-        }
-        return OpTarget::Chars(idx..(j + 1).min(ed.buffer.len_chars()));
+    let mut j = idx;
+    for _ in 0..total {
+        j = word::next_word_end(&ed.buffer, j);
     }
-    op_target(ed, Motion::WordForward, total, false)
+    Some(OpTarget::Chars(idx..(j + 1).min(ed.buffer.len_chars())))
 }

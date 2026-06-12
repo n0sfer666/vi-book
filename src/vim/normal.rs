@@ -79,7 +79,6 @@ fn register(ed: &mut Editor, key: Key) {
 }
 
 fn g_prefix(ed: &mut Editor, key: Key) {
-    ed.pending.stage = Stage::Start;
     if key == Key::Char('g') {
         run_motion(ed, Motion::FirstLine);
     } else {
@@ -94,16 +93,16 @@ fn operator_stage(ed: &mut Editor, op: Operator, key: Key) {
     };
     match c {
         '0' if ed.pending.op_count.is_none() => apply_motion_op(ed, op, Motion::LineStart),
-        '0'..='9' => {
-            let digit = c as usize - '0' as usize;
-            Pending::push_digit(&mut ed.pending.op_count, digit);
-        }
+        '0'..='9' => Pending::push_digit_char(&mut ed.pending.op_count, c),
         'i' => ed.pending.stage = Stage::OperatorObject(op, false),
         'a' => ed.pending.stage = Stage::OperatorObject(op, true),
         'g' => ed.pending.stage = Stage::OperatorG(op),
-        'w' if op == Operator::Change && on_non_blank(ed) => {
-            let target = motion::change_word_target(ed, ed.pending.total_count());
-            operator::apply(ed, op, target);
+        'w' if op == Operator::Change => {
+            if let Some(target) = motion::change_word_target(ed, ed.pending.total_count()) {
+                operator::apply(ed, op, target);
+            } else {
+                ed.pending.reset();
+            }
         }
         c if c == op.key() => {
             let first = ed.cursor.line;
@@ -145,13 +144,16 @@ fn run_motion(ed: &mut Editor, m: Motion) {
 }
 
 fn push_count(ed: &mut Editor, c: char) {
-    let digit = c as usize - '0' as usize;
-    Pending::push_digit(&mut ed.pending.count, digit);
+    Pending::push_digit_char(&mut ed.pending.count, c);
 }
 
 fn apply_motion_op(ed: &mut Editor, op: Operator, m: Motion) {
-    let target = motion::op_target(ed, m, ed.pending.total_count(), ed.pending.has_count());
-    operator::apply(ed, op, target);
+    if let Some(target) = motion::op_target(ed, m, ed.pending.total_count(), ed.pending.has_count())
+    {
+        operator::apply(ed, op, target);
+    } else {
+        ed.pending.reset();
+    }
 }
 
 fn delete_chars(ed: &mut Editor) {
@@ -164,10 +166,4 @@ fn delete_chars(ed: &mut Editor) {
     }
     let idx = ed.cursor_index();
     operator::apply(ed, Operator::Delete, OpTarget::Chars(idx..idx + take));
-}
-
-fn on_non_blank(ed: &Editor) -> bool {
-    ed.buffer
-        .char_at(ed.cursor_index())
-        .is_some_and(|c| !c.is_whitespace())
 }

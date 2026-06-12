@@ -2,7 +2,6 @@ use std::ops::Range;
 
 use crate::core::edit::Edit;
 use crate::core::position::Position;
-use crate::vim::desired_col::DesiredCol;
 use crate::vim::editor::Editor;
 use crate::vim::insert;
 use crate::vim::motion::OpTarget;
@@ -31,11 +30,15 @@ pub fn apply(ed: &mut Editor, op: Operator, target: OpTarget) {
         OpTarget::Lines { first, last } => lines(ed, op, first, last),
     }
     ed.pending.reset();
-    ed.desired = DesiredCol::Col(ed.cursor.col);
+    ed.sync_desired();
 }
 
 fn chars(ed: &mut Editor, op: Operator, range: Range<usize>) {
     if range.start >= range.end {
+        if op == Operator::Change {
+            ed.insert_edits.clear();
+            insert::begin(ed, ed.buffer.char_to_pos(range.start));
+        }
         return;
     }
     let text = ed.buffer.slice(range.clone());

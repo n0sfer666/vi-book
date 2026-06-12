@@ -15,8 +15,9 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     ])
     .areas(frame.area());
     scroll_into_view(app, text_area);
-    draw_text(frame, app, text_area);
-    draw_status(frame, app, status_area);
+    let text = app.editor.text();
+    draw_text(frame, app, &text, text_area);
+    draw_status(frame, app, &text, status_area);
     draw_message(frame, app, message_area);
     place_cursor(frame, app, text_area, message_area);
 }
@@ -32,8 +33,7 @@ fn scroll_into_view(app: &mut App, area: Rect) {
     }
 }
 
-fn draw_text(frame: &mut Frame, app: &App, area: Rect) {
-    let text = app.editor.text();
+fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
     let lines: Vec<Line> = text
         .split('\n')
         .skip(app.top)
@@ -43,18 +43,14 @@ fn draw_text(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(Paragraph::new(lines), area);
 }
 
-fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
+fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
     let mode = match app.editor.mode() {
         Mode::Normal => "NORMAL",
         Mode::Insert => "INSERT",
         Mode::Visual => "VISUAL",
         Mode::VisualLine => "V-LINE",
     };
-    let dirty = if app.editor.text() != app.saved_text {
-        " [+]"
-    } else {
-        ""
-    };
+    let dirty = if text != app.saved_text { " [+]" } else { "" };
     let cursor = app.editor.cursor();
     let status = format!(
         " {mode}  {}{dirty}  {}:{} ",

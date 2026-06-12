@@ -32,7 +32,9 @@ impl Pending {
         self.count.is_some() || self.op_count.is_some()
     }
 
-    pub fn push_digit(slot: &mut Option<usize>, digit: usize) {
-        *slot = Some(slot.unwrap_or(0) * 10 + digit);
+    pub fn push_digit_char(slot: &mut Option<usize>, c: char) {
+        if let Some(digit) = c.to_digit(10) {
+            *slot = Some(slot.unwrap_or(0) * 10 + digit as usize);
+        }
     }
 }

@@ -1,6 +1,5 @@
 use crate::core::edit::Edit;
 use crate::core::position::Position;
-use crate::vim::desired_col::DesiredCol;
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 use crate::vim::mode::Mode;
@@ -91,5 +90,5 @@ fn finalize(ed: &mut Editor) {
     ed.cursor = ed.buffer.clamp_normal(ed.cursor);
     let edits = std::mem::take(&mut ed.insert_edits);
     ed.commit(edits);
-    ed.desired = DesiredCol::Col(ed.cursor.col);
+    ed.sync_desired();
 }

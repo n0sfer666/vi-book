@@ -8,7 +8,6 @@ use crate::io::error::Error;
 use crate::ui::{command_line, event_map, render};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
-use crate::vim::mode::Mode;
 
 pub struct App {
     pub editor: Editor,
@@ -62,16 +61,13 @@ impl App {
         }
     }
 
-    fn handle(&mut self, key: KeyEvent) {
+    pub fn handle(&mut self, key: KeyEvent) {
         self.message.clear();
         if self.command.is_some() {
             command_line::handle(self, key);
             return;
         }
-        let starts_command = self.editor.mode() == Mode::Normal
-            && self.editor.search_input().is_none()
-            && event_map::to_key(key) == Some(Key::Char(':'));
-        if starts_command {
+        if self.editor.idle_normal() && event_map::to_key(key) == Some(Key::Char(':')) {
             self.command = Some(String::new());
             return;
         }

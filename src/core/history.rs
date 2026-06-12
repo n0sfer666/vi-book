@@ -14,14 +14,14 @@ impl History {
         self.redo_stack.clear();
     }
 
-    pub fn undo(&mut self, buffer: &mut Buffer) -> Option<usize> {
+    pub fn undo(&mut self, buffer: &mut Buffer) -> Option<Position> {
         let tx = self.undo_stack.pop()?;
         for edit in tx.edits.iter().rev() {
             edit.inverted().apply(buffer);
         }
-        let start = tx.change_start();
+        let cursor = tx.change_start().map(|idx| buffer.char_to_pos(idx));
         self.redo_stack.push(tx);
-        start
+        cursor
     }
 
     pub fn redo(&mut self, buffer: &mut Buffer) -> Option<Position> {

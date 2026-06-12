@@ -1,6 +1,5 @@
 use crate::core::edit::Edit;
 use crate::core::position::Position;
-use crate::vim::desired_col::DesiredCol;
 use crate::vim::editor::Editor;
 use crate::vim::register::RegisterContent;
 
@@ -15,7 +14,7 @@ pub fn paste(ed: &mut Editor, before: bool) {
         } else {
             paste_chars(ed, &content, before, count);
         }
-        ed.desired = DesiredCol::Col(ed.cursor.col);
+        ed.sync_desired();
     }
     ed.pending.reset();
 }

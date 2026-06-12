@@ -24,12 +24,13 @@ pub fn handle(app: &mut App, event: KeyEvent) {
 
 fn execute(app: &mut App, command: &str) {
     match command {
-        "w" => save(app),
+        "w" => {
+            save(app);
+        }
         "q" => quit(app, false),
         "q!" => quit(app, true),
         "wq" => {
-            save(app);
-            if app.message.is_empty() {
+            if save(app) {
                 app.quit = true;
             }
         }
@@ -38,13 +39,17 @@ fn execute(app: &mut App, command: &str) {
     }
 }
 
-fn save(app: &mut App) {
+fn save(app: &mut App) -> bool {
     match app.editor.save() {
         Ok(()) => {
             app.saved_text = app.editor.text();
             app.message = String::from("written");
+            true
         }
-        Err(err) => app.message = format!("save failed: {err}"),
+        Err(err) => {
+            app.message = format!("save failed: {err}");
+            false
+        }
     }
 }
 

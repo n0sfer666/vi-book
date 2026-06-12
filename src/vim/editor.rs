@@ -10,7 +10,7 @@ use crate::io::file;
 use crate::vim::desired_col::DesiredCol;
 use crate::vim::key::{Key, parse_keys};
 use crate::vim::mode::Mode;
-use crate::vim::pending::Pending;
+use crate::vim::pending::{Pending, Stage};
 use crate::vim::register::Registers;
 use crate::vim::search::SearchState;
 use crate::vim::{insert, normal, search, visual};
@@ -68,7 +68,7 @@ impl Editor {
 
     pub fn set_cursor(&mut self, pos: Position) {
         self.cursor = self.buffer.clamp_normal(pos);
-        self.desired = DesiredCol::Col(self.cursor.col);
+        self.sync_desired();
     }
 
     pub fn mode(&self) -> Mode {
@@ -97,8 +97,19 @@ impl Editor {
         self.search.input.as_deref()
     }
 
+    pub fn idle_normal(&self) -> bool {
+        self.mode == Mode::Normal
+            && self.pending.stage == Stage::Start
+            && self.pending.count.is_none()
+            && self.search.input.is_none()
+    }
+
     pub(crate) fn cursor_index(&self) -> usize {
         self.buffer.pos_to_char(self.cursor)
+    }
+
+    pub(crate) fn sync_desired(&mut self) {
+        self.desired = DesiredCol::Col(self.cursor.col);
     }
 
     pub(crate) fn commit(&mut self, edits: Vec<Edit>) {
@@ -112,16 +123,16 @@ impl Editor {
     }
 
     pub(crate) fn undo(&mut self) {
-        if let Some(start) = self.history.undo(&mut self.buffer) {
-            self.cursor = self.buffer.clamp_normal(self.buffer.char_to_pos(start));
-            self.desired = DesiredCol::Col(self.cursor.col);
+        if let Some(cursor) = self.history.undo(&mut self.buffer) {
+            self.cursor = self.buffer.clamp_normal(cursor);
+            self.sync_desired();
         }
     }
 
     pub(crate) fn redo(&mut self) {
         if let Some(cursor) = self.history.redo(&mut self.buffer) {
             self.cursor = self.buffer.clamp_normal(cursor);
-            self.desired = DesiredCol::Col(self.cursor.col);
+            self.sync_desired();
         }
     }
 }

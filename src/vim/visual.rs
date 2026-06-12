@@ -37,10 +37,7 @@ pub fn handle(ed: &mut Editor, key: Key) {
 fn visual_char(ed: &mut Editor, c: char) {
     match c {
         '0' if ed.pending.count.is_none() => run_motion(ed, Motion::LineStart),
-        '0'..='9' => {
-            let digit = c as usize - '0' as usize;
-            Pending::push_digit(&mut ed.pending.count, digit);
-        }
+        '0'..='9' => Pending::push_digit_char(&mut ed.pending.count, c),
         'g' => ed.pending.stage = Stage::G,
         'd' | 'x' => operate(ed, Operator::Delete),
         'y' => operate(ed, Operator::Yank),
@@ -69,7 +66,7 @@ fn operate(ed: &mut Editor, op: Operator) {
     } else {
         let a = ed.buffer.pos_to_char(ed.visual_anchor);
         let b = ed.cursor_index();
-        OpTarget::Chars(a.min(b)..a.max(b) + 1)
+        OpTarget::Chars(a.min(b)..(a.max(b) + 1).min(ed.buffer.len_chars()))
     };
     ed.mode = Mode::Normal;
     operator::apply(ed, op, target);
