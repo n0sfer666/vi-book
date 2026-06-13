@@ -1,14 +1,14 @@
 use crossterm::event::KeyEvent;
-use ratatui::Frame;
 use ratatui::layout::{Position as ScreenPosition, Rect};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
+use ratatui::Frame;
 
 use crate::markdown::render::render;
 use crate::markdown::rendered::Rendered;
 use crate::ui::app::App;
-use crate::ui::event_map;
 use crate::ui::view::View;
+use crate::ui::{event_map, read_motion};
 use crate::vim::key::Key;
 
 const MAX_COLUMN: usize = 90;
@@ -53,10 +53,17 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     let last_line = rendered.lines.len().saturating_sub(1);
     let (line, col) = app.read_cursor;
     match key {
-        Key::Char('j') => app.read_cursor = clamp(&rendered, line + 1, col),
-        Key::Char('k') => app.read_cursor = clamp(&rendered, line.saturating_sub(1), col),
-        Key::Char('h') => app.read_cursor = clamp(&rendered, line, col.saturating_sub(1)),
-        Key::Char('l') => app.read_cursor = clamp(&rendered, line, col + 1),
+        Key::Char('j') | Key::Down => app.read_cursor = clamp(&rendered, line + 1, col),
+        Key::Char('k') | Key::Up => app.read_cursor = clamp(&rendered, line.saturating_sub(1), col),
+        Key::Char('h') | Key::Left => {
+            app.read_cursor = clamp(&rendered, line, col.saturating_sub(1))
+        }
+        Key::Char('l') | Key::Right => app.read_cursor = clamp(&rendered, line, col + 1),
+        Key::Char('w') => app.read_cursor = read_motion::word_forward(&rendered, (line, col)),
+        Key::Char('b') => app.read_cursor = read_motion::word_back(&rendered, (line, col)),
+        Key::Char('e') => app.read_cursor = read_motion::word_end(&rendered, (line, col)),
+        Key::Char('W') => app.read_cursor = read_motion::element_forward(&rendered, (line, col)),
+        Key::Char('B') => app.read_cursor = read_motion::element_back(&rendered, (line, col)),
         Key::Char('g') => {
             if app.read_pending_g {
                 app.read_cursor = (0, 0);
@@ -69,6 +76,12 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
         Key::Char('$') => app.read_cursor = clamp(&rendered, line, usize::MAX),
         Key::Char('i') => leave(app, width),
         Key::Ctrl('t') => leave(app, width),
+        Key::Enter => {
+            if let Some(idx) = source_at(&rendered, line, col) {
+                app.editor.set_cursor_index(idx);
+            }
+            crate::ui::link_follow::follow_at_cursor(app);
+        }
         _ => {}
     }
     app.read_pending_g = false;

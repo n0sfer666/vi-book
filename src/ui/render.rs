@@ -1,8 +1,8 @@
-use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Position as ScreenPosition, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
+use ratatui::Frame;
 
 use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
@@ -36,6 +36,14 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     }
     draw_status(frame, app, &text, status_area);
     draw_message(frame, app, message_area);
+    if app.help {
+        overlay::draw_help(frame, app, text_area);
+        return;
+    }
+    if let Some(menu) = &app.menu {
+        overlay::draw_menu(frame, menu, text_area);
+        return;
+    }
     if app.picker.is_some() {
         overlay::draw_picker(frame, app, text_area);
         return;

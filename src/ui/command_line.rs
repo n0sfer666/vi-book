@@ -1,8 +1,10 @@
+use std::fs;
+
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::ui::app::App;
 use crate::ui::panel::Panel;
-use crate::ui::{daily_cmd, plugin};
+use crate::ui::{actions, daily_cmd, plugin};
 
 pub fn handle(app: &mut App, event: KeyEvent) {
     let Some(command) = app.command.as_mut() else {
@@ -41,13 +43,46 @@ pub fn run(app: &mut App, command: &str) {
         "daily-next" => daily_cmd::open_next(app),
         "tree" => toggle_panel(app, PanelKind::Tree),
         "backlinks" => toggle_panel(app, PanelKind::Backlinks),
+        "help" => app.help = true,
+        "pick" => app.open_picker(),
+        "toggle-view" => actions::toggle_view(app),
         "" => {}
         other => {
-            if !plugin::run_command(app, other) {
+            if let Some(name) = other.strip_prefix("new ") {
+                create_note(app, name);
+            } else if !plugin::run_command(app, other) {
                 app.message = format!("not an editor command: {other}");
             }
         }
     }
+}
+
+fn create_note(app: &mut App, name: &str) {
+    let name = name.trim();
+    if name.is_empty() {
+        return;
+    }
+    let rel = if name.ends_with(".md") {
+        name.to_string()
+    } else {
+        format!("{name}.md")
+    };
+    let abs = app.session.absolute(&rel);
+    if !abs.exists() {
+        if let Some(parent) = abs.parent()
+            && let Err(err) = fs::create_dir_all(parent)
+        {
+            app.message = format!("create failed: {err}");
+            return;
+        }
+        let stem = rel.trim_end_matches(".md").rsplit('/').next().unwrap_or(&rel);
+        if let Err(err) = fs::write(&abs, format!("# {stem}\n\n")) {
+            app.message = format!("create failed: {err}");
+            return;
+        }
+        let _ = app.session.reindex();
+    }
+    app.open_rel(&rel);
 }
 
 enum PanelKind {

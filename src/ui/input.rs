@@ -5,7 +5,7 @@ use crate::ui::panel::Activation;
 use crate::ui::{event_map, link_follow};
 use crate::vim::key::Key;
 
-pub fn normal_builtin(app: &mut App, mapped: Option<Key>) -> bool {
+pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
     match mapped {
         Some(Key::Char(':')) => app.command = Some(String::new()),
         Some(Key::Ctrl('p')) => app.open_picker(),
@@ -20,6 +20,16 @@ pub fn normal_builtin(app: &mut App, mapped: Option<Key>) -> bool {
                 app.load(&rel);
             }
         }
+        _ => return false,
+    }
+    true
+}
+
+pub fn normal_builtin(app: &mut App, mapped: Option<Key>) -> bool {
+    if global_nav(app, mapped) {
+        return true;
+    }
+    match mapped {
         Some(Key::Enter) => link_follow::follow_at_cursor(app),
         _ => return false,
     }
@@ -31,8 +41,10 @@ pub fn panel_key(app: &mut App, key: Option<Key>) {
         return;
     };
     match key {
-        Some(Key::Char('j')) => panel.move_down(),
-        Some(Key::Char('k')) => panel.move_up(),
+        Some(Key::Char('j') | Key::Char('w') | Key::Char('W')) | Some(Key::Down) => {
+            panel.move_down();
+        }
+        Some(Key::Char('k') | Key::Char('b') | Key::Char('B')) | Some(Key::Up) => panel.move_up(),
         Some(Key::Esc) | Some(Key::Ctrl('w')) => app.panel_focus = false,
         Some(Key::Enter) => match panel.activate() {
             Activation::Open(path) => app.open_rel(&path),
@@ -56,8 +68,8 @@ pub fn picker_key(app: &mut App, event: KeyEvent) {
             }
         }
         Some(Key::Backspace) => picker.pop(),
-        Some(Key::Ctrl('n')) => picker.move_down(),
-        Some(Key::Ctrl('p')) => picker.move_up(),
+        Some(Key::Ctrl('n')) | Some(Key::Down) => picker.move_down(),
+        Some(Key::Ctrl('p')) | Some(Key::Up) => picker.move_up(),
         Some(Key::Char(c)) => picker.push(c),
         _ => {}
     }

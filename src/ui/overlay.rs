@@ -1,11 +1,13 @@
-use ratatui::Frame;
 use ratatui::layout::{Position as ScreenPosition, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::Frame;
 
 use crate::ui::app::App;
+use crate::ui::help;
 use crate::ui::list_nav;
+use crate::ui::menu::Menu;
 
 pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
     let Some(panel) = app.panel.as_ref() else {
@@ -71,4 +73,61 @@ pub fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(Paragraph::new(lines).block(block), rect);
     let cursor_col = rect.x + 3 + picker.query().chars().count() as u16;
     frame.set_cursor_position(ScreenPosition::new(cursor_col, rect.y + 1));
+}
+
+fn centered(area: Rect, width: u16, height: u16) -> Rect {
+    let width = width.min(area.width);
+    let height = height.min(area.height);
+    Rect {
+        x: area.x + (area.width.saturating_sub(width)) / 2,
+        y: area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    }
+}
+
+pub fn draw_menu(frame: &mut Frame, menu: &Menu, area: Rect) {
+    let height = (menu.items.len() as u16 + 2).min(area.height.max(3));
+    let rect = if menu.center {
+        centered(area, 44, height)
+    } else {
+        Rect {
+            x: area.x,
+            y: area.y + area.height.saturating_sub(height),
+            width: area.width,
+            height,
+        }
+    };
+    let lines: Vec<Line> = menu
+        .items
+        .iter()
+        .enumerate()
+        .map(|(i, item)| {
+            let text = format!(" [{}]  {}", item.key, item.label);
+            if i == menu.selected {
+                Line::styled(text, TuiStyle::default().add_modifier(Modifier::REVERSED))
+            } else {
+                Line::from(text)
+            }
+        })
+        .collect();
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(menu.title.clone());
+    frame.render_widget(Paragraph::new(lines).block(block), rect);
+}
+
+pub fn draw_help(frame: &mut Frame, _app: &App, area: Rect) {
+    let rect = centered(area, 64, help::BINDINGS.len() as u16 + 4);
+    let mut lines: Vec<Line> = help::BINDINGS
+        .iter()
+        .map(|(lhs, rhs)| Line::from(format!(" {lhs:<18}{rhs}")))
+        .collect();
+    lines.push(Line::from(""));
+    lines.push(Line::styled(
+        " enter: instruction   shift+enter: developers   esc: close ",
+        TuiStyle::default().add_modifier(Modifier::DIM),
+    ));
+    let block = Block::default().borders(Borders::ALL).title(" help ");
+    frame.render_widget(Paragraph::new(lines).block(block), rect);
 }

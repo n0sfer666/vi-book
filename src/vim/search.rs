@@ -35,7 +35,7 @@ pub fn handle_input(ed: &mut Editor, key: Key) {
             }
         }
         Key::Esc => ed.search.input = None,
-        Key::Ctrl(_) => {}
+        Key::Ctrl(_) | Key::Up | Key::Down | Key::Left | Key::Right => {}
     }
 }
 

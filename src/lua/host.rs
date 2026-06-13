@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use mlua::{Function, Table};
 
-use crate::lua::config::{Bridge, Keymap, PRELUDE, Shared};
+use crate::lua::config::{Bridge, Keymap, Shared, PRELUDE};
 use crate::lua::error::Error;
 use crate::lua::install::{install_buf, install_vault};
 use crate::lua::runtime::Runtime;
@@ -98,6 +98,16 @@ impl PluginHost {
                     rhs: t.get("rhs").ok()?,
                 })
             })
+            .collect()
+    }
+
+    pub fn menu_items(&self) -> Vec<(String, String, String)> {
+        let Ok(menu) = self.vibook_field("__menu") else {
+            return Vec::new();
+        };
+        menu.sequence_values::<Table>()
+            .filter_map(Result::ok)
+            .filter_map(|t| Some((t.get("key").ok()?, t.get("label").ok()?, t.get("rhs").ok()?)))
             .collect()
     }
 

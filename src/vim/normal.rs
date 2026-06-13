@@ -26,7 +26,13 @@ fn start(ed: &mut Editor, key: Key) {
             ed.redo();
             ed.pending.reset();
         }
-        _ => ed.pending.reset(),
+        _ => {
+            if let Some(m) = motion::from_key(key) {
+                run_motion(ed, m);
+            } else {
+                ed.pending.reset();
+            }
+        }
     }
 }
 

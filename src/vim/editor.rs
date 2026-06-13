@@ -8,7 +8,7 @@ use crate::core::transaction::Transaction;
 use crate::io::error::Error;
 use crate::io::file;
 use crate::vim::desired_col::DesiredCol;
-use crate::vim::key::{Key, parse_keys};
+use crate::vim::key::{parse_keys, Key};
 use crate::vim::mode::Mode;
 use crate::vim::pending::{Pending, Stage};
 use crate::vim::register::Registers;
@@ -26,6 +26,8 @@ pub struct Editor {
     pub(crate) insert_edits: Vec<Edit>,
     pub(crate) visual_anchor: Position,
     pub(crate) search: SearchState,
+    pub(crate) insert_escape: Option<String>,
+    pub(crate) insert_run: String,
     path: Option<PathBuf>,
 }
 
@@ -42,8 +44,14 @@ impl Editor {
             insert_edits: Vec::new(),
             visual_anchor: Position::default(),
             search: SearchState::default(),
+            insert_escape: None,
+            insert_run: String::new(),
             path: None,
         }
+    }
+
+    pub fn set_insert_escape(&mut self, seq: Option<String>) {
+        self.insert_escape = seq.filter(|s| !s.is_empty());
     }
 
     pub fn open(path: impl AsRef<Path>) -> Result<Self, Error> {

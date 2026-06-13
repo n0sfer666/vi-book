@@ -7,6 +7,7 @@ use crate::vim::mode::Mode;
 pub fn begin(ed: &mut Editor, pos: Position) {
     ed.mode = Mode::Insert;
     ed.cursor = pos;
+    ed.insert_run.clear();
     ed.pending.reset();
 }
 
@@ -53,11 +54,52 @@ pub fn open_above(ed: &mut Editor) {
 pub fn handle(ed: &mut Editor, key: Key) {
     match key {
         Key::Esc => finalize(ed),
-        Key::Char(c) => insert_text(ed, c.to_string()),
-        Key::Enter => insert_text(ed, "\n".into()),
-        Key::Backspace => backspace(ed),
+        Key::Char(c) => {
+            insert_text(ed, c.to_string());
+            ed.insert_run.push(c);
+            try_escape(ed);
+        }
+        Key::Enter => {
+            ed.insert_run.clear();
+            insert_text(ed, "\n".into());
+        }
+        Key::Backspace => {
+            ed.insert_run.clear();
+            backspace(ed);
+        }
+        Key::Up => move_in_insert(ed, ed.cursor.line.saturating_sub(1), ed.cursor.col),
+        Key::Down => move_in_insert(ed, ed.cursor.line + 1, ed.cursor.col),
+        Key::Left => {
+            let (line, col) = (ed.cursor.line, ed.cursor.col);
+            move_in_insert(ed, line, col.saturating_sub(1));
+        }
+        Key::Right => move_in_insert(ed, ed.cursor.line, ed.cursor.col + 1),
         Key::Ctrl(_) => {}
     }
+}
+
+fn move_in_insert(ed: &mut Editor, line: usize, col: usize) {
+    ed.insert_run.clear();
+    let line = line.min(ed.buffer.line_count().saturating_sub(1));
+    ed.cursor = Position::new(line, col.min(ed.buffer.line_len(line)));
+    ed.sync_desired();
+}
+
+fn try_escape(ed: &mut Editor) {
+    let Some(seq) = ed.insert_escape.clone() else {
+        return;
+    };
+    if !ed.insert_run.ends_with(&seq) {
+        return;
+    }
+    let n = seq.chars().count();
+    let at = ed.cursor_index();
+    if at >= n {
+        let removed = ed.buffer.slice(at - n..at);
+        push_edit(ed, Edit::removal(at - n, removed));
+        ed.cursor = ed.buffer.char_to_pos(at - n);
+    }
+    finalize(ed);
 }
 
 fn insert_text(ed: &mut Editor, text: String) {

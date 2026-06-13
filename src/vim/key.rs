@@ -5,6 +5,10 @@ pub enum Key {
     Enter,
     Backspace,
     Ctrl(char),
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 pub fn parse_keys(notation: &str) -> Vec<Key> {
@@ -29,6 +33,11 @@ fn special(name: &str) -> Option<Key> {
         "CR" => Some(Key::Enter),
         "BS" => Some(Key::Backspace),
         "lt" => Some(Key::Char('<')),
+        "Up" => Some(Key::Up),
+        "Down" => Some(Key::Down),
+        "Left" => Some(Key::Left),
+        "Right" => Some(Key::Right),
+        "Space" => Some(Key::Char(' ')),
         _ => name
             .strip_prefix("C-")
             .and_then(|rest| rest.chars().next())

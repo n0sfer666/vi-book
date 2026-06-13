@@ -29,10 +29,10 @@ pub enum OpTarget {
 
 pub fn from_key(key: Key) -> Option<Motion> {
     match key {
-        Key::Char('h') => Some(Motion::Left),
-        Key::Char('l') => Some(Motion::Right),
-        Key::Char('j') => Some(Motion::Down),
-        Key::Char('k') => Some(Motion::Up),
+        Key::Char('h') | Key::Left => Some(Motion::Left),
+        Key::Char('l') | Key::Right => Some(Motion::Right),
+        Key::Char('j') | Key::Down => Some(Motion::Down),
+        Key::Char('k') | Key::Up => Some(Motion::Up),
         Key::Char('$') => Some(Motion::LineEnd),
         Key::Char('w') => Some(Motion::WordForward),
         Key::Char('b') => Some(Motion::WordBack),

@@ -46,6 +46,10 @@ impl Session {
         self.index.notes().iter().map(|n| n.path.clone()).collect()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.index.notes().is_empty()
+    }
+
     pub fn absolute(&self, rel: &str) -> PathBuf {
         self.root.join(rel)
     }

@@ -28,6 +28,10 @@ vibook.opt = {}
 vibook.__commands = {}
 vibook.__handlers = {}
 vibook.__keymaps = {}
+vibook.__menu = {}
+function vibook.menu_item(key, label, rhs)
+  table.insert(vibook.__menu, { key = key, label = label, rhs = rhs })
+end
 function vibook.command(name, fn) vibook.__commands[name] = fn end
 function vibook.on(event, fn)
   vibook.__handlers[event] = vibook.__handlers[event] or {}

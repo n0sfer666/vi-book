@@ -9,6 +9,10 @@ pub fn to_key(event: KeyEvent) -> Option<Key> {
         KeyCode::Esc => Some(Key::Esc),
         KeyCode::Enter => Some(Key::Enter),
         KeyCode::Backspace => Some(Key::Backspace),
+        KeyCode::Up => Some(Key::Up),
+        KeyCode::Down => Some(Key::Down),
+        KeyCode::Left => Some(Key::Left),
+        KeyCode::Right => Some(Key::Right),
         _ => None,
     }
 }

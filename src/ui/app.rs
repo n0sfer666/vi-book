@@ -10,12 +10,13 @@ use crate::lua::host::PluginHost;
 use crate::markdown::rendered::Rendered;
 use crate::notebook::date::Date;
 use crate::notebook::history::History;
+use crate::ui::menu::{Menu, MenuItem};
 use crate::ui::panel::Panel;
 use crate::ui::picker::Picker;
 use crate::ui::session::Session;
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{command_line, event_map, input, plugin, read_view, render};
+use crate::ui::{plugin, render, router};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
@@ -42,6 +43,12 @@ pub struct App {
     pub firing: bool,
     pub normal_maps: HashMap<Key, String>,
     pub read_cache: Option<(String, usize, Rendered)>,
+    pub menu: Option<Menu>,
+    pub help: bool,
+    pub leader: char,
+    pub menu_center: bool,
+    pub menu_extra: Vec<MenuItem>,
+    pub insert_escape: Option<String>,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -54,6 +61,8 @@ pub fn run() -> Result<(), Error> {
     app.install_keymaps();
     if let Some(rel) = open {
         app.open_rel(&rel);
+    } else if app.session.is_empty() {
+        app.menu = Some(Menu::empty_vault());
     } else {
         app.open_picker();
     }
@@ -89,6 +98,12 @@ impl App {
             firing: false,
             normal_maps: HashMap::new(),
             read_cache: None,
+            menu: None,
+            help: false,
+            leader: ' ',
+            menu_center: false,
+            menu_extra: Vec::new(),
+            insert_escape: Some(String::from("jj")),
         }
     }
 
@@ -98,13 +113,17 @@ impl App {
             return;
         }
         match Editor::open(self.session.absolute(rel)) {
-            Ok(editor) => {
+            Ok(mut editor) => {
+                editor.set_insert_escape(self.insert_escape.clone());
                 self.saved_text = editor.text();
                 self.editor = editor;
                 self.path = rel.to_string();
                 self.top = 0;
-                self.view = View::Edit;
+                self.view = View::Read;
+                self.read_cursor = (0, 0);
+                self.read_cache = None;
                 self.picker = None;
+                self.menu = None;
             }
             Err(err) => self.message = format!("open failed: {err}"),
         }
@@ -146,41 +165,6 @@ impl App {
     }
 
     pub fn handle(&mut self, key: KeyEvent) {
-        self.message.clear();
-        if self.picker.is_some() {
-            input::picker_key(self, key);
-            return;
-        }
-        if self.command.is_some() {
-            command_line::handle(self, key);
-            return;
-        }
-        let mapped = event_map::to_key(key);
-        if self.panel_focus && self.panel.is_some() {
-            input::panel_key(self, mapped);
-            return;
-        }
-        if self.editor.idle_normal() && input::normal_builtin(self, mapped) {
-            return;
-        }
-        if self.view == View::Edit
-            && self.editor.idle_normal()
-            && let Some(rhs) = mapped.and_then(|k| self.normal_maps.get(&k).cloned())
-        {
-            plugin::apply_keymap(self, &rhs);
-            return;
-        }
-        let width = read_view::column_width(self.text_area);
-        if self.view == View::Read {
-            read_view::handle_key(self, key, width);
-            return;
-        }
-        if self.editor.idle_normal() && mapped == Some(Key::Ctrl('t')) {
-            read_view::enter(self, width);
-            return;
-        }
-        if let Some(key) = mapped {
-            self.editor.handle_key(key);
-        }
+        router::handle(self, key);
     }
 }

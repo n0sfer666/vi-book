@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use crate::lua::host::PluginHost;
 use crate::ui::app::App;
 use crate::ui::command_line;
+use crate::ui::menu::MenuItem;
 use crate::vim::key::parse_keys;
 
 pub fn install_keymaps(app: &mut App) {
@@ -45,9 +46,34 @@ pub fn load_config(app: &mut App) {
         Ok(host) => {
             host.set_vault(app.session.items(), app.session.index.tags());
             app.host = Some(host);
+            apply_opts(app);
         }
         Err(err) => app.message = format!("config error: {err}"),
     }
+}
+
+fn apply_opts(app: &mut App) {
+    let Some(host) = &app.host else {
+        return;
+    };
+    if let Some(leader) = host.opt_string("leader").and_then(|s| s.chars().next()) {
+        app.leader = leader;
+    }
+    if let Some(seq) = host.opt_string("insert_escape") {
+        app.insert_escape = Some(seq).filter(|s| !s.is_empty());
+    }
+    if let Some(pos) = host.opt_string("menu_position") {
+        app.menu_center = pos == "center";
+    }
+    app.menu_extra = host
+        .menu_items()
+        .into_iter()
+        .map(|(key, label, action)| MenuItem {
+            key: key.chars().next().unwrap_or(' '),
+            label,
+            action,
+        })
+        .collect();
 }
 
 fn config_path() -> Option<PathBuf> {
