@@ -18,6 +18,7 @@ pub struct Bridge {
     pub backlinks: HashMap<String, Vec<String>>,
     pub creates: Vec<String>,
     pub opens: Vec<String>,
+    pub external_opens: Vec<String>,
 }
 
 pub type Shared = Rc<RefCell<Bridge>>;

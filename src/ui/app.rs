@@ -52,6 +52,8 @@ pub struct App {
     pub others: Vec<crate::ui::pane::Pane>,
     pub active: usize,
     pub pending_ctrl_w: bool,
+    pub code_editor: Option<String>,
+    pub external_request: Option<std::path::PathBuf>,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -110,6 +112,8 @@ impl App {
             others: Vec::new(),
             active: 0,
             pending_ctrl_w: false,
+            code_editor: None,
+            external_request: None,
         }
     }
 
@@ -164,6 +168,14 @@ impl App {
             {
                 self.handle(key);
             }
+            if let Some(path) = self.external_request.take() {
+                if let Some(editor) = self.external_editor() {
+                    let _ = crate::ui::external::run(terminal, &editor, &path);
+                } else {
+                    self.message =
+                        String::from("no editor set (vibook.opt.code_editor or $EDITOR)");
+                }
+            }
             if self.quit {
                 return Ok(());
             }
@@ -172,5 +184,12 @@ impl App {
 
     pub fn handle(&mut self, key: KeyEvent) {
         router::handle(self, key);
+    }
+
+    pub fn external_editor(&self) -> Option<String> {
+        self.code_editor
+            .clone()
+            .or_else(|| env::var("EDITOR").ok())
+            .filter(|s| !s.trim().is_empty())
     }
 }

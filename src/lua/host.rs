@@ -5,7 +5,7 @@ use mlua::{Function, Table};
 
 use crate::lua::config::{Bridge, ColorSpec, Keymap, PRELUDE, Shared};
 use crate::lua::error::Error;
-use crate::lua::install::{install_buf, install_vault};
+use crate::lua::install::{install_buf, install_open, install_vault};
 use crate::lua::runtime::Runtime;
 
 pub struct PluginHost {
@@ -20,6 +20,7 @@ impl PluginHost {
         let bridge: Shared = Rc::new(RefCell::new(Bridge::default()));
         install_buf(&rt, &bridge)?;
         install_vault(&rt, &bridge)?;
+        install_open(&rt, &bridge)?;
         Ok(Self { rt, bridge })
     }
 
@@ -60,6 +61,10 @@ impl PluginHost {
 
     pub fn take_opens(&self) -> Vec<String> {
         std::mem::take(&mut self.bridge.borrow_mut().opens)
+    }
+
+    pub fn take_external_opens(&self) -> Vec<String> {
+        std::mem::take(&mut self.bridge.borrow_mut().external_opens)
     }
 
     pub fn take_creates(&self) -> Vec<String> {
@@ -154,6 +159,17 @@ impl PluginHost {
             for func in list.sequence_values::<Function>() {
                 self.rt.reset_budget();
                 func?.call::<()>(())?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn fire_with(&self, event: &str, arg: &str) -> Result<(), Error> {
+        let handlers = self.vibook_field("__handlers")?;
+        if let Some(list) = handlers.get::<Option<Table>>(event)? {
+            for func in list.sequence_values::<Function>() {
+                self.rt.reset_budget();
+                func?.call::<()>(arg.to_string())?;
             }
         }
         Ok(())

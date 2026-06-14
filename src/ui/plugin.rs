@@ -36,23 +36,58 @@ pub fn apply_keymap(app: &mut App, rhs: &str) {
 }
 
 pub fn load_config(app: &mut App) {
-    let Some(path) = config_path() else {
-        return;
-    };
-    if !path.exists() {
-        return;
-    }
-    let Ok(script) = std::fs::read_to_string(&path) else {
-        return;
-    };
-    match PluginHost::new().and_then(|host| host.load(&script).map(|()| host)) {
-        Ok(host) => {
-            host.set_vault(app.session.items(), app.session.index.tags());
-            app.host = Some(host);
-            apply_opts(app);
+    let host = match PluginHost::new() {
+        Ok(host) => host,
+        Err(err) => {
+            app.message = format!("plugin init error: {err}");
+            return;
         }
-        Err(err) => app.message = format!("config error: {err}"),
+    };
+    for (name, source) in crate::lua::defaults::ALL {
+        if let Err(err) = host.load(source) {
+            app.message = format!("default plugin '{name}' error: {err}");
+        }
     }
+    if let Some(path) = config_path()
+        && path.exists()
+        && let Ok(script) = std::fs::read_to_string(&path)
+        && let Err(err) = host.load(&script)
+    {
+        app.message = format!("config error: {err}");
+    }
+    host.set_vault(app.session.items(), app.session.index.tags());
+    app.host = Some(host);
+    apply_opts(app);
+}
+
+pub fn follow_link(app: &mut App, target: &str) -> bool {
+    if app.host.is_none() {
+        return false;
+    }
+    if let Some(Err(err)) = app
+        .host
+        .as_ref()
+        .map(|host| host.fire_with("follow_link", target))
+    {
+        app.message = format!("plugin error: {err}");
+        return false;
+    }
+    let (opens, external) = match &app.host {
+        Some(host) => (host.take_opens(), host.take_external_opens()),
+        None => return false,
+    };
+    if let Some(rel) = external.into_iter().next_back() {
+        match crate::ui::external::resolve(&app.session.root, &rel) {
+            Some(path) => app.external_request = Some(path),
+            None => app.message = format!("file not found: {rel}"),
+        }
+        return true;
+    }
+    if let Some(rel) = opens.into_iter().next_back() {
+        app.open_rel(&rel);
+        return true;
+    }
+    false
 }
 
 fn apply_opts(app: &mut App) {
@@ -68,6 +103,7 @@ fn apply_opts(app: &mut App) {
     if let Some(pos) = host.opt_string("menu_position") {
         app.menu_center = pos == "center";
     }
+    app.code_editor = host.opt_string("code_editor");
     app.menu_extra = host
         .menu_items()
         .into_iter()

@@ -73,3 +73,25 @@ pub fn install_vault(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
     lua.globals().get::<Table>("vibook")?.set("vault", vault)?;
     Ok(())
 }
+
+pub fn install_open(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
+    let lua = rt.lua();
+    let vibook = lua.globals().get::<Table>("vibook")?;
+    let open = bridge.clone();
+    vibook.set(
+        "open",
+        lua.create_function(move |_, target: String| {
+            open.borrow_mut().opens.push(target);
+            Ok(())
+        })?,
+    )?;
+    let external = bridge.clone();
+    vibook.set(
+        "open_external",
+        lua.create_function(move |_, target: String| {
+            external.borrow_mut().external_opens.push(target);
+            Ok(())
+        })?,
+    )?;
+    Ok(())
+}

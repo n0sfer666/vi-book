@@ -1,10 +1,14 @@
 use crate::ui::app::App;
+use crate::ui::plugin;
 use crate::vault::follow::{Follow, follow, link_at};
 
 pub fn follow_at_cursor(app: &mut App) {
     let Some(link) = link_at(&app.editor.text(), app.editor.text_index()) else {
         return;
     };
+    if plugin::follow_link(app, &link.target) {
+        return;
+    }
     match follow(&app.session.index, &link) {
         Follow::Open(path) => app.open_rel(&path),
         Follow::Disambiguate(paths) => {

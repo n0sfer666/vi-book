@@ -4,6 +4,7 @@ pub mod clock;
 pub mod command_line;
 pub mod daily_cmd;
 pub mod event_map;
+pub mod external;
 pub mod help;
 pub mod input;
 pub mod layout;
