@@ -1,5 +1,5 @@
 use crate::markdown::atom::Atom;
-use crate::markdown::blocks::{self, Block, BlockKind};
+use crate::markdown::blocks::{self, Block, BlockKind, ListItem};
 use crate::markdown::rendered::{Rendered, RenderedLine};
 use crate::markdown::style::{Span, Style};
 use crate::markdown::table::TableRow;
@@ -33,6 +33,7 @@ fn render_block(block: &Block, width: usize, lines: &mut Vec<RenderedLine>) {
             }
         }
         BlockKind::Code { lang, lines: code } => code_block(lang, code, width, lines),
+        BlockKind::List { items } => list(items, width, lines),
         BlockKind::Quote { lines: quote } => {
             for line in quote {
                 for wrapped in wrap::wrap(line, width.saturating_sub(2)) {
@@ -117,6 +118,30 @@ fn code_block(lang: &[Atom], code: &[Vec<Atom>], width: usize, lines: &mut Vec<R
     lines.push(RenderedLine {
         spans: vec![frame_rule("\u{2514}", "\u{2518}", width)],
     });
+}
+
+fn list(items: &[ListItem], width: usize, lines: &mut Vec<RenderedLine>) {
+    for item in items {
+        let indent = item.marker.chars().count();
+        let body = width.saturating_sub(indent).max(1);
+        let wrapped = wrap::wrap(&item.atoms, body);
+        if wrapped.is_empty() {
+            lines.push(RenderedLine {
+                spans: vec![Span::decoration(item.marker.clone(), Style::Text)],
+            });
+            continue;
+        }
+        for (i, line) in wrapped.iter().enumerate() {
+            let prefix = if i == 0 {
+                item.marker.clone()
+            } else {
+                " ".repeat(indent)
+            };
+            let mut spans = vec![Span::decoration(prefix, Style::Text)];
+            spans.extend(wrap::spans(line));
+            lines.push(RenderedLine { spans });
+        }
+    }
 }
 
 fn frame_rule(left: &str, right: &str, width: usize) -> Span {

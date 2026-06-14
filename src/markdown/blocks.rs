@@ -27,6 +27,9 @@ pub enum BlockKind {
         lang: Vec<Atom>,
         lines: Vec<Vec<Atom>>,
     },
+    List {
+        items: Vec<ListItem>,
+    },
     Quote {
         lines: Vec<Vec<Atom>>,
     },
@@ -36,6 +39,11 @@ pub enum BlockKind {
     Verbatim {
         lines: Vec<Vec<Atom>>,
     },
+}
+
+pub struct ListItem {
+    pub marker: String,
+    pub atoms: Vec<Atom>,
 }
 
 struct Ctx<'s> {
@@ -77,6 +85,7 @@ fn walk(ctx: &Ctx, node: Node, blocks: &mut Vec<Block>) {
             },
         )),
         "fenced_code_block" => blocks.push(code(ctx, node)),
+        "list" => blocks.push(list(ctx, node)),
         "block_quote" => blocks.push(quote(ctx, node)),
         "pipe_table" => blocks.push(block(
             node,
@@ -155,6 +164,30 @@ fn code_atoms(chars: &[char], start: usize, end: usize, lang: &str) -> Vec<Atom>
             Atom::exact(chars[idx], style, idx)
         })
         .collect()
+}
+
+fn list(ctx: &Ctx, node: Node) -> Block {
+    let mut items = Vec::new();
+    let mut cursor = node.walk();
+    for item in node.children(&mut cursor) {
+        if item.kind() != "list_item" {
+            continue;
+        }
+        let marker = child_of_kind_prefix(item, "list_marker")
+            .map(|m| parser::node_text(ctx.source, &m).trim_end().to_string() + " ")
+            .unwrap_or_else(|| String::from("- "));
+        let atoms = child(item, "paragraph")
+            .map(|para| inline_atoms(ctx, para, Style::Text))
+            .unwrap_or_default();
+        items.push(ListItem { marker, atoms });
+    }
+    block(node, BlockKind::List { items })
+}
+
+fn child_of_kind_prefix<'n>(node: Node<'n>, prefix: &str) -> Option<Node<'n>> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .find(|child| child.kind().starts_with(prefix))
 }
 
 fn quote(ctx: &Ctx, node: Node) -> Block {
