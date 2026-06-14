@@ -8,13 +8,14 @@ use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
 
 use crate::core::position::Position;
+use crate::markdown::blocks::{self, BlockKind};
 use crate::markdown::render::render;
 use crate::markdown::rendered::{Rendered, RenderedLine};
 use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{event_map, read_motion};
+use crate::ui::{clipboard, event_map, read_motion};
 use crate::vim::key::Key;
 use crate::vim::mode::Mode;
 use crate::vim::visual;
@@ -99,7 +100,13 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
             if let Some(idx) = source_at(&rendered, line, col) {
                 app.editor.set_cursor_index(idx);
             }
-            crate::ui::link_follow::follow_at_cursor(app);
+            if let Some(code) = code_block_at(&app.editor.text(), app.editor.cursor().line) {
+                clipboard::copy(&code);
+                app.editor.yank(code, false);
+                app.message = String::from("copied code block to clipboard");
+            } else {
+                crate::ui::link_follow::follow_at_cursor(app);
+            }
         }
         _ => {}
     }
@@ -178,18 +185,38 @@ fn yank_selection(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some((mode, anchor)) = app.read_select {
         let text = selected_text(&rendered, mode, anchor, app.read_cursor);
+        clipboard::copy(&text);
         app.editor.yank(text, mode == Mode::VisualLine);
         app.read_select = None;
-        app.message = String::from("yanked");
+        app.message = String::from("copied to clipboard");
     }
 }
 
 fn yank_line(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some(line) = rendered.lines.get(app.read_cursor.0) {
-        app.editor.yank(format!("{}\n", line.text()), true);
-        app.message = String::from("yanked line");
+        let text = line.text();
+        clipboard::copy(&text);
+        app.editor.yank(format!("{text}\n"), true);
+        app.message = String::from("copied line to clipboard");
     }
+}
+
+fn code_block_at(text: &str, src_line: usize) -> Option<String> {
+    blocks::analyze(text).into_iter().find_map(|block| {
+        if let BlockKind::Code { lines, .. } = block.kind
+            && src_line >= block.start_line
+            && src_line <= block.end_line
+        {
+            let code = lines
+                .iter()
+                .map(|line| line.iter().map(|atom| atom.ch).collect::<String>())
+                .collect::<Vec<_>>()
+                .join("\n");
+            return Some(code);
+        }
+        None
+    })
 }
 
 fn selected_text(

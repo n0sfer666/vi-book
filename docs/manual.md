@@ -43,6 +43,24 @@ Fenced code blocks are highlighted by language (```` ```python ````,
   A link to a **code file** (e.g. `[[main.rs]]`) opens in your external editor
   (`vibook.opt.code_editor`, falling back to `$EDITOR`).
 
+## Selecting and copying
+
+In **read** mode you can select and copy without leaving the rendered view:
+
+- `v` / `V` / `Ctrl-V` — start a character / line / block selection; the
+  selection is highlighted. Motions extend it; `Esc` cancels.
+- `y` — copy the selection; `Y` — copy the current line.
+- `Enter` on a fenced **code block** copies the whole block.
+
+Copied text goes to your **system clipboard** (via OSC 52, so it works over SSH
+too) and to vi-book's own register, so you can also paste it with `p` in edit
+mode. A status message confirms the copy. (OSC 52 must be enabled in your
+terminal; most modern terminals support it, and tmux needs `set -g set-clipboard
+on`.)
+
+Editing keys (`d`, `c`, `x`, `p`, `o`, `a`, …) drop into edit mode at the same
+spot, so the document still feels like one buffer.
+
 ## The menu (leader key)
 
 Press `<Space>` (the *leader* key) to open the menu — a quick list of common

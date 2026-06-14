@@ -1,5 +1,6 @@
 pub mod actions;
 pub mod app;
+pub mod clipboard;
 pub mod clock;
 pub mod command_line;
 pub mod daily_cmd;
