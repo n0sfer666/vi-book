@@ -28,9 +28,61 @@ pub fn apply(ed: &mut Editor, op: Operator, target: OpTarget) {
     match target {
         OpTarget::Chars(range) => chars(ed, op, range),
         OpTarget::Lines { first, last } => lines(ed, op, first, last),
+        OpTarget::Block {
+            first,
+            last,
+            left,
+            right,
+        } => block(ed, op, first, last, left, right),
     }
     ed.pending.reset();
     ed.sync_desired();
+}
+
+fn block(ed: &mut Editor, op: Operator, first: usize, last: usize, left: usize, right: usize) {
+    let rows: Vec<Vec<char>> = ed
+        .buffer
+        .text()
+        .split('\n')
+        .map(|line| line.chars().collect())
+        .collect();
+    let last = last.min(rows.len().saturating_sub(1));
+    let first = first.min(last);
+    let slice = |row: &[char]| {
+        let a = left.min(row.len());
+        let b = (right + 1).min(row.len());
+        (a, b)
+    };
+    let yanked: Vec<String> = (first..=last)
+        .map(|l| {
+            let (a, b) = slice(&rows[l]);
+            rows[l][a..b].iter().collect()
+        })
+        .collect();
+    ed.registers.write(
+        ed.pending.register,
+        RegisterContent::charwise(yanked.join("\n")),
+    );
+    if op == Operator::Yank {
+        ed.cursor = ed.buffer.clamp_normal(Position::new(first, left));
+        return;
+    }
+    let mut new_rows = rows;
+    for row in new_rows[first..=last].iter_mut() {
+        let (a, b) = slice(row);
+        row.drain(a..b);
+    }
+    let new_text = new_rows
+        .iter()
+        .map(|row| row.iter().collect::<String>())
+        .collect::<Vec<_>>()
+        .join("\n");
+    ed.replace_all(&new_text);
+    ed.cursor = ed.buffer.clamp_normal(Position::new(first, left));
+    if op == Operator::Change {
+        ed.insert_edits.clear();
+        insert::begin(ed, ed.cursor);
+    }
 }
 
 fn chars(ed: &mut Editor, op: Operator, range: Range<usize>) {

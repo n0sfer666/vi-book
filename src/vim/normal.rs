@@ -26,6 +26,7 @@ fn start(ed: &mut Editor, key: Key) {
             ed.redo();
             ed.pending.reset();
         }
+        Key::Ctrl('v') => visual::enter_block(ed),
         _ => {
             if let Some(m) = motion::from_key(key) {
                 run_motion(ed, m);
@@ -54,6 +55,12 @@ fn start_char(ed: &mut Editor, c: char) {
         'x' => delete_chars(ed),
         'p' => paste::paste(ed, false),
         'P' => paste::paste(ed, true),
+        'Y' => {
+            let count = ed.pending.total_count();
+            let first = ed.cursor.line;
+            let last = first + count - 1;
+            operator::apply(ed, Operator::Yank, OpTarget::Lines { first, last });
+        }
         'u' => {
             ed.undo();
             ed.pending.reset();

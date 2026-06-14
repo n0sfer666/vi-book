@@ -1,3 +1,6 @@
+use std::ops::Range;
+
+use crate::core::position::Position;
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 use crate::vim::mode::Mode;
@@ -15,6 +18,12 @@ pub fn enter(ed: &mut Editor, linewise: bool) {
     ed.pending.reset();
 }
 
+pub fn enter_block(ed: &mut Editor) {
+    ed.visual_anchor = ed.cursor;
+    ed.mode = Mode::VisualBlock;
+    ed.pending.reset();
+}
+
 pub fn handle(ed: &mut Editor, key: Key) {
     if ed.pending.stage == Stage::G {
         ed.pending.stage = Stage::Start;
@@ -29,8 +38,13 @@ pub fn handle(ed: &mut Editor, key: Key) {
             ed.mode = Mode::Normal;
             ed.pending.reset();
         }
+        Key::Ctrl('v') => ed.mode = Mode::VisualBlock,
         Key::Char(c) => visual_char(ed, c),
-        _ => {}
+        _ => {
+            if let Some(m) = motion::from_key(key) {
+                run_motion(ed, m);
+            }
+        }
     }
 }
 
@@ -52,21 +66,62 @@ fn visual_char(ed: &mut Editor, c: char) {
     }
 }
 
+pub fn selection_cols(
+    mode: Mode,
+    anchor: Position,
+    cursor: Position,
+    line: usize,
+    line_len: usize,
+) -> Option<Range<usize>> {
+    let top = anchor.line.min(cursor.line);
+    let bottom = anchor.line.max(cursor.line);
+    if line < top || line > bottom {
+        return None;
+    }
+    let span = line_len.max(1);
+    match mode {
+        Mode::VisualLine => Some(0..span),
+        Mode::VisualBlock => {
+            let left = anchor.col.min(cursor.col);
+            let right = anchor.col.max(cursor.col);
+            Some(left..right + 1)
+        }
+        Mode::Visual => {
+            let (start, end) = if (anchor.line, anchor.col) <= (cursor.line, cursor.col) {
+                (anchor, cursor)
+            } else {
+                (cursor, anchor)
+            };
+            let from = if line == start.line { start.col } else { 0 };
+            let to = if line == end.line { end.col + 1 } else { span };
+            Some(from..to)
+        }
+        _ => None,
+    }
+}
+
 fn run_motion(ed: &mut Editor, m: Motion) {
     let count = ed.pending.count.take();
     motion::movement(ed, m, count);
 }
 
 fn operate(ed: &mut Editor, op: Operator) {
-    let target = if ed.mode == Mode::VisualLine {
-        OpTarget::Lines {
+    let target = match ed.mode {
+        Mode::VisualLine => OpTarget::Lines {
             first: ed.visual_anchor.line.min(ed.cursor.line),
             last: ed.visual_anchor.line.max(ed.cursor.line),
+        },
+        Mode::VisualBlock => OpTarget::Block {
+            first: ed.visual_anchor.line.min(ed.cursor.line),
+            last: ed.visual_anchor.line.max(ed.cursor.line),
+            left: ed.visual_anchor.col.min(ed.cursor.col),
+            right: ed.visual_anchor.col.max(ed.cursor.col),
+        },
+        _ => {
+            let a = ed.buffer.pos_to_char(ed.visual_anchor);
+            let b = ed.cursor_index();
+            OpTarget::Chars(a.min(b)..(a.max(b) + 1).min(ed.buffer.len_chars()))
         }
-    } else {
-        let a = ed.buffer.pos_to_char(ed.visual_anchor);
-        let b = ed.cursor_index();
-        OpTarget::Chars(a.min(b)..(a.max(b) + 1).min(ed.buffer.len_chars()))
     };
     ed.mode = Mode::Normal;
     operator::apply(ed, op, target);

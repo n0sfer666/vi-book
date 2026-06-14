@@ -8,7 +8,7 @@ use crate::core::transaction::Transaction;
 use crate::io::error::Error;
 use crate::io::file;
 use crate::vim::desired_col::DesiredCol;
-use crate::vim::key::{parse_keys, Key};
+use crate::vim::key::{Key, parse_keys};
 use crate::vim::mode::Mode;
 use crate::vim::pending::{Pending, Stage};
 use crate::vim::register::Registers;
@@ -83,6 +83,10 @@ impl Editor {
         self.mode
     }
 
+    pub fn visual_anchor(&self) -> Position {
+        self.visual_anchor
+    }
+
     pub fn handle_key(&mut self, key: Key) {
         if self.search.input.is_some() {
             search::handle_input(self, key);
@@ -91,7 +95,7 @@ impl Editor {
         match self.mode {
             Mode::Normal => normal::handle(self, key),
             Mode::Insert => insert::handle(self, key),
-            Mode::Visual | Mode::VisualLine => visual::handle(self, key),
+            Mode::Visual | Mode::VisualLine | Mode::VisualBlock => visual::handle(self, key),
         }
     }
 

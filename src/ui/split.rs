@@ -73,6 +73,7 @@ pub fn draw_pane(frame: &mut Frame, theme: &Theme, pane: &Pane, area: Rect) {
                         line,
                         highlights.get(idx).map_or(&[][..], Vec::as_slice),
                         theme,
+                        None,
                     )
                 })
                 .collect()

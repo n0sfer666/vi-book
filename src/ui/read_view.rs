@@ -45,6 +45,11 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     let Some(key) = event_map::to_key(event) else {
         return;
     };
+    if delegates_to_edit(key) {
+        leave(app, width);
+        app.editor.handle_key(key);
+        return;
+    }
     let rendered = cached_render(app, width);
     let last_line = rendered.lines.len().saturating_sub(1);
     let (line, col) = app.read_cursor;
@@ -103,6 +108,10 @@ pub(crate) fn read_lines(
             )
         })
         .collect()
+}
+
+fn delegates_to_edit(key: Key) -> bool {
+    matches!(key, Key::Ctrl('v')) || matches!(key, Key::Char(c) if "vVpPyYdcxoOaAIsrR".contains(c))
 }
 
 fn clamp(rendered: &Rendered, line: usize, col: usize) -> (usize, usize) {

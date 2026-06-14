@@ -81,33 +81,56 @@ fn scroll_into_view(app: &mut App, area: Rect) {
 
 fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
     let highlights = highlight(text);
+    let selecting = !matches!(app.editor.mode(), Mode::Normal | Mode::Insert);
+    let anchor = app.editor.visual_anchor();
+    let cursor = app.editor.cursor();
     let lines: Vec<Line> = text
         .split('\n')
         .enumerate()
         .skip(app.top)
         .take(area.height as usize)
         .map(|(idx, line)| {
+            let selection = selecting
+                .then(|| {
+                    crate::vim::visual::selection_cols(
+                        app.editor.mode(),
+                        anchor,
+                        cursor,
+                        idx,
+                        line.chars().count(),
+                    )
+                })
+                .flatten();
             styled_line(
                 line,
                 highlights.get(idx).map_or(&[][..], Vec::as_slice),
                 &app.theme,
+                selection.as_ref(),
             )
         })
         .collect();
     frame.render_widget(Paragraph::new(lines), text_column(area));
 }
 
-pub(crate) fn styled_line(line: &str, spans: &[SourceSpan], theme: &Theme) -> Line<'static> {
+pub(crate) fn styled_line(
+    line: &str,
+    spans: &[SourceSpan],
+    theme: &Theme,
+    selection: Option<&std::ops::Range<usize>>,
+) -> Line<'static> {
     let chars: Vec<char> = line.chars().collect();
     let mut parts: Vec<TuiSpan<'static>> = Vec::new();
     let mut run = String::new();
     let mut run_style = TuiStyle::default();
     for (col, ch) in chars.iter().enumerate() {
-        let style = spans
+        let mut style = spans
             .iter()
             .filter(|span| span.start <= col && col < span.end)
             .min_by_key(|span| span.end - span.start)
             .map_or_else(TuiStyle::default, |span| theme.tui(span.style));
+        if selection.is_some_and(|range| range.contains(&col)) {
+            style = style.add_modifier(Modifier::REVERSED);
+        }
         if style != run_style && !run.is_empty() {
             parts.push(TuiSpan::styled(std::mem::take(&mut run), run_style));
         }
@@ -129,6 +152,7 @@ fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
             Mode::Insert => "INSERT",
             Mode::Visual => "VISUAL",
             Mode::VisualLine => "V-LINE",
+            Mode::VisualBlock => "V-BLOCK",
         }
     };
     let dirty = if text != app.saved_text { " [+]" } else { "" };

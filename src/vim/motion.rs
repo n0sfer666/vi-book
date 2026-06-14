@@ -24,7 +24,16 @@ pub enum Motion {
 
 pub enum OpTarget {
     Chars(Range<usize>),
-    Lines { first: usize, last: usize },
+    Lines {
+        first: usize,
+        last: usize,
+    },
+    Block {
+        first: usize,
+        last: usize,
+        left: usize,
+        right: usize,
+    },
 }
 
 pub fn from_key(key: Key) -> Option<Motion> {
