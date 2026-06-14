@@ -1,8 +1,8 @@
+use ratatui::Frame;
 use ratatui::layout::{Position as ScreenPosition, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
-use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::Frame;
+use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 
 use crate::ui::app::App;
 use crate::ui::help;
@@ -42,6 +42,7 @@ pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
         .borders(Borders::ALL)
         .border_style(border)
         .title(panel.title());
+    frame.render_widget(Clear, area);
     frame.render_widget(Paragraph::new(lines).block(block), area);
 }
 
@@ -70,6 +71,7 @@ pub fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
         lines.push(Line::styled(format!("{marker}{item}"), style));
     }
     let block = Block::default().borders(Borders::ALL).title(" notes ");
+    frame.render_widget(Clear, rect);
     frame.render_widget(Paragraph::new(lines).block(block), rect);
     let cursor_col = rect.x + 3 + picker.query().chars().count() as u16;
     frame.set_cursor_position(ScreenPosition::new(cursor_col, rect.y + 1));
@@ -114,6 +116,7 @@ pub fn draw_menu(frame: &mut Frame, menu: &Menu, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
         .title(menu.title.clone());
+    frame.render_widget(Clear, rect);
     frame.render_widget(Paragraph::new(lines).block(block), rect);
 }
 
@@ -129,5 +132,6 @@ pub fn draw_help(frame: &mut Frame, _app: &App, area: Rect) {
         TuiStyle::default().add_modifier(Modifier::DIM),
     ));
     let block = Block::default().borders(Borders::ALL).title(" help ");
+    frame.render_widget(Clear, rect);
     frame.render_widget(Paragraph::new(lines).block(block), rect);
 }
