@@ -87,6 +87,21 @@ impl Editor {
         self.visual_anchor
     }
 
+    pub fn yank(&mut self, text: String, linewise: bool) {
+        let content = if linewise {
+            crate::vim::register::RegisterContent::linewise(text)
+        } else {
+            crate::vim::register::RegisterContent::charwise(text)
+        };
+        self.registers.write(None, content);
+    }
+
+    pub fn yanked(&self) -> Option<String> {
+        self.registers
+            .read(None)
+            .map(|content| content.text.clone())
+    }
+
     pub fn handle_key(&mut self, key: Key) {
         if self.search.input.is_some() {
             search::handle_input(self, key);

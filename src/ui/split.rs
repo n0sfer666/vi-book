@@ -59,7 +59,7 @@ pub fn draw_pane(frame: &mut Frame, theme: &Theme, pane: &Pane, area: Rect) {
     let lines = match pane.view {
         View::Read => {
             let rendered = render(&pane.editor.text(), column_width(area));
-            read_lines(&rendered, pane.top, height, theme)
+            read_lines(&rendered, pane.top, height, theme, None)
         }
         View::Edit => {
             let text = pane.editor.text();

@@ -54,6 +54,7 @@ pub struct App {
     pub pending_ctrl_w: bool,
     pub code_editor: Option<String>,
     pub external_request: Option<std::path::PathBuf>,
+    pub read_select: Option<(crate::vim::mode::Mode, (usize, usize))>,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -114,6 +115,7 @@ impl App {
             pending_ctrl_w: false,
             code_editor: None,
             external_request: None,
+            read_select: None,
         }
     }
 
