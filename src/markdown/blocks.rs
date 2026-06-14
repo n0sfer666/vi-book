@@ -7,7 +7,7 @@ use crate::markdown::facts::NoteFacts;
 use crate::markdown::parser::child_of_kind as child;
 use crate::markdown::style::Style;
 use crate::markdown::table::{self, TableRow};
-use crate::markdown::{inline, parser};
+use crate::markdown::{inline, parser, syntax};
 
 pub struct Block {
     pub start_line: usize,
@@ -122,18 +122,39 @@ fn heading(ctx: &Ctx, node: Node) -> Block {
 }
 
 fn code(ctx: &Ctx, node: Node) -> Block {
-    let lang = child(node, "info_string").map_or_else(Vec::new, |info| {
+    let info = child(node, "info_string");
+    let lang = info.map_or_else(Vec::new, |info| {
         let start = parser::byte_to_char(ctx.source, info.start_byte());
         let end = parser::byte_to_char(ctx.source, info.end_byte());
         inline::verbatim(&ctx.chars, start..end, Style::Frame)
     });
+    let lang_name = info
+        .map(|info| parser::node_text(ctx.source, &info))
+        .and_then(|text| text.split_whitespace().next().map(str::to_string))
+        .unwrap_or_default();
     let lines = child(node, "code_fence_content").map_or_else(Vec::new, |content| {
         let start = parser::byte_to_char(ctx.source, content.start_byte());
         let end = parser::byte_to_char(ctx.source, content.end_byte());
-        let atoms = inline::verbatim(&ctx.chars, start..end, Style::CodeBlock);
+        let atoms = code_atoms(&ctx.chars, start, end, &lang_name);
         split_lines_trimmed(&atoms)
     });
     block(node, BlockKind::Code { lang, lines })
+}
+
+fn code_atoms(chars: &[char], start: usize, end: usize, lang: &str) -> Vec<Atom> {
+    let code: String = chars[start..end.min(chars.len())].iter().collect();
+    let tokens = syntax::highlight(lang, &code);
+    (start..end.min(chars.len()))
+        .enumerate()
+        .map(|(offset, idx)| {
+            let style = tokens
+                .get(offset)
+                .copied()
+                .flatten()
+                .map_or(Style::CodeBlock, Style::Code);
+            Atom::exact(chars[idx], style, idx)
+        })
+        .collect()
 }
 
 fn quote(ctx: &Ctx, node: Node) -> Block {

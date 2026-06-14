@@ -1,10 +1,13 @@
 use std::env;
 use std::path::PathBuf;
 
+use ratatui::style::Color;
+
 use crate::lua::host::PluginHost;
 use crate::ui::app::App;
 use crate::ui::command_line;
 use crate::ui::menu::MenuItem;
+use crate::ui::theme::{self, Face};
 use crate::vim::key::parse_keys;
 
 pub fn install_keymaps(app: &mut App) {
@@ -74,6 +77,29 @@ fn apply_opts(app: &mut App) {
             action,
         })
         .collect();
+    apply_colors(app);
+}
+
+fn apply_colors(app: &mut App) {
+    let Some(host) = &app.host else {
+        return;
+    };
+    for spec in host.colors() {
+        let Some(style) = theme::style_for_name(&spec.name) else {
+            continue;
+        };
+        let face = Face {
+            color: spec
+                .fg
+                .as_deref()
+                .and_then(|name| name.parse::<Color>().ok()),
+            bold: spec.bold,
+            italic: spec.italic,
+            underline: spec.underline,
+            dim: spec.dim,
+        };
+        app.theme.set(style, face);
+    }
 }
 
 fn config_path() -> Option<PathBuf> {

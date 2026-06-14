@@ -22,6 +22,16 @@ pub struct Bridge {
 
 pub type Shared = Rc<RefCell<Bridge>>;
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ColorSpec {
+    pub name: String,
+    pub fg: Option<String>,
+    pub bold: bool,
+    pub italic: bool,
+    pub underline: bool,
+    pub dim: bool,
+}
+
 pub const PRELUDE: &str = r#"
 vibook = vibook or {}
 vibook.opt = {}
@@ -29,8 +39,12 @@ vibook.__commands = {}
 vibook.__handlers = {}
 vibook.__keymaps = {}
 vibook.__menu = {}
+vibook.__colors = {}
 function vibook.menu_item(key, label, rhs)
   table.insert(vibook.__menu, { key = key, label = label, rhs = rhs })
+end
+function vibook.color(name, spec)
+  table.insert(vibook.__colors, { name = name, spec = spec })
 end
 function vibook.command(name, fn) vibook.__commands[name] = fn end
 function vibook.on(event, fn)

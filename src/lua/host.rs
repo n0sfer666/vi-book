@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use mlua::{Function, Table};
 
-use crate::lua::config::{Bridge, Keymap, Shared, PRELUDE};
+use crate::lua::config::{Bridge, ColorSpec, Keymap, PRELUDE, Shared};
 use crate::lua::error::Error;
 use crate::lua::install::{install_buf, install_vault};
 use crate::lua::runtime::Runtime;
@@ -108,6 +108,33 @@ impl PluginHost {
         menu.sequence_values::<Table>()
             .filter_map(Result::ok)
             .filter_map(|t| Some((t.get("key").ok()?, t.get("label").ok()?, t.get("rhs").ok()?)))
+            .collect()
+    }
+
+    pub fn colors(&self) -> Vec<ColorSpec> {
+        let Ok(list) = self.vibook_field("__colors") else {
+            return Vec::new();
+        };
+        list.sequence_values::<Table>()
+            .filter_map(Result::ok)
+            .filter_map(|entry| {
+                let name: String = entry.get("name").ok()?;
+                let spec: Table = entry.get("spec").ok()?;
+                let flag = |key| {
+                    spec.get::<Option<bool>>(key)
+                        .ok()
+                        .flatten()
+                        .unwrap_or(false)
+                };
+                Some(ColorSpec {
+                    name,
+                    fg: spec.get::<Option<String>>("fg").ok().flatten(),
+                    bold: flag("bold"),
+                    italic: flag("italic"),
+                    underline: flag("underline"),
+                    dim: flag("dim"),
+                })
+            })
             .collect()
     }
 

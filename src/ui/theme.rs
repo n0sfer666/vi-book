@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ratatui::style::{Color, Modifier, Style as TuiStyle};
 
-use crate::markdown::style::Style;
+use crate::markdown::style::{CodeToken, Style};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Face {
@@ -72,7 +72,13 @@ impl Default for Theme {
 
 impl Theme {
     pub fn face(&self, style: Style) -> Face {
-        self.faces.get(&style).copied().unwrap_or_default()
+        if let Some(face) = self.faces.get(&style) {
+            return *face;
+        }
+        match style {
+            Style::Code(token) => code_face(token),
+            _ => Face::default(),
+        }
     }
 
     pub fn set(&mut self, style: Style, face: Face) {
@@ -104,5 +110,65 @@ fn default_face(style: Style) -> Face {
         | Style::Frame
         | Style::Frontmatter
         | Style::ImagePlaceholder => Face::dim(),
+        Style::Code(token) => code_face(token),
     }
+}
+
+fn code_face(token: CodeToken) -> Face {
+    match token {
+        CodeToken::Keyword => Face::color(Color::Magenta),
+        CodeToken::String => Face::color(Color::Green),
+        CodeToken::Number | CodeToken::Constant | CodeToken::Attribute => {
+            Face::color(Color::Yellow)
+        }
+        CodeToken::Comment => Face {
+            color: Some(Color::DarkGray),
+            dim: true,
+            ..Face::default()
+        },
+        CodeToken::Function => Face::color(Color::Blue),
+        CodeToken::Type | CodeToken::Property => Face::color(Color::Cyan),
+        CodeToken::Variable => Face::color(Color::White),
+        CodeToken::Operator => Face::color(Color::Red),
+        CodeToken::Punctuation => Face::color(Color::Gray),
+        CodeToken::Tag => Face::color(Color::Blue),
+    }
+}
+
+pub fn style_for_name(name: &str) -> Option<Style> {
+    let token = match name {
+        "keyword" => CodeToken::Keyword,
+        "string" => CodeToken::String,
+        "number" => CodeToken::Number,
+        "comment" => CodeToken::Comment,
+        "function" => CodeToken::Function,
+        "type" => CodeToken::Type,
+        "constant" => CodeToken::Constant,
+        "variable" => CodeToken::Variable,
+        "operator" => CodeToken::Operator,
+        "punctuation" => CodeToken::Punctuation,
+        "property" => CodeToken::Property,
+        "attribute" => CodeToken::Attribute,
+        _ => return markdown_style_for_name(name),
+    };
+    Some(Style::Code(token))
+}
+
+fn markdown_style_for_name(name: &str) -> Option<Style> {
+    Some(match name {
+        "text" => Style::Text,
+        "heading1" => Style::Heading1,
+        "heading2" => Style::Heading2,
+        "heading3" => Style::Heading3,
+        "bold" => Style::Bold,
+        "italic" => Style::Italic,
+        "codespan" => Style::CodeSpan,
+        "codeblock" => Style::CodeBlock,
+        "frame" => Style::Frame,
+        "link" => Style::Link,
+        "hashtag" => Style::Tag,
+        "quote" => Style::Quote,
+        "frontmatter" => Style::Frontmatter,
+        _ => return None,
+    })
 }

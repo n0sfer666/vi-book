@@ -1,4 +1,21 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CodeToken {
+    Keyword,
+    String,
+    Number,
+    Comment,
+    Function,
+    Type,
+    Constant,
+    Variable,
+    Operator,
+    Punctuation,
+    Property,
+    Tag,
+    Attribute,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Style {
     Text,
     Heading1,
@@ -15,6 +32,7 @@ pub enum Style {
     QuoteBar,
     Frontmatter,
     ImagePlaceholder,
+    Code(CodeToken),
 }
 
 impl Style {
