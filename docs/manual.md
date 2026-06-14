@@ -28,10 +28,41 @@ tables, syntax-highlighted code). Press `i` to **edit** the raw text, and
 `<Esc>` (or `jj`) to go back. `<C-t>` toggles between the two at any time.
 
 Content is centred in both modes, so switching read ⇄ edit never shifts it.
+Long paragraphs and list items wrap to the column; raw edit lines do not
+soft-wrap (like vim `nowrap`).
 
-Fenced code blocks are highlighted by language (```` ```python ````,
-```` ```rust ````, …). The colour palette is themeable from `init.lua` with
-`vibook.color(...)` — see the plugin guide.
+## Code blocks and syntax highlighting
+
+Fenced code blocks are syntax-highlighted by their language tag, e.g.:
+
+````
+```tsx
+const ok = props.refreshSlot ? <div/> : null; // highlighted
+```
+````
+
+Bundled languages (grammars are compiled into the binary — nothing to install):
+**rust, python, javascript, jsx, typescript, tsx, json, bash, go, c, toml,
+html, yaml** (plus aliases like `rs`, `py`, `ts`, `sh`). An unknown or missing
+tag falls back to a single colour.
+
+The palette is themeable from `~/.config/vi-book/init.lua`:
+
+```lua
+vibook.color("keyword",  { fg = "magenta", bold = true })
+vibook.color("string",   { fg = "green" })
+vibook.color("number",   { fg = "yellow" })
+vibook.color("comment",  { fg = "#6a737d", italic = true })
+vibook.color("function", { fg = "blue" })
+vibook.color("type",     { fg = "cyan" })
+```
+
+Token names: `keyword string number comment function type constant variable
+operator punctuation property attribute`. Markdown faces (`heading1`, `bold`,
+`link`, `quote`, …) are themeable the same way. Full list: the plugin guide.
+
+Press `Enter` on a code block in read mode to copy it (see *Selecting and
+copying*).
 
 ## Moving around
 

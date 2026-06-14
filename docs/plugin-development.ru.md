@@ -173,9 +173,9 @@ end)
 ## 8. Палитра подсветки — `vibook.color(name, spec)`
 
 Код-блоки подсвечиваются вкомпилированными грамматиками tree-sitter
-(rust, python, javascript, typescript, json, bash, go, c, toml, html, yaml и
-популярные алиасы). Перекрашивайте любой токен — или любой markdown-стиль — из
-конфига.
+(rust, python, javascript, jsx, typescript, tsx, json, bash, go, c, toml, html,
+yaml и популярные алиасы). Перекрашивайте любой токен — или любой
+markdown-стиль — из конфига.
 
 Поля `spec`: `fg` (цвет), `bold`, `italic`, `underline`, `dim`. `fg`
 принимает имена терминальных цветов (`"red"`, `"magenta"`, `"cyan"`, …) и hex

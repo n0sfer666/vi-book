@@ -28,6 +28,20 @@ fn rust_keyword_is_classified() {
 }
 
 #[test]
+fn tsx_is_highlighted() {
+    let code = "const x = 1; // note\n";
+    let hl = highlight("tsx", code);
+    assert_eq!(hl.len(), code.chars().count());
+    assert_eq!(token_at(code, "const", &hl), Some(CodeToken::Keyword));
+    assert_eq!(token_at(code, "1;", &hl), Some(CodeToken::Number));
+    assert_eq!(token_at(code, "// note", &hl), Some(CodeToken::Comment));
+    assert!(
+        hl.iter().filter(|t| t.is_some()).count() > 3,
+        "tsx should produce varied tokens, not a single colour"
+    );
+}
+
+#[test]
 fn unknown_language_yields_no_tokens_but_correct_length() {
     let code = "some plain text";
     let hl = highlight("madeuplang", code);
