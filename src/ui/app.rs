@@ -49,6 +49,9 @@ pub struct App {
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,
     pub insert_escape: Option<String>,
+    pub others: Vec<crate::ui::pane::Pane>,
+    pub active: usize,
+    pub pending_ctrl_w: bool,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -104,6 +107,9 @@ impl App {
             menu_center: false,
             menu_extra: Vec::new(),
             insert_escape: Some(String::from("jj")),
+            others: Vec::new(),
+            active: 0,
+            pending_ctrl_w: false,
         }
     }
 

@@ -20,6 +20,11 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         return;
     }
     let mapped = event_map::to_key(key);
+    if app.pending_ctrl_w {
+        app.pending_ctrl_w = false;
+        window_command(app, mapped);
+        return;
+    }
     if app.menu.is_some() {
         actions::menu_key(app, mapped);
         return;
@@ -41,6 +46,10 @@ pub fn handle(app: &mut App, key: KeyEvent) {
             app.help = true;
             return;
         }
+    }
+    if (app.view == View::Read || app.editor.idle_normal()) && mapped == Some(Key::Ctrl('w')) {
+        app.pending_ctrl_w = true;
+        return;
     }
     let width = layout::column_width(app.text_area);
     if app.view == View::Read {
@@ -64,5 +73,20 @@ pub fn handle(app: &mut App, key: KeyEvent) {
     }
     if let Some(key) = mapped {
         app.editor.handle_key(key);
+    }
+}
+
+fn window_command(app: &mut App, mapped: Option<Key>) {
+    match mapped {
+        Some(Key::Char('w')) | Some(Key::Ctrl('w')) => app.focus_next(),
+        Some(Key::Char('p')) => {
+            if app.panel.is_some() {
+                app.panel_focus = true;
+            }
+        }
+        Some(Key::Char('s')) | Some(Key::Char('v')) => app.vsplit(None),
+        Some(Key::Char('o')) => app.only(),
+        Some(Key::Char('c')) => app.close_active(),
+        _ => {}
     }
 }

@@ -11,6 +11,7 @@ pub mod link_follow;
 pub mod list_nav;
 pub mod menu;
 pub mod overlay;
+pub mod pane;
 pub mod panel;
 pub mod picker;
 pub mod plugin;
@@ -19,6 +20,7 @@ pub mod read_view;
 pub mod render;
 pub mod router;
 pub mod session;
+pub mod split;
 pub mod theme;
 pub mod view;
 

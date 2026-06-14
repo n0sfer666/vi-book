@@ -8,6 +8,7 @@ use crate::markdown::render::render;
 use crate::markdown::rendered::Rendered;
 use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
+use crate::ui::theme::Theme;
 use crate::ui::view::View;
 use crate::ui::{event_map, read_motion};
 use crate::vim::key::Key;
@@ -82,6 +83,28 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     app.read_pending_g = false;
 }
 
+pub(crate) fn read_lines(
+    rendered: &Rendered,
+    top: usize,
+    height: usize,
+    theme: &Theme,
+) -> Vec<Line<'static>> {
+    rendered
+        .lines
+        .iter()
+        .skip(top)
+        .take(height)
+        .map(|line| {
+            Line::from(
+                line.spans
+                    .iter()
+                    .map(|span| TuiSpan::styled(span.text.clone(), theme.tui(span.style)))
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect()
+}
+
 fn clamp(rendered: &Rendered, line: usize, col: usize) -> (usize, usize) {
     let last = rendered.lines.len().saturating_sub(1);
     let line = line.min(last);
@@ -113,20 +136,7 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     }
     let inner = text_column(area);
     let left = inner.x;
-    let lines: Vec<Line> = rendered
-        .lines
-        .iter()
-        .skip(app.top)
-        .take(height)
-        .map(|line| {
-            Line::from(
-                line.spans
-                    .iter()
-                    .map(|span| TuiSpan::styled(span.text.clone(), app.theme.tui(span.style)))
-                    .collect::<Vec<_>>(),
-            )
-        })
-        .collect();
+    let lines = read_lines(&rendered, app.top, height, &app.theme);
     frame.render_widget(Paragraph::new(lines), inner);
     let row = area.y + (app.read_cursor.0 - app.top) as u16;
     let col = left + (app.read_cursor.1 as u16).min(inner.width.saturating_sub(1));

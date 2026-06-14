@@ -8,8 +8,9 @@ use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
 use crate::ui::layout::text_column;
+use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{overlay, read_view};
+use crate::ui::{overlay, read_view, split};
 use crate::vim::mode::Mode;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
@@ -27,13 +28,24 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     } else {
         body
     };
-    app.text_area = text_area;
+    let count = app.pane_count();
+    let rects = split::split_rects(text_area, count);
+    for (i, rect) in rects.iter().enumerate() {
+        if i != app.active {
+            split::draw_pane(frame, &app.theme, app.other_for_display(i), *rect);
+        }
+    }
+    for rect in rects.iter().take(count.saturating_sub(1)) {
+        split::draw_divider(frame, text_area, rect.x + rect.width);
+    }
+    let active_rect = rects[app.active];
+    app.text_area = active_rect;
     let text = app.editor.text();
     if app.view == View::Read {
-        read_view::draw(frame, app, text_area);
+        read_view::draw(frame, app, active_rect);
     } else {
-        scroll_into_view(app, text_area);
-        draw_text(frame, app, &text, text_area);
+        scroll_into_view(app, active_rect);
+        draw_text(frame, app, &text, active_rect);
     }
     draw_status(frame, app, &text, status_area);
     draw_message(frame, app, message_area);
@@ -50,7 +62,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         return;
     }
     if app.view == View::Edit {
-        place_cursor(frame, app, text_area, message_area);
+        place_cursor(frame, app, active_rect, message_area);
     } else if app.command.is_some() || app.editor.search_input().is_some() {
         place_bottom_cursor(frame, app, message_area);
     }
@@ -78,16 +90,16 @@ fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
             styled_line(
                 line,
                 highlights.get(idx).map_or(&[][..], Vec::as_slice),
-                app,
+                &app.theme,
             )
         })
         .collect();
     frame.render_widget(Paragraph::new(lines), text_column(area));
 }
 
-fn styled_line<'l>(line: &'l str, spans: &[SourceSpan], app: &App) -> Line<'l> {
+pub(crate) fn styled_line(line: &str, spans: &[SourceSpan], theme: &Theme) -> Line<'static> {
     let chars: Vec<char> = line.chars().collect();
-    let mut parts: Vec<TuiSpan<'l>> = Vec::new();
+    let mut parts: Vec<TuiSpan<'static>> = Vec::new();
     let mut run = String::new();
     let mut run_style = TuiStyle::default();
     for (col, ch) in chars.iter().enumerate() {
@@ -95,7 +107,7 @@ fn styled_line<'l>(line: &'l str, spans: &[SourceSpan], app: &App) -> Line<'l> {
             .iter()
             .filter(|span| span.start <= col && col < span.end)
             .min_by_key(|span| span.end - span.start)
-            .map_or_else(TuiStyle::default, |span| app.theme.tui(span.style));
+            .map_or_else(TuiStyle::default, |span| theme.tui(span.style));
         if style != run_style && !run.is_empty() {
             parts.push(TuiSpan::styled(std::mem::take(&mut run), run_style));
         }

@@ -46,9 +46,17 @@ pub fn run(app: &mut App, command: &str) {
         "help" => app.help = true,
         "pick" => app.open_picker(),
         "toggle-view" => actions::toggle_view(app),
+        "vsplit" | "vsp" | "split" | "sp" => app.vsplit(None),
+        "only" => app.only(),
+        "close" => app.close_active(),
         "" => {}
         other => {
-            if let Some(name) = other.strip_prefix("new ") {
+            if let Some(name) = other
+                .strip_prefix("vsplit ")
+                .or_else(|| other.strip_prefix("split "))
+            {
+                app.vsplit(Some(name.trim()));
+            } else if let Some(name) = other.strip_prefix("new ") {
                 create_note(app, name);
             } else if !plugin::run_command(app, other) {
                 app.message = format!("not an editor command: {other}");
@@ -75,7 +83,11 @@ fn create_note(app: &mut App, name: &str) {
             app.message = format!("create failed: {err}");
             return;
         }
-        let stem = rel.trim_end_matches(".md").rsplit('/').next().unwrap_or(&rel);
+        let stem = rel
+            .trim_end_matches(".md")
+            .rsplit('/')
+            .next()
+            .unwrap_or(&rel);
         if let Err(err) = fs::write(&abs, format!("# {stem}\n\n")) {
             app.message = format!("create failed: {err}");
             return;

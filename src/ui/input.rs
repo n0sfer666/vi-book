@@ -9,7 +9,6 @@ pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
     match mapped {
         Some(Key::Char(':')) => app.command = Some(String::new()),
         Some(Key::Ctrl('p')) => app.open_picker(),
-        Some(Key::Ctrl('w')) if app.panel.is_some() => app.panel_focus = true,
         Some(Key::Ctrl('o')) => {
             if let Some(rel) = app.history.back() {
                 app.load(&rel);
