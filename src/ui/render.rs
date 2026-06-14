@@ -1,12 +1,13 @@
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Position as ScreenPosition, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
-use ratatui::Frame;
 
 use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
+use crate::ui::layout::text_column;
 use crate::ui::view::View;
 use crate::ui::{overlay, read_view};
 use crate::vim::mode::Mode;
@@ -81,7 +82,7 @@ fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
             )
         })
         .collect();
-    frame.render_widget(Paragraph::new(lines), area);
+    frame.render_widget(Paragraph::new(lines), text_column(area));
 }
 
 fn styled_line<'l>(line: &'l str, spans: &[SourceSpan], app: &App) -> Line<'l> {
@@ -156,8 +157,9 @@ fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, message_area: Rec
         place_bottom_cursor(frame, app, message_area);
         return;
     }
+    let inner = text_column(text_area);
     let cursor = app.editor.cursor();
-    let row = text_area.y + (cursor.line - app.top) as u16;
-    let col = text_area.x + (cursor.col as u16).min(text_area.width.saturating_sub(1));
+    let row = inner.y + (cursor.line - app.top) as u16;
+    let col = inner.x + (cursor.col as u16).min(inner.width.saturating_sub(1));
     frame.set_cursor_position(ScreenPosition::new(col, row));
 }

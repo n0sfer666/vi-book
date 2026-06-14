@@ -1,21 +1,16 @@
 use crossterm::event::KeyEvent;
+use ratatui::Frame;
 use ratatui::layout::{Position as ScreenPosition, Rect};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
-use ratatui::Frame;
 
 use crate::markdown::render::render;
 use crate::markdown::rendered::Rendered;
 use crate::ui::app::App;
+use crate::ui::layout::{column_width, text_column};
 use crate::ui::view::View;
 use crate::ui::{event_map, read_motion};
 use crate::vim::key::Key;
-
-const MAX_COLUMN: usize = 90;
-
-pub fn column_width(area: Rect) -> usize {
-    (area.width as usize).clamp(1, MAX_COLUMN)
-}
 
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
     let text = app.editor.text();
@@ -116,7 +111,8 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     if app.read_cursor.0 >= app.top + height {
         app.top = app.read_cursor.0 + 1 - height;
     }
-    let left = area.x + ((area.width as usize).saturating_sub(width) / 2) as u16;
+    let inner = text_column(area);
+    let left = inner.x;
     let lines: Vec<Line> = rendered
         .lines
         .iter()
@@ -131,12 +127,6 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
             )
         })
         .collect();
-    let inner = Rect {
-        x: left,
-        y: area.y,
-        width: width.min(area.width as usize) as u16,
-        height: area.height,
-    };
     frame.render_widget(Paragraph::new(lines), inner);
     let row = area.y + (app.read_cursor.0 - app.top) as u16;
     let col = left + (app.read_cursor.1 as u16).min(inner.width.saturating_sub(1));

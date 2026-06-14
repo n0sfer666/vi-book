@@ -3,7 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::ui::app::App;
 use crate::ui::menu::Menu;
 use crate::ui::view::View;
-use crate::ui::{command_line, help, read_view};
+use crate::ui::{command_line, help, layout, read_view};
 use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
@@ -55,7 +55,7 @@ pub fn dispatch(app: &mut App, action: &str) {
 }
 
 pub fn toggle_view(app: &mut App) {
-    let width = read_view::column_width(app.text_area);
+    let width = layout::column_width(app.text_area);
     if app.view == View::Read {
         read_view::leave(app, width);
     } else {

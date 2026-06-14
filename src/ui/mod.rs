@@ -6,6 +6,7 @@ pub mod daily_cmd;
 pub mod event_map;
 pub mod help;
 pub mod input;
+pub mod layout;
 pub mod link_follow;
 pub mod list_nav;
 pub mod menu;

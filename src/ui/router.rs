@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::ui::app::App;
 use crate::ui::view::View;
-use crate::ui::{actions, command_line, event_map, input, plugin, read_view};
+use crate::ui::{actions, command_line, event_map, input, layout, plugin, read_view};
 use crate::vim::key::Key;
 
 pub fn handle(app: &mut App, key: KeyEvent) {
@@ -42,7 +42,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
             return;
         }
     }
-    let width = read_view::column_width(app.text_area);
+    let width = layout::column_width(app.text_area);
     if app.view == View::Read {
         if !input::global_nav(app, mapped) {
             read_view::handle_key(app, key, width);
