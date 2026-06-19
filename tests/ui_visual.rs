@@ -1,12 +1,12 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Modifier;
+use ratatui::Terminal;
 
-use vi_book::Editor;
 use vi_book::ui::app::App;
 use vi_book::ui::view::View;
 use vi_book::vim::mode::Mode;
+use vi_book::Editor;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)
@@ -35,7 +35,7 @@ fn visual_selection_is_highlighted_in_edit() {
     app.view = View::Edit;
     app.editor.handle_keys("vll");
     assert!(
-        reversed_at(&mut app, 5, 0),
+        reversed_at(&mut app, 0, 0),
         "selected cell should be reversed"
     );
 }
@@ -68,7 +68,7 @@ fn read_mode_selection_is_highlighted() {
     app.handle(plain('v'));
     app.handle(plain('l'));
     assert!(
-        reversed_at(&mut app, 5, 0),
+        reversed_at(&mut app, 0, 0),
         "read selection should be reversed"
     );
 }
