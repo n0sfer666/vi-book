@@ -18,4 +18,5 @@ pub const BINDINGS: &[(&str, &str)] = &[
     (":w :q :wq", "write / quit"),
     (":tree :backlinks", "toggle panels"),
     (":today :new <name>", "daily note / create note"),
+    (":wrap none|text|all", "line wrapping (or <Space> s w)"),
 ];

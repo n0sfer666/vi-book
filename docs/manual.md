@@ -27,9 +27,29 @@ A note opens in **read** mode — markdown is rendered (headings, bold, links,
 tables, syntax-highlighted code). Press `i` to **edit** the raw text, and
 `<Esc>` (or `jj`) to go back. `<C-t>` toggles between the two at any time.
 
-Content is centred in both modes, so switching read ⇄ edit never shifts it.
-Long paragraphs and list items wrap to the column; raw edit lines do not
-soft-wrap (like vim `nowrap`).
+Content uses the full width of the column (no centring), like vim or a plain
+editor. One pane fills the screen; split panes each fill their share.
+
+## Line wrapping
+
+By default **nothing wraps** (like vim `nowrap`): long lines run off the right
+edge. A dim `›` in the last column means the line continues; once you scroll
+right a dim `‹` appears on the left. The view scrolls horizontally to follow
+the cursor in both read and edit modes — just move right (`l`, `w`, `$`).
+
+Three wrap modes, via `<Space> s w` or `:wrap <mode>`:
+
+- `none` — wrap nothing (default).
+- `text` — wrap prose: paragraphs, quotes, list items.
+- `all` — wrap everything except tables.
+
+Set the startup default in `~/.config/vi-book/init.lua`:
+
+```lua
+vibook.opt.wrap = "text"   -- "none" | "text" | "all"
+```
+
+Tables never wrap in any mode — scroll horizontally to read wide ones.
 
 ## Code blocks and syntax highlighting
 
@@ -97,7 +117,8 @@ spot, so the document still feels like one buffer.
 Press `<Space>` (the *leader* key) to open the menu — a quick list of common
 actions: find a note, create one, toggle the tree, jump to today's daily note,
 write, quit, open help. Pick an entry with the arrow keys and `<CR>`, or just
-press the highlighted letter.
+press the highlighted letter. Entries marked `→` open a submenu (e.g.
+`s` Settings → `w` Wrap → `a`/`t`/`n`); `<Esc>` steps back one level.
 
 ## Finding and linking notes
 
