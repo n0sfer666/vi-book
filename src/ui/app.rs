@@ -26,6 +26,7 @@ pub struct App {
     pub path: String,
     pub saved_text: String,
     pub top: usize,
+    pub left: usize,
     pub command: Option<String>,
     pub message: String,
     pub quit: bool,
@@ -88,6 +89,7 @@ impl App {
             path,
             saved_text,
             top: 0,
+            left: 0,
             command: None,
             message: String::new(),
             quit: false,
@@ -134,6 +136,7 @@ impl App {
                 self.editor = editor;
                 self.path = rel.to_string();
                 self.top = 0;
+                self.left = 0;
                 self.view = View::Read;
                 self.read_cursor = (0, 0);
                 self.read_cache = None;

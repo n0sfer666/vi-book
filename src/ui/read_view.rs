@@ -15,7 +15,7 @@ use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{clipboard, event_map, read_motion};
+use crate::ui::{clipboard, event_map, hscroll, read_motion};
 use crate::vim::key::Key;
 use crate::vim::mode::Mode;
 use crate::vim::visual;
@@ -276,14 +276,20 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     if app.read_cursor.0 >= app.top + height {
         app.top = app.read_cursor.0 + 1 - height;
     }
+    app.left = hscroll::scroll(app.left, app.read_cursor.1, width);
     let inner = text_column(area);
-    let left = inner.x;
     let select = app
         .read_select
         .map(|(mode, anchor)| (mode, anchor, app.read_cursor));
     let lines = read_lines(&rendered, app.top, height, &app.theme, select);
-    frame.render_widget(Paragraph::new(lines), inner);
+    frame.render_widget(Paragraph::new(lines).scroll((0, app.left as u16)), inner);
+    hscroll::markers(frame, inner, app.left, height, |row| {
+        rendered
+            .lines
+            .get(app.top + row)
+            .map(|line| line.text().chars().count())
+    });
     let row = area.y + (app.read_cursor.0 - app.top) as u16;
-    let col = left + (app.read_cursor.1 as u16).min(inner.width.saturating_sub(1));
+    let col = inner.x + (app.read_cursor.1.saturating_sub(app.left) as u16).min(inner.width.saturating_sub(1));
     frame.set_cursor_position(ScreenPosition::new(col, row));
 }
