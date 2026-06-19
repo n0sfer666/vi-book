@@ -111,11 +111,7 @@ pub fn apply_opts(app: &mut App) {
     app.menu_extra = host
         .menu_items()
         .into_iter()
-        .map(|(key, label, action)| MenuItem {
-            key: key.chars().next().unwrap_or(' '),
-            label,
-            action,
-        })
+        .map(|(key, label, action)| MenuItem::leaf(key.chars().next().unwrap_or(' '), label, action))
         .collect();
     apply_colors(app);
 }

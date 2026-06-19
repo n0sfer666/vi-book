@@ -8,7 +8,11 @@ use crate::vim::editor::Editor;
 use crate::vim::key::Key;
 
 pub fn open_menu(app: &mut App) {
-    app.menu = Some(Menu::leader(app.menu_extra.clone(), app.menu_center));
+    app.menu = Some(Menu::leader(
+        app.menu_extra.clone(),
+        app.menu_center,
+        app.wrap,
+    ));
 }
 
 pub fn help_key(app: &mut App, event: KeyEvent) {
@@ -28,18 +32,32 @@ pub fn menu_key(app: &mut App, mapped: Option<Key>) {
     match mapped {
         Some(Key::Down) | Some(Key::Char('j')) => menu.move_down(),
         Some(Key::Up) | Some(Key::Char('k')) => menu.move_up(),
-        Some(Key::Esc) => app.menu = None,
-        Some(Key::Enter) => {
-            if let Some(action) = menu.current().map(|i| i.action.clone()) {
-                dispatch(app, &action);
+        Some(Key::Esc) => {
+            if !menu.back() {
+                app.menu = None;
             }
         }
+        Some(Key::Enter) => {
+            let idx = menu.selected;
+            activate(app, idx);
+        }
         Some(Key::Char(c)) => {
-            if let Some(action) = menu.by_key(c).map(|i| i.action.clone()) {
-                dispatch(app, &action);
+            if let Some(idx) = menu.index_of(c) {
+                activate(app, idx);
             }
         }
         _ => {}
+    }
+}
+
+fn activate(app: &mut App, idx: usize) {
+    let Some(menu) = app.menu.as_mut() else {
+        return;
+    };
+    if menu.has_children(idx) {
+        menu.enter(idx);
+    } else if let Some(action) = menu.action_of(idx) {
+        dispatch(app, &action);
     }
 }
 
