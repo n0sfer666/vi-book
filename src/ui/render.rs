@@ -7,10 +7,10 @@ use ratatui::Frame;
 use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
-use crate::ui::layout::text_column;
+use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{overlay, read_view, split};
+use crate::ui::{hscroll, overlay, read_view, split};
 use crate::vim::mode::Mode;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
@@ -45,6 +45,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         read_view::draw(frame, app, active_rect);
     } else {
         scroll_into_view(app, active_rect);
+        app.left = hscroll::scroll(app.left, app.editor.cursor().col, column_width(active_rect));
         draw_text(frame, app, &text, active_rect);
     }
     draw_status(frame, app, &text, status_area);
@@ -109,7 +110,12 @@ fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
             )
         })
         .collect();
-    frame.render_widget(Paragraph::new(lines), text_column(area));
+    let inner = text_column(area);
+    frame.render_widget(Paragraph::new(lines).scroll((0, app.left as u16)), inner);
+    let source: Vec<&str> = text.split('\n').collect();
+    hscroll::markers(frame, inner, app.left, area.height as usize, |row| {
+        source.get(app.top + row).map(|line| line.chars().count())
+    });
 }
 
 pub(crate) fn styled_line(
@@ -196,6 +202,7 @@ fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, message_area: Rec
     let inner = text_column(text_area);
     let cursor = app.editor.cursor();
     let row = inner.y + (cursor.line - app.top) as u16;
-    let col = inner.x + (cursor.col as u16).min(inner.width.saturating_sub(1));
+    let col =
+        inner.x + (cursor.col.saturating_sub(app.left) as u16).min(inner.width.saturating_sub(1));
     frame.set_cursor_position(ScreenPosition::new(col, row));
 }
