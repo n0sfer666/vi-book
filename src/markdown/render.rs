@@ -1,12 +1,17 @@
-use crate::markdown::atom::Atom;
+use crate::markdown::atom::{split_lines, Atom};
 use crate::markdown::blocks::{self, Block, BlockKind, ListItem};
+use crate::markdown::render_block::{frame_rule, table};
 use crate::markdown::rendered::{Rendered, RenderedLine};
 use crate::markdown::style::{Span, Style};
-use crate::markdown::table::TableRow;
 use crate::markdown::width::{atoms_width, split_by_width};
 use crate::markdown::wrap;
+use crate::markdown::wrap_mode::WrapMode;
 
 pub fn render(source: &str, width: usize) -> Rendered {
+    render_with(source, width, WrapMode::All)
+}
+
+pub fn render_with(source: &str, width: usize, wrap: WrapMode) -> Rendered {
     let width = width.max(1);
     let mut lines = Vec::new();
     let mut prev_end: Option<usize> = None;
@@ -16,27 +21,30 @@ pub fn render(source: &str, width: usize) -> Rendered {
                 lines.push(RenderedLine::default());
             }
         }
-        render_block(&block, width, &mut lines);
+        let wrap_this = wrap.wraps(&block.kind);
+        render_block(&block, width, wrap_this, &mut lines);
         prev_end = Some(block.end_line);
     }
     Rendered { lines }
 }
 
-fn render_block(block: &Block, width: usize, lines: &mut Vec<RenderedLine>) {
+fn lines_of(atoms: &[Atom], width: usize, wrap_this: bool) -> Vec<Vec<Atom>> {
+    if wrap_this {
+        wrap::wrap(atoms, width)
+    } else {
+        split_lines(atoms)
+    }
+}
+
+fn render_block(block: &Block, width: usize, wrap_this: bool, lines: &mut Vec<RenderedLine>) {
     match &block.kind {
-        BlockKind::Heading { level, atoms } => heading(*level, atoms, width, lines),
-        BlockKind::Paragraph { atoms } => {
-            for line in wrap::wrap(atoms, width) {
-                lines.push(RenderedLine {
-                    spans: wrap::spans(&line),
-                });
-            }
-        }
-        BlockKind::Code { lang, lines: code } => code_block(lang, code, width, lines),
-        BlockKind::List { items } => list(items, width, lines),
+        BlockKind::Heading { level, atoms } => heading(*level, atoms, width, wrap_this, lines),
+        BlockKind::Paragraph { atoms } => push_lines(atoms, width, wrap_this, lines),
+        BlockKind::Code { lang, lines: code } => code_block(lang, code, width, wrap_this, lines),
+        BlockKind::List { items } => list(items, width, wrap_this, lines),
         BlockKind::Quote { lines: quote } => {
             for line in quote {
-                for wrapped in wrap::wrap(line, width.saturating_sub(2)) {
+                for wrapped in lines_of(line, width.saturating_sub(2), wrap_this) {
                     let mut spans = vec![Span::decoration("\u{2502} ", Style::QuoteBar)];
                     spans.extend(wrap::spans(&wrapped));
                     lines.push(RenderedLine { spans });
@@ -54,7 +62,27 @@ fn render_block(block: &Block, width: usize, lines: &mut Vec<RenderedLine>) {
     }
 }
 
-fn heading(level: u8, atoms: &[Atom], width: usize, lines: &mut Vec<RenderedLine>) {
+fn push_lines(atoms: &[Atom], width: usize, wrap_this: bool, lines: &mut Vec<RenderedLine>) {
+    for line in lines_of(atoms, width, wrap_this) {
+        lines.push(RenderedLine {
+            spans: wrap::spans(&line),
+        });
+    }
+}
+
+fn rule(width: usize) -> RenderedLine {
+    RenderedLine {
+        spans: vec![Span::decoration("\u{2500}".repeat(width), Style::Frame)],
+    }
+}
+
+fn heading(
+    level: u8,
+    atoms: &[Atom],
+    width: usize,
+    wrap_this: bool,
+    lines: &mut Vec<RenderedLine>,
+) {
     let title_len = atoms_width(atoms);
     match level {
         1 if width >= title_len + 4 => {
@@ -71,24 +99,28 @@ fn heading(level: u8, atoms: &[Atom], width: usize, lines: &mut Vec<RenderedLine
             ));
             lines.push(RenderedLine { spans });
         }
-        2 => {
-            lines.push(RenderedLine {
-                spans: wrap::spans(atoms),
-            });
-            lines.push(RenderedLine {
-                spans: vec![Span::decoration(
-                    "\u{2500}".repeat(title_len.clamp(1, width)),
-                    Style::Frame,
-                )],
-            });
+        1 if wrap_this => {
+            push_lines(atoms, width, true, lines);
+            lines.push(rule(width));
         }
-        _ => lines.push(RenderedLine {
+        1 => lines.push(RenderedLine {
             spans: wrap::spans(atoms),
         }),
+        2 => {
+            push_lines(atoms, width, wrap_this, lines);
+            lines.push(rule(title_len.clamp(1, width)));
+        }
+        _ => push_lines(atoms, width, wrap_this, lines),
     }
 }
 
-fn code_block(lang: &[Atom], code: &[Vec<Atom>], width: usize, lines: &mut Vec<RenderedLine>) {
+fn code_block(
+    lang: &[Atom],
+    code: &[Vec<Atom>],
+    width: usize,
+    wrap_this: bool,
+    lines: &mut Vec<RenderedLine>,
+) {
     let width = width.max(6);
     let inner = width - 4;
     let lang_len = atoms_width(lang);
@@ -105,11 +137,17 @@ fn code_block(lang: &[Atom], code: &[Vec<Atom>], width: usize, lines: &mut Vec<R
     };
     lines.push(RenderedLine { spans: top });
     for line in code {
-        for chunk in split_by_width(line, inner) {
+        let chunks: Vec<&[Atom]> = if wrap_this {
+            split_by_width(line, inner)
+        } else {
+            vec![line.as_slice()]
+        };
+        for chunk in chunks {
             let mut spans = vec![Span::decoration("\u{2502} ", Style::Frame)];
             spans.extend(wrap::spans(chunk));
+            let pad = (width - 3).saturating_sub(atoms_width(chunk));
             spans.push(Span::decoration(
-                format!("{}\u{2502}", " ".repeat(width - 3 - atoms_width(chunk))),
+                format!("{}\u{2502}", " ".repeat(pad)),
                 Style::Frame,
             ));
             lines.push(RenderedLine { spans });
@@ -120,11 +158,11 @@ fn code_block(lang: &[Atom], code: &[Vec<Atom>], width: usize, lines: &mut Vec<R
     });
 }
 
-fn list(items: &[ListItem], width: usize, lines: &mut Vec<RenderedLine>) {
+fn list(items: &[ListItem], width: usize, wrap_this: bool, lines: &mut Vec<RenderedLine>) {
     for item in items {
         let indent = item.marker.chars().count();
         let body = width.saturating_sub(indent).max(1);
-        let wrapped = wrap::wrap(&item.atoms, body);
+        let wrapped = lines_of(&item.atoms, body, wrap_this);
         if wrapped.is_empty() {
             lines.push(RenderedLine {
                 spans: vec![Span::decoration(item.marker.clone(), Style::Text)],
@@ -141,55 +179,5 @@ fn list(items: &[ListItem], width: usize, lines: &mut Vec<RenderedLine>) {
             spans.extend(wrap::spans(line));
             lines.push(RenderedLine { spans });
         }
-    }
-}
-
-fn frame_rule(left: &str, right: &str, width: usize) -> Span {
-    Span::decoration(
-        format!("{left}{}{right}", "\u{2500}".repeat(width - 2)),
-        Style::Frame,
-    )
-}
-
-fn table(rows: &[TableRow], lines: &mut Vec<RenderedLine>) {
-    let columns = rows.iter().map(|row| row.cells.len()).max().unwrap_or(0);
-    let widths: Vec<usize> = (0..columns)
-        .map(|i| {
-            rows.iter()
-                .filter_map(|row| row.cells.get(i))
-                .map(|cell| atoms_width(cell))
-                .max()
-                .unwrap_or(0)
-        })
-        .collect();
-    lines.push(table_rule(&widths, "\u{250c}", "\u{252c}", "\u{2510}"));
-    for row in rows {
-        if row.delimiter {
-            lines.push(table_rule(&widths, "\u{251c}", "\u{253c}", "\u{2524}"));
-            continue;
-        }
-        let mut spans = Vec::new();
-        for (i, cell_width) in widths.iter().enumerate() {
-            spans.push(Span::decoration("\u{2502} ", Style::Frame));
-            let cell = row.cells.get(i).map_or(&[][..], Vec::as_slice);
-            spans.extend(wrap::spans(cell));
-            spans.push(Span::decoration(
-                " ".repeat(cell_width - atoms_width(cell) + 1),
-                Style::Frame,
-            ));
-        }
-        spans.push(Span::decoration("\u{2502}", Style::Frame));
-        lines.push(RenderedLine { spans });
-    }
-    lines.push(table_rule(&widths, "\u{2514}", "\u{2534}", "\u{2518}"));
-}
-
-fn table_rule(widths: &[usize], left: &str, mid: &str, right: &str) -> RenderedLine {
-    let cols: Vec<String> = widths.iter().map(|w| "\u{2500}".repeat(w + 2)).collect();
-    RenderedLine {
-        spans: vec![Span::decoration(
-            format!("{left}{}{right}", cols.join(mid)),
-            Style::Frame,
-        )],
     }
 }
