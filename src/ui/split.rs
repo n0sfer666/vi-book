@@ -1,11 +1,12 @@
-use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
+use ratatui::Frame;
 
 use crate::markdown::highlight::highlight;
-use crate::markdown::render::render;
+use crate::markdown::render::render_with;
+use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::pane::Pane;
 use crate::ui::read_view::read_lines;
@@ -54,11 +55,11 @@ pub fn draw_divider(frame: &mut Frame, area: Rect, x: u16) {
     );
 }
 
-pub fn draw_pane(frame: &mut Frame, theme: &Theme, pane: &Pane, area: Rect) {
+pub fn draw_pane(frame: &mut Frame, theme: &Theme, pane: &Pane, area: Rect, wrap: WrapMode) {
     let height = area.height as usize;
     let lines = match pane.view {
         View::Read => {
-            let rendered = render(&pane.editor.text(), column_width(area));
+            let rendered = render_with(&pane.editor.text(), column_width(area), wrap);
             read_lines(&rendered, pane.top, height, theme, None)
         }
         View::Edit => {

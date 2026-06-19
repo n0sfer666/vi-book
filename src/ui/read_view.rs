@@ -9,7 +9,7 @@ use ratatui::widgets::Paragraph;
 
 use crate::core::position::Position;
 use crate::markdown::blocks::{self, BlockKind};
-use crate::markdown::render::render;
+use crate::markdown::render::render_with;
 use crate::markdown::rendered::{Rendered, RenderedLine};
 use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
@@ -24,14 +24,16 @@ type Select = (Mode, (usize, usize), (usize, usize));
 
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
     let text = app.editor.text();
-    let hit = matches!(&app.read_cache, Some((t, w, _)) if t == &text && *w == width);
+    let wrap = app.wrap;
+    let hit =
+        matches!(&app.read_cache, Some((t, w, m, _)) if t == &text && *w == width && *m == wrap);
     if !hit {
-        let rendered = render(&text, width);
-        app.read_cache = Some((text, width, rendered));
+        let rendered = render_with(&text, width, wrap);
+        app.read_cache = Some((text, width, wrap, rendered));
     }
     app.read_cache
         .as_ref()
-        .map(|(_, _, r)| r.clone())
+        .map(|(_, _, _, r)| r.clone())
         .unwrap_or_default()
 }
 

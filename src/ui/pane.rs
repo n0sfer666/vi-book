@@ -1,4 +1,5 @@
 use crate::markdown::rendered::Rendered;
+use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::view::View;
 use crate::vim::editor::Editor;
@@ -13,7 +14,7 @@ pub struct Pane {
     pub view: View,
     pub read_cursor: (usize, usize),
     pub read_pending_g: bool,
-    pub read_cache: Option<(String, usize, Rendered)>,
+    pub read_cache: Option<(String, usize, WrapMode, Rendered)>,
 }
 
 impl App {

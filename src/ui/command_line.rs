@@ -2,6 +2,7 @@ use std::fs;
 
 use crossterm::event::{KeyCode, KeyEvent};
 
+use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::panel::Panel;
 use crate::ui::{actions, daily_cmd, plugin};
@@ -58,10 +59,23 @@ pub fn run(app: &mut App, command: &str) {
                 app.vsplit(Some(name.trim()));
             } else if let Some(name) = other.strip_prefix("new ") {
                 create_note(app, name);
+            } else if let Some(mode) = other.strip_prefix("wrap ") {
+                set_wrap(app, mode.trim());
             } else if !plugin::run_command(app, other) {
                 app.message = format!("not an editor command: {other}");
             }
         }
+    }
+}
+
+fn set_wrap(app: &mut App, mode: &str) {
+    match WrapMode::parse(mode) {
+        Some(wrap) => {
+            app.wrap = wrap;
+            app.read_cache = None;
+            app.message = format!("wrap: {mode}");
+        }
+        None => app.message = format!("unknown wrap mode: {mode} (none|text|all)"),
     }
 }
 

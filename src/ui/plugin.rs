@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use ratatui::style::Color;
 
 use crate::lua::host::PluginHost;
+use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::command_line;
 use crate::ui::menu::MenuItem;
@@ -90,10 +91,13 @@ pub fn follow_link(app: &mut App, target: &str) -> bool {
     false
 }
 
-fn apply_opts(app: &mut App) {
+pub fn apply_opts(app: &mut App) {
     let Some(host) = &app.host else {
         return;
     };
+    if let Some(wrap) = host.opt_string("wrap").and_then(|s| WrapMode::parse(&s)) {
+        app.wrap = wrap;
+    }
     if let Some(leader) = host.opt_string("leader").and_then(|s| s.chars().next()) {
         app.leader = leader;
     }

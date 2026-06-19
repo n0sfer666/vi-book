@@ -1,8 +1,8 @@
-use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Position as ScreenPosition, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
+use ratatui::Frame;
 
 use crate::markdown::highlight::highlight;
 use crate::markdown::style::SourceSpan;
@@ -32,7 +32,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     let rects = split::split_rects(text_area, count);
     for (i, rect) in rects.iter().enumerate() {
         if i != app.active {
-            split::draw_pane(frame, &app.theme, app.other_for_display(i), *rect);
+            split::draw_pane(frame, &app.theme, app.other_for_display(i), *rect, app.wrap);
         }
     }
     for rect in rects.iter().take(count.saturating_sub(1)) {

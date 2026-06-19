@@ -8,6 +8,7 @@ use ratatui::layout::Rect;
 use crate::io::error::Error;
 use crate::lua::host::PluginHost;
 use crate::markdown::rendered::Rendered;
+use crate::markdown::wrap_mode::WrapMode;
 use crate::notebook::date::Date;
 use crate::notebook::history::History;
 use crate::ui::menu::{Menu, MenuItem};
@@ -42,7 +43,8 @@ pub struct App {
     pub host: Option<PluginHost>,
     pub firing: bool,
     pub normal_maps: HashMap<Key, String>,
-    pub read_cache: Option<(String, usize, Rendered)>,
+    pub read_cache: Option<(String, usize, WrapMode, Rendered)>,
+    pub wrap: WrapMode,
     pub menu: Option<Menu>,
     pub help: bool,
     pub leader: char,
@@ -104,6 +106,7 @@ impl App {
             firing: false,
             normal_maps: HashMap::new(),
             read_cache: None,
+            wrap: WrapMode::None,
             menu: None,
             help: false,
             leader: ' ',
