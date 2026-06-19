@@ -15,9 +15,9 @@ fn wide_chars_table_aligns_by_display_width() {
 #[test]
 fn wide_chars_code_frame_aligns_by_display_width() {
     assert_snapshot!(render("```\n日本語\n```", 20).text(), @r"
-    ┌──────────────────┐
-    │ 日本語           │
-    └──────────────────┘
+    ┌────────┐
+    │ 日本語 │
+    └────────┘
     ");
 }
 

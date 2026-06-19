@@ -39,18 +39,18 @@ fn h3_renders_as_plain_text_line() {
 #[test]
 fn fenced_code_renders_in_frame_with_language() {
     assert_snapshot!(render("```rust\nlet x;\n```", 20).text(), @r"
-    ┌─ rust ───────────┐
-    │ let x;           │
-    └──────────────────┘
+    ┌─ rust ─┐
+    │ let x; │
+    └────────┘
     ");
 }
 
 #[test]
 fn fenced_code_without_language() {
     assert_snapshot!(render("```\ncode\n```", 10).text(), @r"
-    ┌────────┐
-    │ code   │
-    └────────┘
+    ┌──────┐
+    │ code │
+    └──────┘
     ");
 }
 

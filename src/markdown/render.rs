@@ -121,9 +121,21 @@ fn code_block(
     wrap_this: bool,
     lines: &mut Vec<RenderedLine>,
 ) {
-    let width = width.max(6);
-    let inner = width - 4;
+    let avail = width.max(6);
     let lang_len = atoms_width(lang);
+    let chunks: Vec<&[Atom]> = code
+        .iter()
+        .flat_map(|line| {
+            if wrap_this {
+                split_by_width(line, avail - 4)
+            } else {
+                vec![line.as_slice()]
+            }
+        })
+        .collect();
+    let content = chunks.iter().map(|c| atoms_width(c)).max().unwrap_or(0);
+    let lang_min = if lang.is_empty() { 0 } else { lang_len + 6 };
+    let width = (content + 4).max(lang_min).min(avail);
     let top = if !lang.is_empty() && width >= lang_len + 6 {
         let mut spans = vec![Span::decoration("\u{250c}\u{2500} ", Style::Frame)];
         spans.extend(wrap::spans(lang));
@@ -136,22 +148,15 @@ fn code_block(
         vec![frame_rule("\u{250c}", "\u{2510}", width)]
     };
     lines.push(RenderedLine { spans: top });
-    for line in code {
-        let chunks: Vec<&[Atom]> = if wrap_this {
-            split_by_width(line, inner)
-        } else {
-            vec![line.as_slice()]
-        };
-        for chunk in chunks {
-            let mut spans = vec![Span::decoration("\u{2502} ", Style::Frame)];
-            spans.extend(wrap::spans(chunk));
-            let pad = (width - 3).saturating_sub(atoms_width(chunk));
-            spans.push(Span::decoration(
-                format!("{}\u{2502}", " ".repeat(pad)),
-                Style::Frame,
-            ));
-            lines.push(RenderedLine { spans });
-        }
+    for chunk in chunks {
+        let mut spans = vec![Span::decoration("\u{2502} ", Style::Frame)];
+        spans.extend(wrap::spans(chunk));
+        let pad = (width - 3).saturating_sub(atoms_width(chunk));
+        spans.push(Span::decoration(
+            format!("{}\u{2502}", " ".repeat(pad)),
+            Style::Frame,
+        ));
+        lines.push(RenderedLine { spans });
     }
     lines.push(RenderedLine {
         spans: vec![frame_rule("\u{2514}", "\u{2518}", width)],
