@@ -164,7 +164,7 @@ fn save(app: &mut App) -> bool {
 }
 
 fn quit(app: &mut App, force: bool) {
-    if !force && app.editor.text() != app.saved_text {
+    if !force && app.any_dirty() {
         app.message = String::from("unsaved changes (use :q! to discard)");
     } else {
         app.quit = true;

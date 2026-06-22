@@ -90,6 +90,28 @@ fn open_rel_of_active_file_is_a_noop() {
     let _ = fs::remove_dir_all(&root);
 }
 
+#[test]
+fn quit_is_blocked_when_a_pooled_buffer_is_dirty() {
+    let root = temp_vault("quit-dirty-pool");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("b.md");
+    app.editor.handle_keys("ix<Esc>");
+    app.open_rel("a.md");
+    assert_eq!(app.editor.text(), app.saved_text, "active a.md is clean");
+    assert!(app.buffers.iter().any(|p| p.editor.text() != p.saved_text));
+
+    vi_book::ui::command_line::run(&mut app, "q");
+    assert!(!app.quit, "q is blocked by a dirty pooled buffer");
+    assert!(app.message.contains("unsaved"));
+
+    vi_book::ui::command_line::run(&mut app, "q!");
+    assert!(app.quit, "q! force-quits regardless of dirty buffers");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
 fn three_buffer_app(root: &std::path::Path) -> App {
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(Editor::new(""), String::new());

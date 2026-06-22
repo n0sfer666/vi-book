@@ -33,6 +33,11 @@ impl App {
         }
     }
 
+    pub fn any_dirty(&self) -> bool {
+        self.editor.text() != self.saved_text
+            || self.buffers.iter().any(|p| p.editor.text() != p.saved_text)
+    }
+
     fn is_buffer_dirty(&self, idx: usize) -> bool {
         if idx == 0 {
             self.editor.text() != self.saved_text
