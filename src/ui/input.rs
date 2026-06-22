@@ -11,12 +11,12 @@ pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
         Some(Key::Ctrl('p')) => app.open_picker(),
         Some(Key::Ctrl('o')) => {
             if let Some(rel) = app.history.back() {
-                app.load(&rel);
+                app.open_rel(&rel);
             }
         }
         Some(Key::Ctrl('i')) => {
             if let Some(rel) = app.history.forward() {
-                app.load(&rel);
+                app.open_rel(&rel);
             }
         }
         _ => return false,

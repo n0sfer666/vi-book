@@ -13,7 +13,7 @@ fn temp_vault(name: &str) -> PathBuf {
 }
 
 #[test]
-fn switching_files_with_unsaved_changes_is_refused() {
+fn switching_files_with_unsaved_changes_stashes_the_dirty_buffer() {
     let root = temp_vault("dirty");
     fs::write(root.join("b.md"), "target body").unwrap();
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
@@ -28,11 +28,19 @@ fn switching_files_with_unsaved_changes_is_refused() {
 
     let path = app.path.clone();
     let text = app.editor.text();
-    let warned = !app.message.is_empty();
+    let stashed_dirty = app
+        .buffers
+        .iter()
+        .find(|p| p.path == "a.md")
+        .map(|p| (p.editor.text(), p.saved_text.clone()));
+    let a_on_disk = root.join("a.md").exists();
     let _ = fs::remove_dir_all(&root);
-    assert_eq!(path, "a.md", "must not switch away from a dirty buffer");
-    assert_eq!(text, dirty_text, "dirty buffer must be preserved");
-    assert!(warned, "must warn about unsaved changes");
+    assert_eq!(path, "b.md", "switching is always allowed now");
+    assert_eq!(text, "target body", "target buffer is loaded");
+    let (a_text, a_saved) = stashed_dirty.expect("dirty buffer is stashed in the pool");
+    assert_eq!(a_text, dirty_text, "stashed buffer keeps its edits");
+    assert_ne!(a_text, a_saved, "stashed buffer stays dirty");
+    assert!(!a_on_disk, "switching never writes to disk");
 }
 
 #[test]

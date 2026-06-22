@@ -30,6 +30,67 @@ fn pool_buffer(root: &std::path::Path, rel: &str) -> Pane {
 }
 
 #[test]
+fn open_rel_dedups_to_existing_buffer_without_reload() {
+    let root = temp_vault("dedup");
+    fs::write(root.join("a.md"), "A body").unwrap();
+    fs::write(root.join("b.md"), "B body").unwrap();
+    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
+
+    let mut app = App::new(Editor::new(""), String::new());
+    app.session = session;
+    app.open_rel("a.md");
+    app.open_rel("b.md");
+    assert_eq!(app.path, "b.md");
+    assert_eq!(
+        app.buffers.len(),
+        1,
+        "a.md is pooled, no empty buffer leaks in"
+    );
+
+    app.editor.handle_keys("ix<Esc>");
+    let dirty = app.editor.text();
+    assert_ne!(dirty, "B body");
+
+    app.open_rel("a.md");
+    assert_eq!(app.path, "a.md", "open of pooled file switches to it");
+
+    app.open_rel("b.md");
+    assert_eq!(app.path, "b.md", "switching back reaches the pooled b.md");
+    assert_eq!(
+        app.editor.text(),
+        dirty,
+        "dedup must not reload from disk — dirty edits survive"
+    );
+    assert_eq!(
+        fs::read_to_string(root.join("b.md")).unwrap(),
+        "B body",
+        "disk untouched by switching"
+    );
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn open_rel_of_active_file_is_a_noop() {
+    let root = temp_vault("noop");
+    fs::write(root.join("a.md"), "A body line\nsecond").unwrap();
+    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
+
+    let mut app = App::new(Editor::new(""), String::new());
+    app.session = session;
+    app.open_rel("a.md");
+    app.editor.set_cursor(vi_book::Position { line: 1, col: 2 });
+    let cursor = app.editor.cursor();
+    let pool_len = app.buffers.len();
+
+    app.open_rel("a.md");
+    assert_eq!(app.editor.cursor(), cursor, "reopening active keeps cursor");
+    assert_eq!(app.buffers.len(), pool_len, "no self-stash on no-op open");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
 fn switch_to_buffer_preserves_active_state_and_mru() {
     let root = temp_vault("switch");
     fs::write(root.join("a.md"), "hello").unwrap();

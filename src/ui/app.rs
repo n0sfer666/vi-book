@@ -129,13 +129,13 @@ impl App {
     }
 
     pub fn load(&mut self, rel: &str) {
-        if self.editor.text() != self.saved_text {
-            self.message = String::from("unsaved changes (write with :w or discard)");
-            return;
-        }
         match Editor::open(self.session.absolute(rel)) {
             Ok(mut editor) => {
                 editor.set_insert_escape(self.insert_escape.clone());
+                let old = self.take_active();
+                if !old.path.is_empty() {
+                    self.buffers.insert(0, old);
+                }
                 self.saved_text = editor.text();
                 self.editor = editor;
                 self.path = rel.to_string();
@@ -152,6 +152,14 @@ impl App {
     }
 
     pub fn open_rel(&mut self, rel: &str) {
+        if self.path == rel {
+            return;
+        }
+        if let Some(idx) = self.buffers.iter().position(|p| p.path == rel) {
+            self.switch_to_buffer(idx);
+            plugin::fire(self, "note_open");
+            return;
+        }
         self.load(rel);
         if self.path == rel {
             self.history.visit(rel);
