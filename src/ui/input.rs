@@ -1,7 +1,7 @@
 use crossterm::event::KeyEvent;
 
 use crate::ui::app::App;
-use crate::ui::panel::Activation;
+use crate::ui::panel::{Activation, Panel};
 use crate::ui::{event_map, link_follow};
 use crate::vim::key::Key;
 
@@ -45,10 +45,19 @@ pub fn panel_key(app: &mut App, key: Option<Key>) {
         }
         Some(Key::Char('k') | Key::Char('b') | Key::Char('B')) | Some(Key::Up) => panel.move_up(),
         Some(Key::Esc) | Some(Key::Ctrl('w')) => app.panel_focus = false,
-        Some(Key::Enter) => match panel.activate() {
-            Activation::Open(path) => app.open_rel(&path),
-            Activation::Toggled | Activation::None => {}
-        },
+        Some(Key::Enter) => {
+            let close_after = matches!(panel, Panel::Backlinks { .. });
+            match panel.activate() {
+                Activation::Open(path) => {
+                    app.open_rel(&path);
+                    if close_after {
+                        app.panel = None;
+                        app.panel_focus = false;
+                    }
+                }
+                Activation::Toggled | Activation::None => {}
+            }
+        }
         _ => {}
     }
 }

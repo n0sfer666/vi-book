@@ -127,17 +127,24 @@ fn toggle_panel(app: &mut App, kind: PanelKind) {
         app.panel_focus = false;
         return;
     }
-    app.panel = Some(match kind {
+    let panel = match kind {
         PanelKind::Tree => Panel::tree(&app.session.items()),
-        PanelKind::Backlinks => Panel::backlinks(
-            app.session
+        PanelKind::Backlinks => {
+            let items: Vec<String> = app
+                .session
                 .index
                 .backlinks(&app.path)
                 .iter()
                 .map(|n| n.path.clone())
-                .collect(),
-        ),
-    });
+                .collect();
+            if items.is_empty() {
+                app.message = String::from("no notes link here");
+                return;
+            }
+            Panel::backlinks(items)
+        }
+    };
+    app.panel = Some(panel);
     app.panel_focus = true;
 }
 
