@@ -90,6 +90,82 @@ fn open_rel_of_active_file_is_a_noop() {
     let _ = fs::remove_dir_all(&root);
 }
 
+fn three_buffer_app(root: &std::path::Path) -> App {
+    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
+    let mut app = App::new(Editor::new(""), String::new());
+    app.session = session;
+    app
+}
+
+#[test]
+fn close_clean_pool_buffer_removes_it() {
+    let root = temp_vault("close-clean");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("b.md");
+    app.open_rel("a.md");
+    assert_eq!(app.path, "a.md");
+    assert_eq!(app.buffers.len(), 1, "b.md is pooled");
+
+    app.close_buffer(1);
+    assert_eq!(app.path, "a.md", "active untouched");
+    assert!(app.buffers.is_empty(), "pooled buffer removed");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn close_dirty_buffer_is_blocked() {
+    let root = temp_vault("close-dirty");
+    fs::write(root.join("a.md"), "A").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("a.md");
+    app.editor.handle_keys("ix<Esc>");
+    assert_ne!(app.editor.text(), app.saved_text);
+
+    app.close_buffer(0);
+    assert!(
+        app.message.contains("unsaved"),
+        "dirty close is blocked with a message"
+    );
+    assert_eq!(app.path, "a.md", "buffer stays");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn close_active_switches_to_mru() {
+    let root = temp_vault("close-active");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("b.md");
+    app.open_rel("a.md");
+    assert_eq!(app.path, "a.md");
+
+    app.close_buffer(0);
+    assert_eq!(app.path, "b.md", "closing active switches to MRU");
+    assert!(app.buffers.is_empty(), "old active is gone, not re-pooled");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn close_last_buffer_opens_picker() {
+    let root = temp_vault("close-last");
+    fs::write(root.join("a.md"), "A").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("a.md");
+    assert!(app.buffers.is_empty());
+
+    app.close_buffer(0);
+    assert!(app.picker.is_some(), "closing last buffer opens the picker");
+    assert!(app.path.is_empty(), "no active named buffer remains");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
 #[test]
 fn switch_to_buffer_preserves_active_state_and_mru() {
     let root = temp_vault("switch");
