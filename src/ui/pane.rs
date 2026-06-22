@@ -113,7 +113,7 @@ impl App {
         }
     }
 
-    fn take_active(&mut self) -> Pane {
+    pub(crate) fn take_active(&mut self) -> Pane {
         Pane {
             editor: std::mem::replace(&mut self.editor, Editor::new("")),
             path: std::mem::take(&mut self.path),
@@ -126,7 +126,7 @@ impl App {
         }
     }
 
-    fn put_active(&mut self, pane: Pane) {
+    pub(crate) fn put_active(&mut self, pane: Pane) {
         self.editor = pane.editor;
         self.path = pane.path;
         self.saved_text = pane.saved_text;
