@@ -1,7 +1,35 @@
 use crate::ui::app::App;
+use crate::ui::buffer_list::{BufferEntry, BufferList};
 use crate::vim::editor::Editor;
 
 impl App {
+    pub fn named_buffers(&self) -> Vec<BufferEntry> {
+        let mut out = Vec::new();
+        if !self.path.is_empty() {
+            out.push(BufferEntry {
+                idx: 0,
+                path: self.path.clone(),
+                dirty: self.editor.text() != self.saved_text,
+                current: true,
+            });
+        }
+        for (i, pane) in self.buffers.iter().enumerate() {
+            if !pane.path.is_empty() {
+                out.push(BufferEntry {
+                    idx: i + 1,
+                    path: pane.path.clone(),
+                    dirty: pane.editor.text() != pane.saved_text,
+                    current: false,
+                });
+            }
+        }
+        out
+    }
+
+    pub fn open_buffer_list(&mut self) {
+        self.buffer_list = Some(BufferList::new(self.named_buffers()));
+    }
+
     pub fn switch_to_buffer(&mut self, idx: usize) {
         if idx >= self.buffers.len() {
             return;

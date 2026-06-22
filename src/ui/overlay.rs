@@ -1,8 +1,8 @@
-use ratatui::Frame;
 use ratatui::layout::{Position as ScreenPosition, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use ratatui::Frame;
 
 use crate::ui::app::App;
 use crate::ui::help;
@@ -77,6 +77,36 @@ pub fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
     frame.set_cursor_position(ScreenPosition::new(cursor_col, rect.y + 1));
 }
 
+pub fn draw_buffer_list(frame: &mut Frame, app: &App, area: Rect) {
+    let Some(list) = app.buffer_list.as_ref() else {
+        return;
+    };
+    let width = (area.width.saturating_sub(4)).min(70);
+    let height = (area.height.saturating_sub(2)).min(16);
+    let rect = Rect {
+        x: area.x + (area.width.saturating_sub(width)) / 2,
+        y: area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    };
+    let (offset, items) = list.window(height.saturating_sub(2) as usize);
+    let mut lines = vec![Line::from(format!("> {}", list.query()))];
+    for (i, item) in items.iter().enumerate() {
+        let selected = offset + i == list.selected();
+        let style = if selected {
+            TuiStyle::default().add_modifier(Modifier::REVERSED)
+        } else {
+            TuiStyle::default()
+        };
+        lines.push(Line::styled(item.label(), style));
+    }
+    let block = Block::default().borders(Borders::ALL).title(" buffers ");
+    frame.render_widget(Clear, rect);
+    frame.render_widget(Paragraph::new(lines).block(block), rect);
+    let cursor_col = rect.x + 3 + list.query().chars().count() as u16;
+    frame.set_cursor_position(ScreenPosition::new(cursor_col, rect.y + 1));
+}
+
 fn centered(area: Rect, width: u16, height: u16) -> Rect {
     let width = width.min(area.width);
     let height = height.min(area.height);
@@ -105,7 +135,12 @@ pub fn draw_menu(frame: &mut Frame, menu: &Menu, area: Rect) {
         .iter()
         .enumerate()
         .map(|(i, item)| {
-            let text = format!(" [{}]  {}", item.key, item.label);
+            let key = if item.key == ' ' {
+                '\u{2423}'
+            } else {
+                item.key
+            };
+            let text = format!(" [{key}]  {}", item.label);
             if i == menu.selected {
                 Line::styled(text, TuiStyle::default().add_modifier(Modifier::REVERSED))
             } else {

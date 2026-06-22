@@ -50,6 +50,7 @@ impl Menu {
     pub fn leader(extra: Vec<MenuItem>, center: bool, wrap: WrapMode) -> Self {
         let mut items = vec![
             MenuItem::new('f', "Find note", ":pick"),
+            MenuItem::new(' ', "Buffers", ":buffers"),
             MenuItem::new('n', "New note", ":newprompt"),
             MenuItem::new('e', "Toggle read/edit", ":toggle-view"),
             MenuItem::new('t', "Toggle tree", ":tree"),

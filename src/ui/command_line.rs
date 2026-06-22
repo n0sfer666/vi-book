@@ -46,6 +46,7 @@ pub fn run(app: &mut App, command: &str) {
         "backlinks" => toggle_panel(app, PanelKind::Backlinks),
         "help" => app.help = true,
         "pick" => app.open_picker(),
+        "buffers" => app.open_buffer_list(),
         "toggle-view" => actions::toggle_view(app),
         "vsplit" | "vsp" | "split" | "sp" => app.vsplit(None),
         "only" => app.only(),

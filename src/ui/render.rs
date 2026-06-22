@@ -58,6 +58,10 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         overlay::draw_menu(frame, menu, text_area);
         return;
     }
+    if app.buffer_list.is_some() {
+        overlay::draw_buffer_list(frame, app, text_area);
+        return;
+    }
     if app.picker.is_some() {
         overlay::draw_picker(frame, app, text_area);
         return;

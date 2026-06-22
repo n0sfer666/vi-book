@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
 
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
 use vi_book::ui::app::App;
 use vi_book::ui::pane::Pane;
 use vi_book::ui::session::Session;
@@ -86,6 +88,107 @@ fn open_rel_of_active_file_is_a_noop() {
     app.open_rel("a.md");
     assert_eq!(app.editor.cursor(), cursor, "reopening active keeps cursor");
     assert_eq!(app.buffers.len(), pool_len, "no self-stash on no-op open");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+fn ctrl(c: char) -> KeyEvent {
+    KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)
+}
+
+#[test]
+fn buffers_command_opens_list_selecting_previous_buffer() {
+    let root = temp_vault("blist-open");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("b.md");
+    app.open_rel("a.md");
+
+    vi_book::ui::command_line::run(&mut app, "buffers");
+    let bl = app.buffer_list.as_ref().expect("buffer list opens");
+    let entries = bl.filtered();
+    assert_eq!(entries.len(), 2, "active + one pooled buffer");
+    assert_eq!(entries[0].path, "a.md");
+    assert!(entries[0].current, "active is marked current");
+    assert_eq!(entries[1].path, "b.md");
+    assert_eq!(
+        bl.current().unwrap().path,
+        "b.md",
+        "cursor defaults to the previous (MRU) buffer"
+    );
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn unnamed_buffer_is_not_listed() {
+    let root = temp_vault("blist-unnamed");
+    fs::write(root.join("a.md"), "A").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("a.md");
+
+    let entries = app.named_buffers();
+    assert_eq!(entries.len(), 1, "the empty startup buffer is excluded");
+    assert_eq!(entries[0].path, "a.md");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn buffer_list_enter_switches_and_closes() {
+    let root = temp_vault("blist-enter");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("b.md");
+    app.open_rel("a.md");
+
+    vi_book::ui::command_line::run(&mut app, "buffers");
+    vi_book::ui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Enter));
+    assert_eq!(app.path, "b.md", "Enter switches to the selected buffer");
+    assert!(app.buffer_list.is_none(), "Enter closes the list");
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn buffer_list_ctrl_d_closes_buffer_and_stays_open() {
+    let root = temp_vault("blist-ctrld");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    fs::write(root.join("c.md"), "C").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("c.md");
+    app.open_rel("b.md");
+    app.open_rel("a.md");
+
+    vi_book::ui::command_line::run(&mut app, "buffers");
+    vi_book::ui::input::buffer_list_key(&mut app, ctrl('d'));
+    assert!(app.buffer_list.is_some(), "Ctrl-d keeps the list open");
+    let entries = app.buffer_list.as_ref().unwrap().filtered();
+    assert!(
+        entries.iter().all(|e| e.path != "b.md"),
+        "selected (previous) buffer is closed"
+    );
+    assert_eq!(
+        app.path, "a.md",
+        "closing a pooled buffer leaves active alone"
+    );
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn buffer_list_esc_closes() {
+    let root = temp_vault("blist-esc");
+    fs::write(root.join("a.md"), "A").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("a.md");
+
+    vi_book::ui::command_line::run(&mut app, "buffers");
+    vi_book::ui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Esc));
+    assert!(app.buffer_list.is_none());
 
     let _ = fs::remove_dir_all(&root);
 }

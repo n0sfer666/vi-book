@@ -62,6 +62,40 @@ pub fn panel_key(app: &mut App, key: Option<Key>) {
     }
 }
 
+pub fn buffer_list_key(app: &mut App, event: KeyEvent) {
+    let Some(list) = app.buffer_list.as_mut() else {
+        return;
+    };
+    match event_map::to_key(event) {
+        Some(Key::Esc) => app.buffer_list = None,
+        Some(Key::Enter) => {
+            let target = list.current().map(|e| e.idx);
+            app.buffer_list = None;
+            if let Some(idx) = target
+                && idx > 0
+            {
+                app.switch_to_buffer(idx - 1);
+            }
+        }
+        Some(Key::Ctrl('d')) => {
+            if let Some(idx) = list.current().map(|e| e.idx) {
+                app.close_buffer(idx);
+                let entries = app.named_buffers();
+                if entries.is_empty() {
+                    app.buffer_list = None;
+                } else if let Some(list) = app.buffer_list.as_mut() {
+                    list.rebuild(entries);
+                }
+            }
+        }
+        Some(Key::Backspace) => list.pop(),
+        Some(Key::Ctrl('n')) | Some(Key::Down) => list.move_down(),
+        Some(Key::Ctrl('p')) | Some(Key::Up) => list.move_up(),
+        Some(Key::Char(c)) => list.push(c),
+        _ => {}
+    }
+}
+
 pub fn picker_key(app: &mut App, event: KeyEvent) {
     let Some(picker) = app.picker.as_mut() else {
         return;

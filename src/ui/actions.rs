@@ -65,6 +65,7 @@ pub fn dispatch(app: &mut App, action: &str) {
     app.menu = None;
     match action {
         ":pick" => app.open_picker(),
+        ":buffers" => app.open_buffer_list(),
         ":newprompt" => app.command = Some("new ".to_string()),
         ":toggle-view" => toggle_view(app),
         ":help" => app.help = true,

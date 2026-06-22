@@ -11,6 +11,10 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         actions::help_key(app, key);
         return;
     }
+    if app.buffer_list.is_some() {
+        input::buffer_list_key(app, key);
+        return;
+    }
     if app.picker.is_some() {
         input::picker_key(app, key);
         return;

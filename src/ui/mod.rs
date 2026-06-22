@@ -1,6 +1,7 @@
 pub mod actions;
 pub mod app;
 pub mod buffer;
+pub mod buffer_list;
 pub mod clipboard;
 pub mod clock;
 pub mod command_line;
