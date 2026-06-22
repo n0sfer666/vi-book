@@ -1,12 +1,13 @@
-use ratatui::Terminal;
 use ratatui::backend::TestBackend;
+use ratatui::Terminal;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use vi_book::Editor;
 use vi_book::ui::app::App;
+use vi_book::ui::buffer_list::{BufferEntry, BufferList};
 use vi_book::ui::picker::Picker;
 use vi_book::ui::render;
+use vi_book::Editor;
 
 fn background() -> Editor {
     let line = "X".repeat(70);
@@ -72,6 +73,47 @@ fn picker_modal_is_opaque() {
     app.picker = Some(Picker::new(vec!["one".into(), "two".into()]));
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
+}
+
+#[test]
+fn buffer_list_modal_renders_markers_and_is_opaque() {
+    let mut app = App::new(background(), "a.md".into());
+    app.buffer_list = Some(BufferList::new(vec![
+        BufferEntry {
+            idx: 0,
+            path: "architecture.md".into(),
+            dirty: false,
+            current: true,
+        },
+        BufferEntry {
+            idx: 1,
+            path: "notes/arch.md".into(),
+            dirty: true,
+            current: false,
+        },
+        BufferEntry {
+            idx: 2,
+            path: "readme.md".into(),
+            dirty: false,
+            current: false,
+        },
+    ]));
+    let grid = render_app(&mut app);
+    assert_modal_is_opaque(&grid);
+    let joined = grid
+        .iter()
+        .map(|row| row.concat())
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        joined.contains("% architecture.md"),
+        "current buffer marker rendered"
+    );
+    assert!(
+        joined.contains("notes/arch.md [+]"),
+        "dirty buffer marker rendered"
+    );
+    assert!(joined.contains("readme.md"), "every buffer is listed");
 }
 
 #[test]
