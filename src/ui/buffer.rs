@@ -1,8 +1,50 @@
 use crate::ui::app::App;
 use crate::ui::buffer_list::{BufferEntry, BufferList};
+use crate::ui::plugin;
+use crate::ui::view::View;
 use crate::vim::editor::Editor;
 
 impl App {
+    pub fn load(&mut self, rel: &str) {
+        match Editor::open(self.session.absolute(rel)) {
+            Ok(mut editor) => {
+                editor.set_insert_escape(self.insert_escape.clone());
+                let old = self.take_active();
+                if !old.path.is_empty() {
+                    self.buffers.insert(0, old);
+                }
+                self.saved_text = editor.text();
+                self.editor = editor;
+                self.path = rel.to_string();
+                self.top = 0;
+                self.left = 0;
+                self.view = View::Read;
+                self.read_cursor = (0, 0);
+                self.read_cache = None;
+                self.picker = None;
+                self.menu = None;
+            }
+            Err(err) => self.message = format!("open failed: {err}"),
+        }
+    }
+
+    pub fn open_rel(&mut self, rel: &str) {
+        if self.path == rel {
+            return;
+        }
+        if let Some(idx) = self.buffers.iter().position(|p| p.path == rel) {
+            self.switch_to_buffer(idx);
+            plugin::fire(self, "note_open");
+            return;
+        }
+        self.load(rel);
+        if self.path == rel {
+            self.history.visit(rel);
+            plugin::fire(self, "note_open");
+            self.saved_text = self.editor.text();
+        }
+    }
+
     pub fn named_buffers(&self) -> Vec<BufferEntry> {
         let mut out = Vec::new();
         if !self.path.is_empty() {
