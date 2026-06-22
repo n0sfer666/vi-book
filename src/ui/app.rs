@@ -57,6 +57,7 @@ pub struct App {
     pub pending_ctrl_w: bool,
     pub code_editor: Option<String>,
     pub external_request: Option<std::path::PathBuf>,
+    pub url_request: Option<String>,
     pub read_select: Option<(crate::vim::mode::Mode, (usize, usize))>,
 }
 
@@ -120,6 +121,7 @@ impl App {
             pending_ctrl_w: false,
             code_editor: None,
             external_request: None,
+            url_request: None,
             read_select: None,
         }
     }
@@ -183,6 +185,9 @@ impl App {
                     self.message =
                         String::from("no editor set (vibook.opt.code_editor or $EDITOR)");
                 }
+            }
+            if let Some(url) = self.url_request.take() {
+                crate::ui::external::open_url(&url);
             }
             if self.quit {
                 return Ok(());

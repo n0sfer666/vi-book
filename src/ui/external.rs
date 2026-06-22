@@ -34,6 +34,17 @@ fn find_by_name(dir: &Path, name: &std::ffi::OsStr) -> Option<PathBuf> {
     dirs.iter().find_map(|d| find_by_name(d, name))
 }
 
+pub fn open_url(url: &str) {
+    let opener = if cfg!(target_os = "macos") {
+        "open"
+    } else if cfg!(target_os = "windows") {
+        "explorer"
+    } else {
+        "xdg-open"
+    };
+    let _ = Command::new(opener).arg(url).spawn();
+}
+
 pub fn run(terminal: &mut DefaultTerminal, editor: &str, path: &Path) -> io::Result<()> {
     let mut parts = editor.split_whitespace();
     let Some(program) = parts.next() else {
