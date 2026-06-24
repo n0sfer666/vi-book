@@ -97,6 +97,67 @@ fn ctrl(c: char) -> KeyEvent {
 }
 
 #[test]
+fn ctrl_o_i_navigate_through_buffers_without_reload() {
+    let root = temp_vault("hist-pool");
+    fs::write(root.join("a.md"), "A body").unwrap();
+    fs::write(root.join("b.md"), "B body").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("a.md");
+    app.open_rel("b.md");
+    app.editor.handle_keys("ix<Esc>");
+    let dirty = app.editor.text();
+    assert_ne!(dirty, "B body");
+
+    vi_book::ui::input::global_nav(&mut app, Some(vi_book::Key::Ctrl('o')));
+    assert_eq!(app.path, "a.md", "Ctrl-o switches back through the pool");
+    assert!(
+        app.buffers
+            .iter()
+            .any(|p| p.path == "b.md" && p.editor.text() == dirty),
+        "b.md is stashed dirty, not written or reloaded"
+    );
+
+    vi_book::ui::input::global_nav(&mut app, Some(vi_book::Key::Ctrl('i')));
+    assert_eq!(app.path, "b.md", "Ctrl-i switches forward through the pool");
+    assert_eq!(
+        app.editor.text(),
+        dirty,
+        "forward navigation reuses the buffer, never reloads from disk"
+    );
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn buffer_pool_is_global_across_split_focus_changes() {
+    let root = temp_vault("pool-splits");
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("b.md"), "B").unwrap();
+    fs::write(root.join("c.md"), "C").unwrap();
+    let mut app = three_buffer_app(&root);
+    app.open_rel("a.md");
+    app.open_rel("b.md");
+    let pool: Vec<String> = app.buffers.iter().map(|p| p.path.clone()).collect();
+    assert_eq!(pool, vec!["a.md"], "pool holds the previous buffer");
+
+    app.vsplit(Some("c.md"));
+    let after_split: Vec<String> = app.buffers.iter().map(|p| p.path.clone()).collect();
+    assert_eq!(
+        after_split, pool,
+        "splitting does not move the pool into the new pane"
+    );
+
+    app.focus_next();
+    let after_focus: Vec<String> = app.buffers.iter().map(|p| p.path.clone()).collect();
+    assert_eq!(
+        after_focus, pool,
+        "the pool stays global on App when focus moves between panes"
+    );
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
 fn buffers_command_opens_list_selecting_previous_buffer() {
     let root = temp_vault("blist-open");
     fs::write(root.join("a.md"), "A").unwrap();
