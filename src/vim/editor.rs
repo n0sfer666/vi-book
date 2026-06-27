@@ -8,7 +8,7 @@ use crate::core::transaction::Transaction;
 use crate::io::error::Error;
 use crate::io::file;
 use crate::vim::desired_col::DesiredCol;
-use crate::vim::key::{Key, parse_keys};
+use crate::vim::key::{parse_keys, Key};
 use crate::vim::mode::Mode;
 use crate::vim::pending::{Pending, Stage};
 use crate::vim::register::Registers;
@@ -88,12 +88,25 @@ impl Editor {
     }
 
     pub fn yank(&mut self, text: String, linewise: bool) {
+        self.set_unnamed(text, linewise);
+        self.registers.note_yank();
+    }
+
+    pub fn set_unnamed(&mut self, text: String, linewise: bool) {
         let content = if linewise {
             crate::vim::register::RegisterContent::linewise(text)
         } else {
             crate::vim::register::RegisterContent::charwise(text)
         };
         self.registers.write(None, content);
+    }
+
+    pub fn clip_yank_version(&self) -> u64 {
+        self.registers.yank_version()
+    }
+
+    pub fn pending_register(&self) -> Option<char> {
+        self.pending.register
     }
 
     pub fn yanked(&self) -> Option<String> {

@@ -61,6 +61,7 @@ pub struct App {
     pub external_request: Option<std::path::PathBuf>,
     pub url_request: Option<String>,
     pub read_select: Option<(crate::vim::mode::Mode, (usize, usize))>,
+    pub last_clip: String,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -127,6 +128,7 @@ impl App {
             external_request: None,
             url_request: None,
             read_select: None,
+            last_clip: String::new(),
         }
     }
 

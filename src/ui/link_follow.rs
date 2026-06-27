@@ -1,5 +1,7 @@
+use crate::ui::actions;
 use crate::ui::app::App;
 use crate::ui::external;
+use crate::ui::help;
 use crate::ui::plugin;
 use crate::vault::follow::{follow, Follow};
 use crate::vault::link::Link;
@@ -32,6 +34,9 @@ fn follow_wiki(app: &mut App, link: &Link) {
 }
 
 fn follow_path(app: &mut App, target: &str) {
+    if open_bundled(app, target) {
+        return;
+    }
     let Some(rel) = resolve(app, target) else {
         return;
     };
@@ -39,6 +44,19 @@ fn follow_path(app: &mut App, target: &str) {
         return;
     }
     app.open_rel(&rel);
+}
+
+fn open_bundled(app: &mut App, target: &str) -> bool {
+    if help::bundled_doc(&app.path).is_none() {
+        return false;
+    }
+    match help::bundled_doc(target) {
+        Some(content) => {
+            actions::open_doc(app, target, content);
+            true
+        }
+        None => false,
+    }
 }
 
 fn resolve(app: &App, target: &str) -> Option<String> {

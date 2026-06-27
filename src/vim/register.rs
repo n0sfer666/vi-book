@@ -26,6 +26,7 @@ impl RegisterContent {
 pub struct Registers {
     unnamed: RegisterContent,
     named: HashMap<char, RegisterContent>,
+    yank_version: u64,
 }
 
 impl Registers {
@@ -34,6 +35,14 @@ impl Registers {
             self.named.insert(name, content.clone());
         }
         self.unnamed = content;
+    }
+
+    pub fn note_yank(&mut self) {
+        self.yank_version += 1;
+    }
+
+    pub fn yank_version(&self) -> u64 {
+        self.yank_version
     }
 
     pub fn read(&self, name: Option<char>) -> Option<&RegisterContent> {

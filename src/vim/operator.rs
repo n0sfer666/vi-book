@@ -35,6 +35,9 @@ pub fn apply(ed: &mut Editor, op: Operator, target: OpTarget) {
             right,
         } => block(ed, op, first, last, left, right),
     }
+    if op == Operator::Yank {
+        ed.registers.note_yank();
+    }
     ed.pending.reset();
     ed.sync_desired();
 }

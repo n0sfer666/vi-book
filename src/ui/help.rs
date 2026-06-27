@@ -1,5 +1,17 @@
 pub const MANUAL: &str = include_str!("../../docs/manual.md");
 pub const DEVELOPERS: &str = include_str!("../../docs/developers.md");
+pub const PLUGIN_DEV: &str = include_str!("../../docs/plugin-development.md");
+pub const PLUGIN_DEV_RU: &str = include_str!("../../docs/plugin-development.ru.md");
+
+pub fn bundled_doc(name: &str) -> Option<&'static str> {
+    match name {
+        "manual.md" => Some(MANUAL),
+        "developers.md" => Some(DEVELOPERS),
+        "plugin-development.md" => Some(PLUGIN_DEV),
+        "plugin-development.ru.md" => Some(PLUGIN_DEV_RU),
+        _ => None,
+    }
+}
 
 pub const BINDINGS: &[(&str, &str)] = &[
     ("<Space>", "open the menu (leader)"),

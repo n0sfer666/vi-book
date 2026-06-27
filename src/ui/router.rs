@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::ui::app::App;
 use crate::ui::view::View;
-use crate::ui::{actions, command_line, event_map, input, layout, plugin, read_view};
+use crate::ui::{actions, clip_sync, command_line, event_map, input, layout, plugin, read_view};
 use crate::vim::key::Key;
 
 pub fn handle(app: &mut App, key: KeyEvent) {
@@ -76,7 +76,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         return;
     }
     if let Some(key) = mapped {
-        app.editor.handle_key(key);
+        clip_sync::editor_key(app, key);
     }
 }
 

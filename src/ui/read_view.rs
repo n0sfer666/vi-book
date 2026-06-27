@@ -15,7 +15,7 @@ use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
-use crate::ui::{clipboard, event_map, hscroll, read_motion};
+use crate::ui::{clip_sync, event_map, hscroll, read_motion};
 use crate::vim::key::Key;
 use crate::vim::mode::Mode;
 use crate::vim::visual;
@@ -68,7 +68,7 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     }
     if delegates_to_edit(key) {
         leave(app, width);
-        app.editor.handle_key(key);
+        clip_sync::editor_key(app, key);
         return;
     }
     let rendered = cached_render(app, width);
@@ -103,8 +103,8 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
                 app.editor.set_cursor_index(idx);
             }
             if let Some(code) = code_block_at(&app.editor.text(), app.editor.cursor().line) {
-                clipboard::copy(&code);
                 app.editor.yank(code, false);
+                clip_sync::sync_out(app);
                 app.message = String::from("copied code block to clipboard");
             } else {
                 crate::ui::link_follow::follow_at_cursor(app);
@@ -187,8 +187,8 @@ fn yank_selection(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some((mode, anchor)) = app.read_select {
         let text = selected_text(&rendered, mode, anchor, app.read_cursor);
-        clipboard::copy(&text);
         app.editor.yank(text, mode == Mode::VisualLine);
+        clip_sync::sync_out(app);
         app.read_select = None;
         app.message = String::from("copied to clipboard");
     }
@@ -198,8 +198,8 @@ fn yank_line(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some(line) = rendered.lines.get(app.read_cursor.0) {
         let text = line.text();
-        clipboard::copy(&text);
         app.editor.yank(format!("{text}\n"), true);
+        clip_sync::sync_out(app);
         app.message = String::from("copied line to clipboard");
     }
 }

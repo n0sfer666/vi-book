@@ -29,8 +29,15 @@ pub fn osc52(text: &str) -> String {
     format!("\x1b]52;c;{}\x07", base64(text.as_bytes()))
 }
 
-pub fn copy(text: &str) {
+pub fn set(text: &str) {
     let mut stdout = std::io::stdout();
     let _ = stdout.write_all(osc52(text).as_bytes());
     let _ = stdout.flush();
+    if let Ok(mut clipboard) = arboard::Clipboard::new() {
+        let _ = clipboard.set_text(text);
+    }
+}
+
+pub fn get() -> Option<String> {
+    arboard::Clipboard::new().ok()?.get_text().ok()
 }
