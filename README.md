@@ -26,7 +26,9 @@ best rendering of code blocks and glyphs.
 - `<Space>` opens the **menu** (leader); `F1` / `?` open **help** (which then
   reveals the full manual / developer guide).
 - `h j k l` or **arrows** move; `w`/`b`/`e` words; `W`/`B` blocks; `gg`/`G` ends.
-- `<C-p>` fuzzy-find, `<CR>` follow `[[link]]`, `<C-o>/<C-i>` history.
+- `<C-p>` fuzzy-find, `<CR>` follow `[[link]]` / `[md](link)` / URL, `<C-o>/<C-i>` history.
+- `y` copies to the system clipboard; `p` pastes the newer of vi-book's register
+  and the system clipboard (so you can paste from other apps).
 - `<C-w>` is the window prefix: `<C-w> w` cycles split focus, `<C-w> p` focuses
   the side panel, `<C-w> s`/`v` splits, `<C-w> o` keeps only the active column.
 - `:w :q :tree :backlinks :today :new <name>` and `:vsplit [file] :only` commands.

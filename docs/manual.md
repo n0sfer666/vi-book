@@ -93,6 +93,8 @@ copying*).
 - `<CR>` on a `[[link]]` — follow it. If several notes match, a picker opens.
   A link to a **code file** (e.g. `[[main.rs]]`) opens in your external editor
   (`vibook.opt.code_editor`, falling back to `$EDITOR`).
+- `<CR>` also follows a standard `[text](file.md)` markdown link and a bare URL
+  (URLs open in your browser) — in both **read** and **edit** mode.
 
 ## Selecting and copying
 
@@ -103,11 +105,13 @@ In **read** mode you can select and copy without leaving the rendered view:
 - `y` — copy the selection; `Y` — copy the current line.
 - `Enter` on a fenced **code block** copies the whole block.
 
-Copied text goes to your **system clipboard** (via OSC 52, so it works over SSH
-too) and to vi-book's own register, so you can also paste it with `p` in edit
-mode. A status message confirms the copy. (OSC 52 must be enabled in your
-terminal; most modern terminals support it, and tmux needs `set -g set-clipboard
-on`.)
+Yanking — `y`/`Y` here, and `y`, `yy`, visual `y` in edit mode — copies to your
+**system clipboard** (locally via the OS clipboard, and over SSH via OSC 52) as
+well as to vi-book's own register. Conversely, `p`/`P` paste whichever is
+**newer**: vi-book's register or the system clipboard, so you can paste text you
+copied in another app. A status message confirms the copy. (For the OSC 52 path,
+your terminal must allow it; most modern terminals do, and tmux needs `set -g
+set-clipboard on`.)
 
 Editing keys (`d`, `c`, `x`, `p`, `o`, `a`, …) drop into edit mode at the same
 spot, so the document still feels like one buffer.

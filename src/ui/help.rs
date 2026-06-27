@@ -24,7 +24,10 @@ pub const BINDINGS: &[(&str, &str)] = &[
     ("W / B", "next / previous block (heading, paragraph, item)"),
     ("gg / G", "top / bottom"),
     ("<C-p>", "find note (fuzzy)"),
-    ("<CR>", "follow [[link]] under cursor"),
+    (
+        "<CR>",
+        "follow link under cursor ([[wiki]], [md](link), URL)",
+    ),
     ("<C-w>", "focus side panel"),
     ("<C-o> / <C-i>", "jump back / forward"),
     (":w :q :wq", "write / quit"),
