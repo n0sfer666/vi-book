@@ -47,7 +47,7 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn leader(extra: Vec<MenuItem>, center: bool, wrap: WrapMode) -> Self {
+    pub fn leader(extra: Vec<MenuItem>, center: bool, wrap: WrapMode, scan_hidden: bool) -> Self {
         let mut items = vec![
             MenuItem::new('f', "Find note", ":pick"),
             MenuItem::new(' ', "Buffers", ":buffers"),
@@ -57,7 +57,7 @@ impl Menu {
             MenuItem::new('b', "Backlinks", ":backlinks"),
             MenuItem::new('d', "Today's note", ":today"),
             MenuItem::new('w', "Write", ":w"),
-            MenuItem::submenu('s', "Settings", settings(wrap)),
+            MenuItem::submenu('s', "Settings", settings(wrap, scan_hidden)),
             MenuItem::new('?', "Help", ":help"),
             MenuItem::new('q', "Quit", ":q"),
         ];
@@ -138,8 +138,20 @@ impl Menu {
     }
 }
 
-fn settings(wrap: WrapMode) -> Vec<MenuItem> {
-    vec![MenuItem::submenu('w', "Wrap", wrap_choices(wrap))]
+fn settings(wrap: WrapMode, scan_hidden: bool) -> Vec<MenuItem> {
+    vec![
+        MenuItem::submenu('w', "Wrap", wrap_choices(wrap)),
+        scan_hidden_choice(scan_hidden),
+    ]
+}
+
+fn scan_hidden_choice(on: bool) -> MenuItem {
+    let mark = if on { "\u{25cf} " } else { "  " };
+    MenuItem::leaf(
+        'h',
+        format!("{mark}Scan hidden folders"),
+        String::from(":scan-hidden toggle"),
+    )
 }
 
 fn wrap_choices(wrap: WrapMode) -> Vec<MenuItem> {

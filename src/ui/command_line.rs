@@ -62,6 +62,8 @@ pub fn run(app: &mut App, command: &str) {
                 create_note(app, name);
             } else if let Some(mode) = other.strip_prefix("wrap ") {
                 set_wrap(app, mode.trim());
+            } else if let Some(arg) = other.strip_prefix("scan-hidden ") {
+                set_scan_hidden(app, arg.trim());
             } else if !plugin::run_command(app, other) {
                 app.message = format!("not an editor command: {other}");
             }
@@ -77,6 +79,27 @@ fn set_wrap(app: &mut App, mode: &str) {
             app.message = format!("wrap: {mode}");
         }
         None => app.message = format!("unknown wrap mode: {mode} (none|text|all)"),
+    }
+}
+
+fn set_scan_hidden(app: &mut App, arg: &str) {
+    let value = match arg {
+        "on" => true,
+        "off" => false,
+        "toggle" => !app.session.scan_hidden,
+        _ => {
+            app.message = String::from("scan-hidden: on|off|toggle");
+            return;
+        }
+    };
+    app.session.scan_hidden = value;
+    let state = if value { "on" } else { "off" };
+    match app.session.reindex() {
+        Ok(()) => {
+            plugin::sync_vault_host(app);
+            app.message = format!("scan hidden folders: {state}");
+        }
+        Err(err) => app.message = format!("reindex failed: {err}"),
     }
 }
 

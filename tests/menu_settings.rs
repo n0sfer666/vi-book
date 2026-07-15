@@ -33,6 +33,44 @@ fn settings_wrap_text_and_none() {
     assert_eq!(a.wrap, WrapMode::Text);
 }
 
+fn empty_root() -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("vi-book-menu-hidden-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    dir
+}
+
+#[test]
+fn settings_scan_hidden_toggles_session_flag() {
+    let mut a = app();
+    a.session.root = empty_root();
+    assert!(!a.session.scan_hidden);
+    actions::open_menu(&mut a);
+    press(&mut a, 's');
+    press(&mut a, 'h');
+    assert!(a.session.scan_hidden, "menu toggles scan-hidden on");
+    assert!(a.menu.is_none(), "menu closes after the toggle");
+}
+
+#[test]
+fn scan_hidden_state_is_marked_in_menu() {
+    let mut a = app();
+    a.session.scan_hidden = true;
+    actions::open_menu(&mut a);
+    press(&mut a, 's');
+    let menu = a.menu.as_ref().unwrap();
+    let item = menu
+        .items
+        .iter()
+        .find(|i| i.action == ":scan-hidden toggle")
+        .expect("scan hidden item");
+    assert!(
+        item.label.contains('\u{25cf}'),
+        "active state marked, got: {:?}",
+        item.label
+    );
+}
+
 #[test]
 fn esc_steps_back_through_levels_then_closes() {
     let mut a = app();

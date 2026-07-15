@@ -1,6 +1,7 @@
 use ratatui::backend::TestBackend;
 use ratatui::Terminal;
 
+use vi_book::markdown::wrap_mode::WrapMode;
 use vi_book::ui::app::App;
 use vi_book::ui::view::View;
 use vi_book::Editor;
@@ -22,6 +23,7 @@ fn draw_row0(app: &mut App, w: u16) -> String {
 fn read_app() -> App {
     let mut app = App::new(Editor::new(LINE), "a.md".into());
     app.view = View::Read;
+    app.wrap = WrapMode::None;
     app
 }
 

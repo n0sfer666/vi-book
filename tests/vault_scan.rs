@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use vi_book::vault::cache::{self, Cache, Entry};
 use vi_book::vault::note::Note;
-use vi_book::vault::scan::scan;
+use vi_book::vault::scan::{scan, scan_with};
 
 struct TempVault {
     root: PathBuf,
@@ -54,6 +54,26 @@ fn scan_skips_hidden_directories() {
     vault.write(".git/b.md", "x");
     vault.write(".obsidian/c.md", "x");
     assert_eq!(paths(&scan(&vault.root).unwrap()), vec!["a.md"]);
+}
+
+#[test]
+fn scan_with_hidden_includes_dot_directories() {
+    let vault = TempVault::new("with-hidden");
+    vault.write("a.md", "x");
+    vault.write(".obsidian/c.md", "x");
+    vault.write(".git/b.md", "x");
+    assert_eq!(
+        paths(&scan_with(&vault.root, true).unwrap()),
+        vec![".git/b.md", ".obsidian/c.md", "a.md"]
+    );
+}
+
+#[test]
+fn scan_defaults_to_skipping_hidden() {
+    let vault = TempVault::new("default-skip");
+    vault.write("a.md", "x");
+    vault.write(".hidden/b.md", "x");
+    assert_eq!(paths(&scan_with(&vault.root, false).unwrap()), vec!["a.md"]);
 }
 
 #[test]

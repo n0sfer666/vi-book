@@ -112,7 +112,7 @@ impl App {
             firing: false,
             normal_maps: HashMap::new(),
             read_cache: None,
-            wrap: WrapMode::None,
+            wrap: WrapMode::All,
             menu: None,
             help: false,
             leader: ' ',

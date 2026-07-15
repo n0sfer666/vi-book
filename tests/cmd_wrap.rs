@@ -8,8 +8,8 @@ fn app() -> App {
 }
 
 #[test]
-fn wrap_default_is_none() {
-    assert_eq!(app().wrap, WrapMode::None);
+fn wrap_default_is_all() {
+    assert_eq!(app().wrap, WrapMode::All);
 }
 
 #[test]

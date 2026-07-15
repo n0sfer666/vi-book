@@ -10,7 +10,7 @@ fn cached_render_matches_direct_render() {
     let cached = cached_render(&mut app, 40);
     assert_eq!(
         cached.text(),
-        render_with("# Title\n\ntext", 40, WrapMode::None).text()
+        render_with("# Title\n\ntext", 40, WrapMode::All).text()
     );
 }
 
@@ -20,14 +20,14 @@ fn cache_reflects_buffer_changes() {
     let first = cached_render(&mut app, 40);
     assert_eq!(
         first.text(),
-        render_with("# Title", 40, WrapMode::None).text()
+        render_with("# Title", 40, WrapMode::All).text()
     );
 
     app.editor.replace_all("## Other");
     let second = cached_render(&mut app, 40);
     assert_eq!(
         second.text(),
-        render_with("## Other", 40, WrapMode::None).text()
+        render_with("## Other", 40, WrapMode::All).text()
     );
 }
 
@@ -44,6 +44,7 @@ fn cache_reflects_width_changes() {
 #[test]
 fn cache_reflects_wrap_mode_changes() {
     let mut app = App::new(Editor::new("aaa bbb ccc"), "a.md".into());
+    app.wrap = WrapMode::None;
     let none = cached_render(&mut app, 7).text();
     app.wrap = WrapMode::All;
     let all = cached_render(&mut app, 7).text();

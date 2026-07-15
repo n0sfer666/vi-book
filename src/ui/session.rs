@@ -2,11 +2,12 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use crate::vault::index::Index;
-use crate::vault::scan::scan;
+use crate::vault::scan::{scan, scan_with};
 
 pub struct Session {
     pub root: PathBuf,
     pub index: Index,
+    pub scan_hidden: bool,
 }
 
 impl Session {
@@ -14,6 +15,7 @@ impl Session {
         Self {
             root: PathBuf::from("."),
             index: Index::from_notes(Vec::new()),
+            scan_hidden: false,
         }
     }
 
@@ -32,13 +34,17 @@ impl Session {
             None => (std::env::current_dir()?, None),
         };
         let index = Index::from_notes(scan(&root)?);
-        let session = Self { root, index };
+        let session = Self {
+            root,
+            index,
+            scan_hidden: false,
+        };
         let rel = file.as_deref().map(|f| session.relativize(f));
         Ok((session, rel))
     }
 
     pub fn reindex(&mut self) -> io::Result<()> {
-        self.index = Index::from_notes(scan(&self.root)?);
+        self.index = Index::from_notes(scan_with(&self.root, self.scan_hidden)?);
         Ok(())
     }
 

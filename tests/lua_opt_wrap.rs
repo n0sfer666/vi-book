@@ -27,6 +27,6 @@ fn opt_wrap_text_sets_app_wrap() {
 }
 
 #[test]
-fn opt_wrap_absent_keeps_none() {
-    assert_eq!(app_with_opt("vibook.opt.leader = ','").wrap, WrapMode::None);
+fn opt_wrap_absent_keeps_default_all() {
+    assert_eq!(app_with_opt("vibook.opt.leader = ','").wrap, WrapMode::All);
 }

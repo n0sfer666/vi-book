@@ -98,6 +98,13 @@ pub fn apply_opts(app: &mut App) {
     if let Some(wrap) = host.opt_string("wrap").and_then(|s| WrapMode::parse(&s)) {
         app.wrap = wrap;
     }
+    if let Some(hidden) = host.opt_bool("scan_hidden")
+        && hidden != app.session.scan_hidden
+    {
+        app.session.scan_hidden = hidden;
+        let _ = app.session.reindex();
+        host.set_vault(app.session.items(), app.session.index.tags());
+    }
     if let Some(leader) = host.opt_string("leader").and_then(|s| s.chars().next()) {
         app.leader = leader;
     }
@@ -114,6 +121,12 @@ pub fn apply_opts(app: &mut App) {
         .map(|(key, label, action)| MenuItem::leaf(key.chars().next().unwrap_or(' '), label, action))
         .collect();
     apply_colors(app);
+}
+
+pub fn sync_vault_host(app: &App) {
+    if let Some(host) = &app.host {
+        host.set_vault(app.session.items(), app.session.index.tags());
+    }
 }
 
 fn apply_colors(app: &mut App) {

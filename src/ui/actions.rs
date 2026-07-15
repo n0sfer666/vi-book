@@ -12,6 +12,7 @@ pub fn open_menu(app: &mut App) {
         app.menu_extra.clone(),
         app.menu_center,
         app.wrap,
+        app.session.scan_hidden,
     ));
 }
 
