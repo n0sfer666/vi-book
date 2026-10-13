@@ -4,13 +4,13 @@ use std::path::PathBuf;
 use ratatui::style::Color;
 
 use crate::lua::host::PluginHost;
-use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::command_line;
 use crate::ui::config_path;
 use crate::ui::menu::MenuItem;
 use crate::ui::theme::{self, Face};
 use v_ide_keys::key::parse_keys;
+use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn install_keymaps(app: &mut App) {
     let Some(host) = &app.host else {

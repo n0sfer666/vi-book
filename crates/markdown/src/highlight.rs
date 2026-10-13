@@ -2,9 +2,9 @@ use std::ops::Range;
 
 use tree_sitter::Node;
 
-use crate::markdown::extract::extract;
-use crate::markdown::parser;
-use crate::markdown::style::{SourceSpan, Style};
+use crate::extract::extract;
+use crate::parser;
+use crate::style::{SourceSpan, Style};
 
 pub fn highlight(source: &str) -> Vec<Vec<SourceSpan>> {
     let mut intervals: Vec<(Range<usize>, Style)> = Vec::new();

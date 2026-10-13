@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ratatui::style::{Color, Modifier, Style as TuiStyle};
 
-use crate::markdown::style::{CodeToken, Style};
+use v_ide_markdown::style::{CodeToken, Style};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Face {

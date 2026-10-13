@@ -1,13 +1,13 @@
 use tree_sitter::Node;
 use tree_sitter_md::MarkdownTree;
 
-use crate::markdown::atom::{Atom, split_lines, split_lines_trimmed};
-use crate::markdown::extract::extract;
-use crate::markdown::facts::NoteFacts;
-use crate::markdown::parser::child_of_kind as child;
-use crate::markdown::style::Style;
-use crate::markdown::table::{self, TableRow};
-use crate::markdown::{inline, parser, syntax};
+use crate::atom::{Atom, split_lines, split_lines_trimmed};
+use crate::extract::extract;
+use crate::facts::NoteFacts;
+use crate::parser::child_of_kind as child;
+use crate::style::Style;
+use crate::table::{self, TableRow};
+use crate::{inline, parser, syntax};
 
 pub struct Block {
     pub start_line: usize,

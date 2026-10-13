@@ -1,7 +1,7 @@
 use tree_sitter::Language;
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter};
 
-use crate::markdown::style::CodeToken;
+use crate::style::CodeToken;
 
 const NAMES: &[(&str, CodeToken)] = &[
     ("keyword", CodeToken::Keyword),

@@ -2,10 +2,10 @@ use std::fs;
 
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::panel::Panel;
 use crate::ui::{actions, daily_cmd, plugin};
+use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn handle(app: &mut App, event: KeyEvent) {
     let Some(command) = app.command.as_mut() else {

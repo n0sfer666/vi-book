@@ -3,10 +3,10 @@ use std::ops::Range;
 use tree_sitter::Node;
 use tree_sitter_md::MarkdownTree;
 
-use crate::markdown::atom::{Atom, Src};
-use crate::markdown::facts::NoteFacts;
-use crate::markdown::parser::{self, child_of_kind};
-use crate::markdown::style::Style;
+use crate::atom::{Atom, Src};
+use crate::facts::NoteFacts;
+use crate::parser::{self, child_of_kind};
+use crate::style::Style;
 
 struct Plan {
     styles: Vec<(Range<usize>, Style)>,

@@ -1,5 +1,5 @@
-use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::list_nav;
+use v_ide_markdown::wrap_mode::WrapMode;
 
 #[derive(Clone)]
 pub struct MenuItem {

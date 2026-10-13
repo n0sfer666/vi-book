@@ -1,6 +1,6 @@
-use crate::markdown::extract::extract;
 use crate::vault::index::{Index, Resolution};
 use crate::vault::link::{self, Link};
+use v_ide_markdown::extract::extract;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Follow {

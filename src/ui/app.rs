@@ -6,8 +6,6 @@ use ratatui::DefaultTerminal;
 use ratatui::layout::Rect;
 
 use crate::lua::host::PluginHost;
-use crate::markdown::rendered::Rendered;
-use crate::markdown::wrap_mode::WrapMode;
 use crate::notebook::date::Date;
 use crate::notebook::history::History;
 use crate::ui::menu::{Menu, MenuItem};
@@ -20,6 +18,8 @@ use crate::ui::{plugin, render, router};
 use v_ide_engine::editor::Editor;
 use v_ide_engine::io::error::Error;
 use v_ide_keys::key::Key;
+use v_ide_markdown::rendered::Rendered;
+use v_ide_markdown::wrap_mode::WrapMode;
 
 pub struct App {
     pub editor: Editor,

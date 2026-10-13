@@ -4,15 +4,15 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
 
-use crate::markdown::highlight::highlight;
-use crate::markdown::render::render_with;
-use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::pane::Pane;
 use crate::ui::read_view::read_lines;
 use crate::ui::render::styled_line;
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
+use v_ide_markdown::highlight::highlight;
+use v_ide_markdown::render::render_with;
+use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn split_rects(area: Rect, n: usize) -> Vec<Rect> {
     let n = n.max(1) as u16;

@@ -1,4 +1,4 @@
-use crate::markdown::blocks::BlockKind;
+use crate::blocks::BlockKind;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum WrapMode {

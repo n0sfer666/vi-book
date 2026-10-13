@@ -1,11 +1,11 @@
-use crate::markdown::atom::{Atom, split_lines};
-use crate::markdown::blocks::{self, Block, BlockKind, ListItem};
-use crate::markdown::render_block::{frame_rule, table};
-use crate::markdown::rendered::{Rendered, RenderedLine};
-use crate::markdown::style::{Span, Style};
-use crate::markdown::width::{atoms_width, split_by_width};
-use crate::markdown::wrap;
-use crate::markdown::wrap_mode::WrapMode;
+use crate::atom::{Atom, split_lines};
+use crate::blocks::{self, Block, BlockKind, ListItem};
+use crate::render_block::{frame_rule, table};
+use crate::rendered::{Rendered, RenderedLine};
+use crate::style::{Span, Style};
+use crate::width::{atoms_width, split_by_width};
+use crate::wrap;
+use crate::wrap_mode::WrapMode;
 
 pub fn render(source: &str, width: usize) -> Rendered {
     render_with(source, width, WrapMode::All)

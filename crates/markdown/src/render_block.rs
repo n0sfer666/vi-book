@@ -1,8 +1,8 @@
-use crate::markdown::rendered::RenderedLine;
-use crate::markdown::style::{Span, Style};
-use crate::markdown::table::TableRow;
-use crate::markdown::width::atoms_width;
-use crate::markdown::wrap;
+use crate::rendered::RenderedLine;
+use crate::style::{Span, Style};
+use crate::table::TableRow;
+use crate::width::atoms_width;
+use crate::wrap;
 
 pub(crate) fn frame_rule(left: &str, right: &str, width: usize) -> Span {
     Span::decoration(

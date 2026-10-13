@@ -1,5 +1,5 @@
-use crate::markdown::facts::{NoteFacts, Tag, WikiLink};
-use crate::markdown::{frontmatter_scan, parser};
+use crate::facts::{NoteFacts, Tag, WikiLink};
+use crate::{frontmatter_scan, parser};
 
 pub fn extract(source: &str) -> NoteFacts {
     let frontmatter = frontmatter_scan::scan(source);

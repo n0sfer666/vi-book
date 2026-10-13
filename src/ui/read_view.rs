@@ -7,9 +7,6 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
 
-use crate::markdown::blocks::{self, BlockKind};
-use crate::markdown::render::render_with;
-use crate::markdown::rendered::{Rendered, RenderedLine};
 use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
@@ -18,6 +15,9 @@ use crate::ui::{clip_sync, event_map, hscroll, read_motion};
 use v_ide_engine::mode::Mode;
 use v_ide_engine::visual;
 use v_ide_keys::key::Key;
+use v_ide_markdown::blocks::{self, BlockKind};
+use v_ide_markdown::render::render_with;
+use v_ide_markdown::rendered::{Rendered, RenderedLine};
 use v_ide_text::position::Position;
 
 type Select = (Mode, (usize, usize), (usize, usize));

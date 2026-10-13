@@ -4,14 +4,14 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
 
-use crate::markdown::highlight::highlight;
-use crate::markdown::style::SourceSpan;
 use crate::ui::app::App;
 use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
 use crate::ui::{hscroll, overlay, read_view, split};
 use v_ide_engine::mode::Mode;
+use v_ide_markdown::highlight::highlight;
+use v_ide_markdown::style::SourceSpan;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
     let [body, status_area, message_area] = Layout::vertical([

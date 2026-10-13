@@ -1,8 +1,8 @@
 use tree_sitter::Node;
 
-use crate::markdown::atom::Atom;
-use crate::markdown::style::Style;
-use crate::markdown::{inline, parser};
+use crate::atom::Atom;
+use crate::style::Style;
+use crate::{inline, parser};
 
 pub struct TableRow {
     pub cells: Vec<Vec<Atom>>,

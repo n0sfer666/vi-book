@@ -1,6 +1,6 @@
-use crate::markdown::atom::{Atom, Src, split_lines};
-use crate::markdown::style::Span;
-use crate::markdown::width::{atoms_width, split_by_width};
+use crate::atom::{Atom, Src, split_lines};
+use crate::style::Span;
+use crate::width::{atoms_width, split_by_width};
 
 pub fn wrap(atoms: &[Atom], width: usize) -> Vec<Vec<Atom>> {
     let mut lines = Vec::new();

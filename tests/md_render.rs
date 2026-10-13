@@ -1,6 +1,6 @@
 use insta::assert_snapshot;
-use v_ide::markdown::render::render;
-use v_ide::markdown::style::Style;
+use v_ide_markdown::render::render;
+use v_ide_markdown::style::Style;
 
 #[test]
 fn paragraph_wraps_by_words() {

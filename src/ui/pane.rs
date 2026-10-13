@@ -1,8 +1,8 @@
-use crate::markdown::rendered::Rendered;
-use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::view::View;
 use v_ide_engine::editor::Editor;
+use v_ide_markdown::rendered::Rendered;
+use v_ide_markdown::wrap_mode::WrapMode;
 
 const MAX_PANES: usize = 3;
 

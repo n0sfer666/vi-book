@@ -1,6 +1,6 @@
 use unicode_width::UnicodeWidthChar;
 
-use crate::markdown::atom::Atom;
+use crate::atom::Atom;
 
 pub fn char_width(c: char) -> usize {
     UnicodeWidthChar::width(c).unwrap_or(0)

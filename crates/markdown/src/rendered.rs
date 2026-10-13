@@ -1,4 +1,4 @@
-use crate::markdown::style::Span;
+use crate::style::Span;
 
 #[derive(Debug, Clone, Default)]
 pub struct RenderedLine {

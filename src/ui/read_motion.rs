@@ -1,4 +1,4 @@
-use crate::markdown::rendered::Rendered;
+use v_ide_markdown::rendered::Rendered;
 use v_ide_text::buffer::Buffer;
 
 type Pos = (usize, usize);

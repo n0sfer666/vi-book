@@ -1,4 +1,4 @@
-use crate::markdown::style::Style;
+use crate::style::Style;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Src {

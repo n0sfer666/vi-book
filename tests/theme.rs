@@ -1,6 +1,6 @@
 use ratatui::style::{Color, Modifier};
-use v_ide::markdown::style::Style;
 use v_ide::ui::theme::{Face, Theme};
+use v_ide_markdown::style::Style;
 
 #[test]
 fn default_theme_covers_every_style() {

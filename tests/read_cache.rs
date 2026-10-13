@@ -1,8 +1,8 @@
-use v_ide::markdown::render::{render, render_with};
-use v_ide::markdown::wrap_mode::WrapMode;
 use v_ide::ui::app::App;
 use v_ide::ui::read_view::cached_render;
 use v_ide_engine::editor::Editor;
+use v_ide_markdown::render::{render, render_with};
+use v_ide_markdown::wrap_mode::WrapMode;
 
 #[test]
 fn cached_render_matches_direct_render() {

@@ -1,5 +1,5 @@
-use v_ide::markdown::extract::extract;
-use v_ide::markdown::facts::{Tag, WikiLink};
+use v_ide_markdown::extract::extract;
+use v_ide_markdown::facts::{Tag, WikiLink};
 
 fn link(name: &str, start: usize, end: usize) -> WikiLink {
     WikiLink {

@@ -24,7 +24,7 @@ fn enter_on_a_code_block_copies_it() {
     let src = "# Title\n\n```rust\nfn main() {}\n```\n";
     let mut app = App::new(Editor::new(src), "a.md".into());
     app.view = View::Read;
-    let rendered = v_ide::markdown::render::render(src, 80);
+    let rendered = v_ide_markdown::render::render(src, 80);
     let line = rendered
         .lines
         .iter()

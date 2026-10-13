@@ -1,4 +1,4 @@
-use crate::markdown::facts::Frontmatter;
+use crate::facts::Frontmatter;
 
 pub fn scan(source: &str) -> Option<Frontmatter> {
     let mut lines = source.split_inclusive('\n');
