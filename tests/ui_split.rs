@@ -71,11 +71,11 @@ fn editing_active_pane_does_not_touch_others() {
 fn focus_next_cycles_through_panes() {
     let mut app = App::new(common::named_doc("one", "a.md"));
     app.vsplit(None);
-    app.active = 0;
+    assert_eq!(app.workspace.active_index(), 1);
     app.focus_next();
-    assert_eq!(app.active, 1);
+    assert_eq!(app.workspace.active_index(), 0);
     app.focus_next();
-    assert_eq!(app.active, 0);
+    assert_eq!(app.workspace.active_index(), 1);
 }
 
 #[test]
@@ -106,5 +106,5 @@ fn only_collapses_to_a_single_pane() {
     assert_eq!(app.pane_count(), 3);
     app.only();
     assert_eq!(app.pane_count(), 1);
-    assert_eq!(app.active, 0);
+    assert_eq!(app.workspace.active_index(), 0);
 }

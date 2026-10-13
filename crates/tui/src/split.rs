@@ -5,11 +5,12 @@ use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
 
 use crate::layout::{column_width, text_column};
-use crate::pane::Pane;
+use crate::read_state::ReadState;
 use crate::read_view::read_lines;
 use crate::render::styled_line;
 use crate::theme::Theme;
 use crate::view::View;
+use v_ide_editor::document::Document;
 use v_ide_markdown::highlight::highlight;
 use v_ide_markdown::render::render_with;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -55,19 +56,26 @@ pub fn draw_divider(frame: &mut Frame, area: Rect, x: u16) {
     );
 }
 
-pub fn draw_pane(frame: &mut Frame, theme: &Theme, pane: &Pane, area: Rect, wrap: WrapMode) {
+pub fn draw_pane(
+    frame: &mut Frame,
+    theme: &Theme,
+    doc: &Document,
+    state: &ReadState,
+    area: Rect,
+    wrap: WrapMode,
+) {
     let height = area.height as usize;
-    let lines = match pane.state.view {
+    let lines = match state.view {
         View::Read => {
-            let rendered = render_with(&pane.buf.doc.editor.text(), column_width(area), wrap);
-            read_lines(&rendered, pane.state.top, height, theme, None)
+            let rendered = render_with(&doc.editor.text(), column_width(area), wrap);
+            read_lines(&rendered, state.top, height, theme, None)
         }
         View::Edit => {
-            let text = pane.buf.doc.editor.text();
+            let text = doc.editor.text();
             let highlights = highlight(&text);
             text.split('\n')
                 .enumerate()
-                .skip(pane.state.top)
+                .skip(state.top)
                 .take(height)
                 .map(|(idx, line)| {
                     styled_line(

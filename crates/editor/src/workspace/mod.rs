@@ -1,40 +1,63 @@
 mod buffer;
 mod doc_id;
+mod window;
+mod window_id;
 
 pub use buffer::Buffer;
 pub use doc_id::DocId;
+pub use window::Window;
+pub use window_id::WindowId;
 
 use crate::document::Document;
 
 pub struct Workspace {
-    current: Buffer,
+    windows: Vec<Window>,
+    active: usize,
     pool: Vec<Buffer>,
     next: u64,
+    next_window: u64,
 }
 
 impl Workspace {
     pub fn new(doc: Document) -> Self {
         Self {
-            current: Buffer { id: DocId(0), doc },
+            windows: vec![Window {
+                id: WindowId(0),
+                buf: Buffer { id: DocId(0), doc },
+            }],
+            active: 0,
             pool: Vec::new(),
             next: 1,
+            next_window: 1,
         }
     }
 
     pub fn current(&self) -> &Document {
-        &self.current.doc
+        &self.windows[self.active].buf.doc
     }
 
     pub fn current_mut(&mut self) -> &mut Document {
-        &mut self.current.doc
+        &mut self.windows[self.active].buf.doc
     }
 
     pub fn current_id(&self) -> DocId {
-        self.current.id
+        self.windows[self.active].buf.id
     }
 
     pub fn pool(&self) -> &[Buffer] {
         &self.pool
+    }
+
+    pub fn windows(&self) -> &[Window] {
+        &self.windows
+    }
+
+    pub fn active_window(&self) -> WindowId {
+        self.windows[self.active].id
+    }
+
+    pub fn active_index(&self) -> usize {
+        self.active
     }
 
     #[must_use]
@@ -59,7 +82,7 @@ impl Workspace {
 
     #[must_use]
     pub fn put_current(&mut self, buf: Buffer) -> Buffer {
-        std::mem::replace(&mut self.current, buf)
+        std::mem::replace(&mut self.windows[self.active].buf, buf)
     }
 
     pub fn open(&mut self, doc: Document) -> Option<DocId> {
@@ -86,5 +109,34 @@ impl Workspace {
     #[must_use]
     pub fn remove(&mut self, idx: usize) -> Option<Buffer> {
         (idx < self.pool.len()).then(|| self.pool.remove(idx))
+    }
+
+    pub fn split(&mut self, buf: Buffer) -> WindowId {
+        let id = WindowId(self.next_window);
+        self.next_window += 1;
+        self.active += 1;
+        self.windows.insert(self.active, Window { id, buf });
+        id
+    }
+
+    pub fn focus_next(&mut self) {
+        self.active = (self.active + 1) % self.windows.len();
+    }
+
+    #[must_use]
+    pub fn close_window(&mut self) -> Option<Window> {
+        if self.windows.len() <= 1 {
+            return None;
+        }
+        let closed = self.windows.remove(self.active);
+        self.active = self.active.min(self.windows.len() - 1);
+        Some(closed)
+    }
+
+    #[must_use]
+    pub fn only(&mut self) -> Vec<Window> {
+        let kept = self.windows.remove(self.active);
+        self.active = 0;
+        std::mem::replace(&mut self.windows, vec![kept])
     }
 }

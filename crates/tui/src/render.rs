@@ -6,6 +6,7 @@ use ratatui::widgets::Paragraph;
 
 use crate::app::App;
 use crate::layout::{column_width, text_column};
+use crate::read_state::ReadState;
 use crate::theme::Theme;
 use crate::view::View;
 use crate::{hscroll, overlay, read_view, split};
@@ -30,15 +31,18 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     };
     let count = app.pane_count();
     let rects = split::split_rects(text_area, count);
-    for (i, rect) in rects.iter().enumerate() {
-        if i != app.active {
-            split::draw_pane(frame, &app.theme, app.other_for_display(i), *rect, app.wrap);
+    let active = app.workspace.active_window();
+    let fallback = ReadState::new();
+    for (window, rect) in app.workspace.windows().iter().zip(&rects) {
+        if window.id != active {
+            let state = app.window_states.get(&window.id).unwrap_or(&fallback);
+            split::draw_pane(frame, &app.theme, &window.buf.doc, state, *rect, app.wrap);
         }
     }
     for rect in rects.iter().take(count.saturating_sub(1)) {
         split::draw_divider(frame, text_area, rect.x + rect.width);
     }
-    let active_rect = rects[app.active];
+    let active_rect = rects[app.workspace.active_index()];
     app.text_area = active_rect;
     let text = app.workspace.current().editor.text();
     if app.view == View::Read {

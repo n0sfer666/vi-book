@@ -15,7 +15,7 @@ use crate::view::View;
 use crate::{plugin, render, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
-use v_ide_editor::workspace::{DocId, Workspace};
+use v_ide_editor::workspace::{DocId, WindowId, Workspace};
 use v_ide_keys::key::Key;
 use v_ide_lua::host::PluginHost;
 use v_ide_markdown::rendered::Rendered;
@@ -53,9 +53,8 @@ pub struct App {
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,
     pub insert_escape: Option<String>,
-    pub others: Vec<crate::pane::Pane>,
+    pub window_states: HashMap<WindowId, ReadState>,
     pub buffer_list: Option<crate::buffer_list::BufferList>,
-    pub active: usize,
     pub pending_ctrl_w: bool,
     pub code_editor: Option<String>,
     pub external_request: Option<std::path::PathBuf>,
@@ -117,9 +116,8 @@ impl App {
             menu_center: false,
             menu_extra: Vec::new(),
             insert_escape: Some(String::from("jj")),
-            others: Vec::new(),
+            window_states: HashMap::new(),
             buffer_list: None,
-            active: 0,
             pending_ctrl_w: false,
             code_editor: None,
             external_request: None,
