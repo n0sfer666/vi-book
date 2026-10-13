@@ -106,7 +106,10 @@ impl App {
     }
 
     pub fn any_dirty(&self) -> bool {
-        self.workspace.current().is_dirty()
+        self.workspace
+            .windows()
+            .iter()
+            .any(|w| w.buf.doc.is_dirty())
             || self.workspace.pool().iter().any(|b| b.doc.is_dirty())
     }
 

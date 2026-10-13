@@ -108,3 +108,39 @@ fn only_collapses_to_a_single_pane() {
     assert_eq!(app.pane_count(), 1);
     assert_eq!(app.workspace.active_index(), 0);
 }
+
+fn app_with_dirty_split() -> App {
+    let mut app = App::new(common::named_doc("alpha", "a.md"));
+    app.vsplit(None);
+    app.workspace
+        .current_mut()
+        .editor
+        .handle_key(v_ide_keys::Key::Char('x'));
+    app
+}
+
+#[test]
+fn quit_refuses_when_an_inactive_window_is_dirty() {
+    let mut app = app_with_dirty_split();
+    app.focus_next();
+    v_ide_tui::command_line::run(&mut app, "q");
+    assert!(!app.quit, "dirty split window blocks :q");
+    assert!(app.message.contains("unsaved"));
+}
+
+#[test]
+fn close_refuses_a_dirty_window() {
+    let mut app = app_with_dirty_split();
+    v_ide_tui::command_line::run(&mut app, "close");
+    assert_eq!(app.pane_count(), 2, "dirty window stays open");
+    assert!(app.message.contains("unsaved"));
+}
+
+#[test]
+fn only_refuses_when_another_window_is_dirty() {
+    let mut app = app_with_dirty_split();
+    app.focus_next();
+    v_ide_tui::command_line::run(&mut app, "only");
+    assert_eq!(app.pane_count(), 2, "dirty window is not discarded");
+    assert!(app.message.contains("unsaved"));
+}

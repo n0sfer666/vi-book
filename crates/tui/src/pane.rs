@@ -4,6 +4,7 @@ use v_ide_editor::document::Document;
 use v_ide_editor::workspace::Buffer;
 
 const MAX_PANES: usize = 3;
+const UNSAVED: &str = "unsaved changes (write with :w first)";
 
 impl App {
     pub fn pane_count(&self) -> usize {
@@ -28,12 +29,26 @@ impl App {
     }
 
     pub fn only(&mut self) {
+        let active = self.workspace.active_window();
+        let others_dirty = self
+            .workspace
+            .windows()
+            .iter()
+            .any(|w| w.id != active && w.buf.doc.is_dirty());
+        if others_dirty {
+            self.message = String::from(UNSAVED);
+            return;
+        }
         for window in self.workspace.only() {
             self.window_states.remove(&window.id);
         }
     }
 
     pub fn close_active(&mut self) {
+        if self.pane_count() > 1 && self.workspace.current().is_dirty() {
+            self.message = String::from(UNSAVED);
+            return;
+        }
         if self.workspace.close_window().is_some() {
             self.restore_window();
         }
