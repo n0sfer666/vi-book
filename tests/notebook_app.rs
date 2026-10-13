@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use v_ide::ui::app::App;
 use v_ide::ui::session::Session;
-use v_ide::vim::editor::Editor;
+use v_ide_engine::editor::Editor;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-app-{}-{name}", std::process::id()));

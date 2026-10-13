@@ -3,11 +3,11 @@ use ratatui::backend::TestBackend;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide::Editor;
 use v_ide::ui::app::App;
 use v_ide::ui::buffer_list::{BufferEntry, BufferList};
 use v_ide::ui::picker::Picker;
 use v_ide::ui::render;
+use v_ide_engine::Editor;
 
 fn background() -> Editor {
     let line = "X".repeat(70);

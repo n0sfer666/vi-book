@@ -1,7 +1,7 @@
 use crate::ui::app::App;
 use crate::ui::clipboard;
-use crate::vim::key::Key;
-use crate::vim::mode::Mode;
+use v_ide_engine::mode::Mode;
+use v_ide_keys::key::Key;
 
 pub fn freshest<'a>(system: &'a str, last_synced: &str) -> Option<&'a str> {
     (!system.is_empty() && system != last_synced).then_some(system)

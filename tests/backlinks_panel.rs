@@ -1,13 +1,13 @@
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide::Editor;
-use v_ide::Key;
 use v_ide::ui::app::App;
 use v_ide::ui::command_line;
 use v_ide::ui::input;
 use v_ide::ui::panel::Panel;
 use v_ide::ui::session::Session;
+use v_ide_engine::Editor;
+use v_ide_keys::Key;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root =

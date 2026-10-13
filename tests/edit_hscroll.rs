@@ -1,9 +1,9 @@
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 
-use v_ide::Editor;
 use v_ide::ui::app::App;
 use v_ide::ui::view::View;
+use v_ide_engine::Editor;
 
 const LINE: &str = "0123456789ABCDEF";
 const LEFT: char = '\u{2039}';

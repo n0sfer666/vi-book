@@ -2,7 +2,7 @@ use crate::ui::app::App;
 use crate::ui::buffer_list::{BufferEntry, BufferList};
 use crate::ui::plugin;
 use crate::ui::view::View;
-use crate::vim::editor::Editor;
+use v_ide_engine::editor::Editor;
 
 impl App {
     pub fn load(&mut self, rel: &str) {

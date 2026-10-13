@@ -3,7 +3,6 @@ use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide::Editor;
 use v_ide::markdown::render::render;
 use v_ide::ui::actions;
 use v_ide::ui::app::App;
@@ -11,6 +10,7 @@ use v_ide::ui::help;
 use v_ide::ui::read_motion;
 use v_ide::ui::session::Session;
 use v_ide::ui::view::View;
+use v_ide_engine::Editor;
 
 fn key(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::NONE)

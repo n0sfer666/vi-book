@@ -1,7 +1,7 @@
 mod common;
 
 use common::{check, editor_at, t};
-use v_ide::Mode;
+use v_ide_engine::Mode;
 
 #[test]
 fn entering_insert() {

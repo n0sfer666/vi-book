@@ -1,8 +1,8 @@
-use crate::core::edit::Edit;
-use crate::core::position::Position;
-use crate::vim::editor::Editor;
-use crate::vim::key::Key;
-use crate::vim::mode::Mode;
+use crate::editor::Editor;
+use crate::mode::Mode;
+use v_ide_keys::key::Key;
+use v_ide_text::edit::Edit;
+use v_ide_text::position::Position;
 
 pub fn begin(ed: &mut Editor, pos: Position) {
     ed.mode = Mode::Insert;

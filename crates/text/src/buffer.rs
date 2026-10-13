@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use ropey::Rope;
 
-use crate::core::position::Position;
+use crate::position::Position;
 
 pub struct Buffer {
     rope: Rope,

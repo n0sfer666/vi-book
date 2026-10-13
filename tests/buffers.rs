@@ -7,7 +7,7 @@ use v_ide::ui::app::App;
 use v_ide::ui::pane::Pane;
 use v_ide::ui::session::Session;
 use v_ide::ui::view::View;
-use v_ide::vim::editor::Editor;
+use v_ide_engine::editor::Editor;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-buf-{}-{name}", std::process::id()));
@@ -81,7 +81,8 @@ fn open_rel_of_active_file_is_a_noop() {
     let mut app = App::new(Editor::new(""), String::new());
     app.session = session;
     app.open_rel("a.md");
-    app.editor.set_cursor(v_ide::Position { line: 1, col: 2 });
+    app.editor
+        .set_cursor(v_ide_text::Position { line: 1, col: 2 });
     let cursor = app.editor.cursor();
     let pool_len = app.buffers.len();
 
@@ -108,7 +109,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
     let dirty = app.editor.text();
     assert_ne!(dirty, "B body");
 
-    v_ide::ui::input::global_nav(&mut app, Some(v_ide::Key::Ctrl('o')));
+    v_ide::ui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('o')));
     assert_eq!(app.path, "a.md", "Ctrl-o switches back through the pool");
     assert!(
         app.buffers
@@ -117,7 +118,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
         "b.md is stashed dirty, not written or reloaded"
     );
 
-    v_ide::ui::input::global_nav(&mut app, Some(v_ide::Key::Ctrl('i')));
+    v_ide::ui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('i')));
     assert_eq!(app.path, "b.md", "Ctrl-i switches forward through the pool");
     assert_eq!(
         app.editor.text(),

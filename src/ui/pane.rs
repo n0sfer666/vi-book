@@ -2,7 +2,7 @@ use crate::markdown::rendered::Rendered;
 use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::view::View;
-use crate::vim::editor::Editor;
+use v_ide_engine::editor::Editor;
 
 const MAX_PANES: usize = 3;
 

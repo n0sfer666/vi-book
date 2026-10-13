@@ -5,7 +5,6 @@ use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use ratatui::DefaultTerminal;
 use ratatui::layout::Rect;
 
-use crate::io::error::Error;
 use crate::lua::host::PluginHost;
 use crate::markdown::rendered::Rendered;
 use crate::markdown::wrap_mode::WrapMode;
@@ -18,8 +17,9 @@ use crate::ui::session::Session;
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
 use crate::ui::{plugin, render, router};
-use crate::vim::editor::Editor;
-use crate::vim::key::Key;
+use v_ide_engine::editor::Editor;
+use v_ide_engine::io::error::Error;
+use v_ide_keys::key::Key;
 
 pub struct App {
     pub editor: Editor,
@@ -60,7 +60,7 @@ pub struct App {
     pub code_editor: Option<String>,
     pub external_request: Option<std::path::PathBuf>,
     pub url_request: Option<String>,
-    pub read_select: Option<(crate::vim::mode::Mode, (usize, usize))>,
+    pub read_select: Option<(v_ide_engine::mode::Mode, (usize, usize))>,
     pub last_clip: String,
 }
 

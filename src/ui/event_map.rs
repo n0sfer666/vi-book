@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::vim::key::Key;
+use v_ide_keys::key::Key;
 
 pub fn to_key(event: KeyEvent) -> Option<Key> {
     match event.code {

@@ -3,7 +3,7 @@ use crossterm::event::KeyEvent;
 use crate::ui::app::App;
 use crate::ui::panel::{Activation, Panel};
 use crate::ui::{event_map, link_follow};
-use crate::vim::key::Key;
+use v_ide_keys::key::Key;
 
 pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
     match mapped {

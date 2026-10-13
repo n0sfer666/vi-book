@@ -9,7 +9,7 @@ use crate::ui::app::App;
 use crate::ui::command_line;
 use crate::ui::menu::MenuItem;
 use crate::ui::theme::{self, Face};
-use crate::vim::key::parse_keys;
+use v_ide_keys::key::parse_keys;
 
 pub fn install_keymaps(app: &mut App) {
     let Some(host) = &app.host else {

@@ -1,6 +1,6 @@
-use crate::core::buffer::Buffer;
-use crate::core::position::Position;
-use crate::core::transaction::Transaction;
+use crate::buffer::Buffer;
+use crate::position::Position;
+use crate::transaction::Transaction;
 
 #[derive(Default)]
 pub struct History {

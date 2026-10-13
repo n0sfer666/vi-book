@@ -2,10 +2,10 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
 
-use v_ide::Editor;
 use v_ide::ui::app::App;
 use v_ide::ui::layout::{column_width, text_column};
 use v_ide::ui::view::View;
+use v_ide_engine::Editor;
 
 #[test]
 fn wide_terminal_uses_full_width() {

@@ -1,5 +1,5 @@
-use crate::core::buffer::Buffer;
 use crate::markdown::rendered::Rendered;
+use v_ide_text::buffer::Buffer;
 
 type Pos = (usize, usize);
 
@@ -35,15 +35,15 @@ fn first_non_blank(line: &str) -> usize {
 }
 
 pub fn word_forward(rendered: &Rendered, pos: Pos) -> Pos {
-    word_step(rendered, pos, crate::vim::word::next_word_start)
+    word_step(rendered, pos, v_ide_engine::word::next_word_start)
 }
 
 pub fn word_back(rendered: &Rendered, pos: Pos) -> Pos {
-    word_step(rendered, pos, crate::vim::word::prev_word_start)
+    word_step(rendered, pos, v_ide_engine::word::prev_word_start)
 }
 
 pub fn word_end(rendered: &Rendered, pos: Pos) -> Pos {
-    word_step(rendered, pos, crate::vim::word::next_word_end)
+    word_step(rendered, pos, v_ide_engine::word::next_word_end)
 }
 
 fn word_step(rendered: &Rendered, pos: Pos, step: fn(&Buffer, usize) -> usize) -> Pos {

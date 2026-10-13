@@ -1,4 +1,5 @@
-use v_ide::{Editor, Mode, Position};
+use v_ide_engine::{Editor, Mode};
+use v_ide_text::Position;
 
 use crate::fixture::{Case, Snapshot};
 

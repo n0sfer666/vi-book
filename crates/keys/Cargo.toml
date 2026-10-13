@@ -1,0 +1,9 @@
+[package]
+name = "v-ide-keys"
+description = "Key type and vim key notation for v-ide"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]

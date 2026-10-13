@@ -1,12 +1,12 @@
 use std::ops::Range;
 
-use crate::core::position::Position;
-use crate::vim::editor::Editor;
-use crate::vim::key::Key;
-use crate::vim::mode::Mode;
-use crate::vim::motion::{self, Motion, OpTarget};
-use crate::vim::operator::{self, Operator};
-use crate::vim::pending::{Pending, Stage};
+use crate::editor::Editor;
+use crate::mode::Mode;
+use crate::motion::{self, Motion, OpTarget};
+use crate::operator::{self, Operator};
+use crate::pending::{Pending, Stage};
+use v_ide_keys::key::Key;
+use v_ide_text::position::Position;
 
 pub fn enter(ed: &mut Editor, linewise: bool) {
     ed.visual_anchor = ed.cursor;

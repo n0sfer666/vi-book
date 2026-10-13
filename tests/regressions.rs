@@ -7,7 +7,8 @@ use common::{check, editor_at, t};
 use crossterm::event::{KeyCode, KeyEvent};
 use v_ide::ui::app::App;
 use v_ide::ui::command_line;
-use v_ide::{Editor, Key, Mode, parse_keys};
+use v_ide_engine::{Editor, Mode};
+use v_ide_keys::{Key, parse_keys};
 
 #[test]
 fn visual_operator_on_empty_buffer_is_safe() {

@@ -1,7 +1,7 @@
-use crate::core::edit::Edit;
-use crate::core::position::Position;
-use crate::vim::editor::Editor;
-use crate::vim::register::RegisterContent;
+use crate::editor::Editor;
+use crate::register::RegisterContent;
+use v_ide_text::edit::Edit;
+use v_ide_text::position::Position;
 
 pub fn paste(ed: &mut Editor, before: bool) {
     let count = ed.pending.count.unwrap_or(1);

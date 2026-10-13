@@ -1,12 +1,12 @@
-use crate::vim::editor::Editor;
-use crate::vim::key::Key;
-use crate::vim::motion::{self, Motion, OpTarget};
-use crate::vim::operator::{self, Operator};
-use crate::vim::paste;
-use crate::vim::pending::{Pending, Stage};
-use crate::vim::search;
-use crate::vim::text_object;
-use crate::vim::{insert, visual};
+use crate::editor::Editor;
+use crate::motion::{self, Motion, OpTarget};
+use crate::operator::{self, Operator};
+use crate::paste;
+use crate::pending::{Pending, Stage};
+use crate::search;
+use crate::text_object;
+use crate::{insert, visual};
+use v_ide_keys::key::Key;
 
 pub fn handle(ed: &mut Editor, key: Key) {
     match ed.pending.stage {

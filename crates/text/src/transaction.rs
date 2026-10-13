@@ -1,5 +1,5 @@
-use crate::core::edit::Edit;
-use crate::core::position::Position;
+use crate::edit::Edit;
+use crate::position::Position;
 
 #[derive(Debug, Clone)]
 pub struct Transaction {

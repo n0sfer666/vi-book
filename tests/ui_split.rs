@@ -2,10 +2,10 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
 
-use v_ide::Editor;
 use v_ide::ui::app::App;
 use v_ide::ui::split::split_rects;
 use v_ide::ui::view::View;
+use v_ide_engine::Editor;
 
 #[test]
 fn one_pane_fills_the_area() {
@@ -52,7 +52,7 @@ fn vsplit_adds_independent_panes_up_to_three() {
 fn editing_active_pane_does_not_touch_others() {
     let mut app = App::new(Editor::new("alpha"), "a.md".into());
     app.vsplit(None);
-    app.editor.handle_key(v_ide::Key::Char('x'));
+    app.editor.handle_key(v_ide_keys::Key::Char('x'));
     let active_text = app.editor.text();
     app.focus_next();
     assert_ne!(app.editor.text(), active_text, "other pane is independent");

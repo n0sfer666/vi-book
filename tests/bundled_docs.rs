@@ -1,11 +1,11 @@
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide::Editor;
 use v_ide::ui::app::App;
 use v_ide::ui::help;
 use v_ide::ui::link_follow::follow_at_cursor;
 use v_ide::ui::session::Session;
+use v_ide_engine::Editor;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-bundled-{}-{name}", std::process::id()));

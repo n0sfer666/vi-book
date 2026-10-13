@@ -1,8 +1,8 @@
-use v_ide::Editor;
 use v_ide::markdown::wrap_mode::WrapMode;
 use v_ide::ui::actions;
 use v_ide::ui::app::App;
-use v_ide::vim::key::Key;
+use v_ide_engine::Editor;
+use v_ide_keys::key::Key;
 
 fn app() -> App {
     App::new(Editor::new("x"), "a.md".into())

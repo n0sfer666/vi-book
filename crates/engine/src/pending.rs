@@ -1,4 +1,4 @@
-use crate::vim::operator::Operator;
+use crate::operator::Operator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Stage {

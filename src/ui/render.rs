@@ -11,7 +11,7 @@ use crate::ui::layout::{column_width, text_column};
 use crate::ui::theme::Theme;
 use crate::ui::view::View;
 use crate::ui::{hscroll, overlay, read_view, split};
-use crate::vim::mode::Mode;
+use v_ide_engine::mode::Mode;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
     let [body, status_area, message_area] = Layout::vertical([
@@ -97,7 +97,7 @@ fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
         .map(|(idx, line)| {
             let selection = selecting
                 .then(|| {
-                    crate::vim::visual::selection_cols(
+                    v_ide_engine::visual::selection_cols(
                         app.editor.mode(),
                         anchor,
                         cursor,

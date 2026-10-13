@@ -3,3 +3,5 @@ pub mod edit;
 pub mod history;
 pub mod position;
 pub mod transaction;
+
+pub use crate::position::Position;

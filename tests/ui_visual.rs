@@ -3,10 +3,10 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Modifier;
 
-use v_ide::Editor;
 use v_ide::ui::app::App;
 use v_ide::ui::view::View;
-use v_ide::vim::mode::Mode;
+use v_ide_engine::Editor;
+use v_ide_engine::mode::Mode;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)

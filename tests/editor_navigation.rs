@@ -1,9 +1,11 @@
-use v_ide::vim::mode::Mode;
-use v_ide::{Editor, Position, parse_keys};
+use v_ide_engine::Editor;
+use v_ide_engine::mode::Mode;
+use v_ide_keys::parse_keys;
+use v_ide_text::Position;
 
 #[test]
 fn arrows_parse_as_keys() {
-    use v_ide::Key;
+    use v_ide_keys::Key;
     assert_eq!(
         parse_keys("<Up><Down><Left><Right>"),
         vec![Key::Up, Key::Down, Key::Left, Key::Right]

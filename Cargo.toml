@@ -1,10 +1,20 @@
-[package]
-name = "v-ide"
+[workspace]
+members = ["crates/*"]
+default-members = [".", "crates/*"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-description = "A terminal note-taking app with vim-style editing"
 repository = "https://github.com/n0sfer666/vi-book"
+
+[package]
+name = "v-ide"
+description = "A terminal note-taking app with vim-style editing"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 name = "v_ide"
@@ -14,7 +24,9 @@ name = "v-ide"
 path = "src/main.rs"
 
 [dependencies]
-ropey = "1.6"
+v-ide-text = { path = "crates/text" }
+v-ide-keys = { path = "crates/keys" }
+v-ide-engine = { path = "crates/engine" }
 thiserror = "2"
 ratatui = "0.29"
 crossterm = "0.28"

@@ -1393,7 +1393,6 @@ dependencies = [
  "mlua",
  "notify",
  "ratatui",
- "ropey",
  "serde",
  "serde_json",
  "thiserror",
@@ -1412,6 +1411,29 @@ dependencies = [
  "tree-sitter-typescript",
  "tree-sitter-yaml",
  "unicode-width 0.2.0",
+ "v-ide-engine",
+ "v-ide-keys",
+ "v-ide-text",
+]
+
+[[package]]
+name = "v-ide-engine"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+ "v-ide-keys",
+ "v-ide-text",
+]
+
+[[package]]
+name = "v-ide-keys"
+version = "0.1.0"
+
+[[package]]
+name = "v-ide-text"
+version = "0.1.0"
+dependencies = [
+ "ropey",
 ]
 
 [[package]]

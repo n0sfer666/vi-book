@@ -2,11 +2,11 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Color;
 
-use v_ide::Editor;
 use v_ide::markdown::style::{CodeToken, Style};
 use v_ide::ui::app::App;
 use v_ide::ui::theme::{Face, Theme, style_for_name};
 use v_ide::ui::view::View;
+use v_ide_engine::Editor;
 
 #[test]
 fn code_tokens_have_default_colors() {

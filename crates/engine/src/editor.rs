@@ -1,19 +1,19 @@
 use std::path::{Path, PathBuf};
 
-use crate::core::buffer::Buffer;
-use crate::core::edit::Edit;
-use crate::core::history::History;
-use crate::core::position::Position;
-use crate::core::transaction::Transaction;
+use crate::desired_col::DesiredCol;
 use crate::io::error::Error;
 use crate::io::file;
-use crate::vim::desired_col::DesiredCol;
-use crate::vim::key::{Key, parse_keys};
-use crate::vim::mode::Mode;
-use crate::vim::pending::{Pending, Stage};
-use crate::vim::register::Registers;
-use crate::vim::search::SearchState;
-use crate::vim::{insert, normal, search, visual};
+use crate::mode::Mode;
+use crate::pending::{Pending, Stage};
+use crate::register::Registers;
+use crate::search::SearchState;
+use crate::{insert, normal, search, visual};
+use v_ide_keys::key::{Key, parse_keys};
+use v_ide_text::buffer::Buffer;
+use v_ide_text::edit::Edit;
+use v_ide_text::history::History;
+use v_ide_text::position::Position;
+use v_ide_text::transaction::Transaction;
 
 pub struct Editor {
     pub(crate) buffer: Buffer,
@@ -94,9 +94,9 @@ impl Editor {
 
     pub fn set_unnamed(&mut self, text: String, linewise: bool) {
         let content = if linewise {
-            crate::vim::register::RegisterContent::linewise(text)
+            crate::register::RegisterContent::linewise(text)
         } else {
-            crate::vim::register::RegisterContent::charwise(text)
+            crate::register::RegisterContent::charwise(text)
         };
         self.registers.write(None, content);
     }

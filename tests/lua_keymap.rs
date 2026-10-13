@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use v_ide::lua::host::PluginHost;
 use v_ide::ui::app::App;
-use v_ide::vim::editor::Editor;
+use v_ide_engine::editor::Editor;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)

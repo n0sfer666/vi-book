@@ -1,11 +1,11 @@
 use std::ops::Range;
 
-use crate::core::buffer::Buffer;
-use crate::core::position::Position;
-use crate::vim::desired_col::DesiredCol;
-use crate::vim::editor::Editor;
-use crate::vim::key::Key;
-use crate::vim::word;
+use crate::desired_col::DesiredCol;
+use crate::editor::Editor;
+use crate::word;
+use v_ide_keys::key::Key;
+use v_ide_text::buffer::Buffer;
+use v_ide_text::position::Position;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Motion {

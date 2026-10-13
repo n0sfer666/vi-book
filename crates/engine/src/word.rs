@@ -1,4 +1,4 @@
-use crate::core::buffer::Buffer;
+use v_ide_text::buffer::Buffer;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CharClass {

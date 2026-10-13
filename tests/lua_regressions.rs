@@ -5,7 +5,7 @@ use v_ide::lua::host::PluginHost;
 use v_ide::lua::runtime::Runtime;
 use v_ide::ui::app::App;
 use v_ide::ui::session::Session;
-use v_ide::vim::editor::Editor;
+use v_ide_engine::editor::Editor;
 
 #[test]
 fn print_and_warn_are_denied() {

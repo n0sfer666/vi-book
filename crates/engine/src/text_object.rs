@@ -1,6 +1,6 @@
-use crate::vim::editor::Editor;
-use crate::vim::motion::OpTarget;
-use crate::vim::word;
+use crate::editor::Editor;
+use crate::motion::OpTarget;
+use crate::word;
 
 pub fn target(ed: &Editor, object: char, around: bool) -> Option<OpTarget> {
     if around && object != 'w' {

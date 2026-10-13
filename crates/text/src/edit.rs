@@ -1,4 +1,4 @@
-use crate::core::buffer::Buffer;
+use crate::buffer::Buffer;
 
 #[derive(Debug, Clone)]
 pub struct Edit {

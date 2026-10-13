@@ -1,5 +1,5 @@
-use crate::vim::editor::Editor;
-use crate::vim::key::Key;
+use crate::editor::Editor;
+use v_ide_keys::key::Key;
 
 #[derive(Default)]
 pub struct SearchState {

@@ -1,0 +1,10 @@
+[package]
+name = "v-ide-text"
+description = "Rope text buffer, edits and undo history for v-ide"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ropey = "1.6"

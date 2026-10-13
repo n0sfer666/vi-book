@@ -1,11 +1,11 @@
 use std::ops::Range;
 
-use crate::core::edit::Edit;
-use crate::core::position::Position;
-use crate::vim::editor::Editor;
-use crate::vim::insert;
-use crate::vim::motion::OpTarget;
-use crate::vim::register::RegisterContent;
+use crate::editor::Editor;
+use crate::insert;
+use crate::motion::OpTarget;
+use crate::register::RegisterContent;
+use v_ide_text::edit::Edit;
+use v_ide_text::position::Position;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operator {
