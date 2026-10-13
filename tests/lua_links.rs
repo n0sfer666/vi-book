@@ -1,5 +1,5 @@
-use vi_book::lua::defaults::LINKS;
-use vi_book::lua::host::PluginHost;
+use v_ide::lua::defaults::LINKS;
+use v_ide::lua::host::PluginHost;
 
 fn host_with_links(extra: &str) -> PluginHost {
     let host = PluginHost::new().unwrap();

@@ -1,9 +1,9 @@
-use vi_book::vim::mode::Mode;
-use vi_book::{Editor, Position, parse_keys};
+use v_ide::vim::mode::Mode;
+use v_ide::{Editor, Position, parse_keys};
 
 #[test]
 fn arrows_parse_as_keys() {
-    use vi_book::Key;
+    use v_ide::Key;
     assert_eq!(
         parse_keys("<Up><Down><Left><Right>"),
         vec![Key::Up, Key::Down, Key::Left, Key::Right]

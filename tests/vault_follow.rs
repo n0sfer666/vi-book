@@ -1,8 +1,8 @@
-use vi_book::ui::picker::Picker;
-use vi_book::vault::follow::{Follow, follow, link_at};
-use vi_book::vault::fuzzy::{filter, score};
-use vi_book::vault::index::Index;
-use vi_book::vault::note::Note;
+use v_ide::ui::picker::Picker;
+use v_ide::vault::follow::{Follow, follow, link_at};
+use v_ide::vault::fuzzy::{filter, score};
+use v_ide::vault::index::Index;
+use v_ide::vault::note::Note;
 
 #[test]
 fn fuzzy_matches_subsequence_case_insensitively() {

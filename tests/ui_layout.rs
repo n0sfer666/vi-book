@@ -2,10 +2,10 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
 
-use vi_book::Editor;
-use vi_book::ui::app::App;
-use vi_book::ui::layout::{column_width, text_column};
-use vi_book::ui::view::View;
+use v_ide::Editor;
+use v_ide::ui::app::App;
+use v_ide::ui::layout::{column_width, text_column};
+use v_ide::ui::view::View;
 
 #[test]
 fn wide_terminal_uses_full_width() {
@@ -47,7 +47,7 @@ fn edit_content_starts_at_origin_not_centered() {
     let backend = TestBackend::new(100, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal
-        .draw(|frame| vi_book::ui::render::draw(frame, &mut app))
+        .draw(|frame| v_ide::ui::render::draw(frame, &mut app))
         .unwrap();
     let buf = terminal.backend().buffer().clone();
     let row: String = (0..100).map(|x| buf[(x, 0)].symbol().to_string()).collect();

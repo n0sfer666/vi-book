@@ -1,5 +1,5 @@
-use vi_book::markdown::render::render_with;
-use vi_book::markdown::wrap_mode::WrapMode;
+use v_ide::markdown::render::render_with;
+use v_ide::markdown::wrap_mode::WrapMode;
 
 fn lines(src: &str, width: usize, mode: WrapMode) -> usize {
     render_with(src, width, mode).lines.len()

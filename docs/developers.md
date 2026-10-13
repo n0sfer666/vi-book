@@ -79,7 +79,7 @@ frontmatter`.
 ## Building
 
 ```
-cargo build --release        # static binary at target/release/vi-book
+cargo build --release        # static binary at target/release/v-ide
 ./install.sh                 # build + install to ~/.local/bin
 cargo test                   # the tests/ directory is an immutable contract
 ```

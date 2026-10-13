@@ -1,6 +1,6 @@
-use vi_book::markdown::render::render;
-use vi_book::markdown::style::{CodeToken, Style};
-use vi_book::markdown::syntax::highlight;
+use v_ide::markdown::render::render;
+use v_ide::markdown::style::{CodeToken, Style};
+use v_ide::markdown::syntax::highlight;
 
 fn token_at(code: &str, needle: &str, hl: &[Option<CodeToken>]) -> Option<CodeToken> {
     let byte = code.find(needle).expect("needle present");

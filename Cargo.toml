@@ -1,5 +1,5 @@
 [package]
-name = "vi-book"
+name = "v-ide"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -7,10 +7,10 @@ description = "A terminal note-taking app with vim-style editing"
 repository = "https://github.com/n0sfer666/vi-book"
 
 [lib]
-name = "vi_book"
+name = "v_ide"
 
 [[bin]]
-name = "vi-book"
+name = "v-ide"
 path = "src/main.rs"
 
 [dependencies]

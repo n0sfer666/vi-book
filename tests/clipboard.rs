@@ -1,9 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use vi_book::Editor;
-use vi_book::ui::app::App;
-use vi_book::ui::clipboard::{base64, osc52};
-use vi_book::ui::view::View;
+use v_ide::Editor;
+use v_ide::ui::app::App;
+use v_ide::ui::clipboard::{base64, osc52};
+use v_ide::ui::view::View;
 
 #[test]
 fn base64_matches_known_vectors() {
@@ -24,7 +24,7 @@ fn enter_on_a_code_block_copies_it() {
     let src = "# Title\n\n```rust\nfn main() {}\n```\n";
     let mut app = App::new(Editor::new(src), "a.md".into());
     app.view = View::Read;
-    let rendered = vi_book::markdown::render::render(src, 80);
+    let rendered = v_ide::markdown::render::render(src, 80);
     let line = rendered
         .lines
         .iter()

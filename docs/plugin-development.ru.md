@@ -281,7 +281,7 @@ end)
 ## 10. Сборка и тесты
 
 ```
-cargo build --release   # один статический бинарь target/release/vi-book
+cargo build --release   # один статический бинарь target/release/v-ide
 ./install.sh            # сборка + установка + конфиг + загрузка Nerd Font
 cargo test              # каталог tests/ — иммутабельный контракт
 ```

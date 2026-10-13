@@ -1,6 +1,6 @@
-use vi_book::vim::mode::Mode;
-use vi_book::vim::visual::selection_cols;
-use vi_book::{Editor, Position};
+use v_ide::vim::mode::Mode;
+use v_ide::vim::visual::selection_cols;
+use v_ide::{Editor, Position};
 
 #[test]
 fn yank_line_with_capital_y_then_paste() {

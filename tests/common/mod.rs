@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use vi_book::{Editor, Position};
+use v_ide::{Editor, Position};
 
 pub struct Case {
     pub name: &'static str,

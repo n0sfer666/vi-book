@@ -1,6 +1,6 @@
-use vi_book::vault::index::{Index, Resolution};
-use vi_book::vault::link::{self, Link};
-use vi_book::vault::note::Note;
+use v_ide::vault::index::{Index, Resolution};
+use v_ide::vault::link::{self, Link};
+use v_ide::vault::note::Note;
 
 fn link(target: &str, alias: Option<&str>, anchor: Option<&str>) -> Link {
     Link {

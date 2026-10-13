@@ -1,7 +1,7 @@
-use vi_book::Editor;
-use vi_book::markdown::wrap_mode::WrapMode;
-use vi_book::ui::app::App;
-use vi_book::ui::command_line;
+use v_ide::Editor;
+use v_ide::markdown::wrap_mode::WrapMode;
+use v_ide::ui::app::App;
+use v_ide::ui::command_line;
 
 fn app() -> App {
     App::new(Editor::new("x"), "a.md".into())

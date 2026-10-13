@@ -1,4 +1,4 @@
-use vi_book::{Editor, Mode, Position};
+use v_ide::{Editor, Mode, Position};
 
 use crate::fixture::{Case, Snapshot};
 

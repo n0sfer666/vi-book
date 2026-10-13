@@ -8,11 +8,11 @@ Lua plugins — over plain Markdown files.
 ## Install
 
 ```
-./install.sh            # build release + put `vi-book` on PATH + seed config
+./install.sh            # build release + put `v-ide` on PATH + seed config
 ```
 
-Then run `vi-book` inside a folder of notes, `vi-book ~/notes`, or
-`vi-book note.md`. An empty folder shows a start screen offering to create your
+Then run `v-ide` inside a folder of notes, `v-ide ~/notes`, or
+`v-ide note.md`. An empty folder shows a start screen offering to create your
 first note. No environment variables are required; config lives at
 `~/.config/vi-book/init.lua`.
 

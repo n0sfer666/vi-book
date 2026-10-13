@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use vi_book::{Editor, Error, Mode, Position};
+use v_ide::{Editor, Error, Mode, Position};
 
 fn temp_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("vi-book-test-{}-{}", std::process::id(), name))

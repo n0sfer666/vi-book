@@ -2,11 +2,11 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Color;
 
-use vi_book::Editor;
-use vi_book::markdown::style::{CodeToken, Style};
-use vi_book::ui::app::App;
-use vi_book::ui::theme::{Face, Theme, style_for_name};
-use vi_book::ui::view::View;
+use v_ide::Editor;
+use v_ide::markdown::style::{CodeToken, Style};
+use v_ide::ui::app::App;
+use v_ide::ui::theme::{Face, Theme, style_for_name};
+use v_ide::ui::view::View;
 
 #[test]
 fn code_tokens_have_default_colors() {
@@ -52,7 +52,7 @@ fn rendered_code_block_paints_keyword_color() {
     let backend = TestBackend::new(60, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal
-        .draw(|frame| vi_book::ui::render::draw(frame, &mut app))
+        .draw(|frame| v_ide::ui::render::draw(frame, &mut app))
         .unwrap();
     let buf = terminal.backend().buffer().clone();
     let magenta = (0..buf.area.width)

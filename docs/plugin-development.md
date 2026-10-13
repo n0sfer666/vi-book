@@ -281,7 +281,7 @@ end)
 ## 10. Building and testing
 
 ```
-cargo build --release   # one static binary at target/release/vi-book
+cargo build --release   # one static binary at target/release/v-ide
 ./install.sh            # build + install + seed config + fetch a Nerd Font
 cargo test              # the tests/ directory is an immutable contract
 ```

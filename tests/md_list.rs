@@ -1,5 +1,5 @@
-use vi_book::markdown::render::render;
-use vi_book::markdown::style::Style;
+use v_ide::markdown::render::render;
+use v_ide::markdown::style::Style;
 
 #[test]
 fn list_items_wrap_to_the_column_width() {

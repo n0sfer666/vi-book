@@ -1,4 +1,4 @@
-use vi_book::lua::host::PluginHost;
+use v_ide::lua::host::PluginHost;
 
 #[test]
 fn options_are_collected() {

@@ -1,8 +1,8 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use vi_book::lua::host::PluginHost;
-use vi_book::ui::app::App;
-use vi_book::vim::editor::Editor;
+use v_ide::lua::host::PluginHost;
+use v_ide::ui::app::App;
+use v_ide::vim::editor::Editor;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)

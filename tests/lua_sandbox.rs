@@ -1,4 +1,4 @@
-use vi_book::lua::runtime::{Capability, Runtime};
+use v_ide::lua::runtime::{Capability, Runtime};
 
 #[test]
 fn safe_stdlib_is_available() {

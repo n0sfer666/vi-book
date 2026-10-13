@@ -6,13 +6,13 @@ notes and Lua plugins. It only ever touches **Markdown** files.
 
 ## Opening a vault
 
-A *vault* is just a folder of `.md` files. Open one by running vi-book inside
+A *vault* is just a folder of `.md` files. Open one by running `v-ide` inside
 it, or by passing a path:
 
 ```
-vi-book              # use the current folder
-vi-book ~/notes      # open a folder
-vi-book ~/notes/a.md # open a single note (its folder becomes the vault)
+v-ide                # use the current folder
+v-ide ~/notes        # open a folder
+v-ide ~/notes/a.md   # open a single note (its folder becomes the vault)
 ```
 
 If the folder has no notes yet, vi-book shows a start screen and offers to

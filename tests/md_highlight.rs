@@ -1,5 +1,5 @@
-use vi_book::markdown::highlight::highlight;
-use vi_book::markdown::style::{SourceSpan, Style};
+use v_ide::markdown::highlight::highlight;
+use v_ide::markdown::style::{SourceSpan, Style};
 
 fn has(spans: &[SourceSpan], start: usize, end: usize, style: Style) -> bool {
     spans

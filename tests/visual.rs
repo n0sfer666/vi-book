@@ -1,7 +1,7 @@
 mod common;
 
 use common::{check, editor_at, t};
-use vi_book::Mode;
+use v_ide::Mode;
 
 #[test]
 fn charwise_visual() {

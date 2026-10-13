@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
-# vi-book installer — builds a release binary and puts `vi-book` on your PATH.
+# vi-book installer — builds a release binary and puts `v-ide` on your PATH.
 # Works from any shell (bash, zsh, fish, nu); only POSIX sh is used here.
 set -eu
 
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-BIN_NAME="vi-book"
+BIN_NAME="v-ide"
 
 # Install a Nerd Font so code blocks and glyphs render well in the terminal.
 # Idempotent, offline-safe, and skippable with VIBOOK_NO_FONT=1.
@@ -55,6 +55,9 @@ echo "vi-book: building release binary..."
 mkdir -p "$BIN_DIR"
 install -m 0755 "$REPO_DIR/target/release/$BIN_NAME" "$BIN_DIR/$BIN_NAME"
 echo "vi-book: installed to $BIN_DIR/$BIN_NAME"
+if [ -e "$BIN_DIR/vi-book" ]; then
+	echo "vi-book: old binary $BIN_DIR/vi-book found; remove it with: rm $BIN_DIR/vi-book"
+fi
 
 # Seed a default config so no environment variable is ever required.
 CONFIG_DIR="$HOME/.config/vi-book"
@@ -92,4 +95,4 @@ case ":$PATH:" in
 esac
 
 echo
-echo "Done. Run 'vi-book' inside a folder of .md notes, or 'vi-book ~/notes'."
+echo "Done. Run 'v-ide' inside a folder of .md notes, or 'v-ide ~/notes'."

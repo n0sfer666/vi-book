@@ -1,4 +1,4 @@
-use vi_book::notebook::history::History;
+use v_ide::notebook::history::History;
 
 #[test]
 fn back_and_forward_walk_visited_paths() {
