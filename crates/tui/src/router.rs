@@ -1,8 +1,8 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::ui::app::App;
-use crate::ui::view::View;
-use crate::ui::{actions, clip_sync, command_line, event_map, input, layout, plugin, read_view};
+use crate::app::App;
+use crate::view::View;
+use crate::{actions, clip_sync, command_line, event_map, input, layout, plugin, read_view};
 use v_ide_keys::key::Key;
 
 pub fn handle(app: &mut App, key: KeyEvent) {

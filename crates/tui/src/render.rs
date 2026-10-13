@@ -4,11 +4,11 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
 
-use crate::ui::app::App;
-use crate::ui::layout::{column_width, text_column};
-use crate::ui::theme::Theme;
-use crate::ui::view::View;
-use crate::ui::{hscroll, overlay, read_view, split};
+use crate::app::App;
+use crate::layout::{column_width, text_column};
+use crate::theme::Theme;
+use crate::view::View;
+use crate::{hscroll, overlay, read_view, split};
 use v_ide_engine::mode::Mode;
 use v_ide_markdown::highlight::highlight;
 use v_ide_markdown::style::SourceSpan;

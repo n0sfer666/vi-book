@@ -1,4 +1,4 @@
-use crate::ui::list_nav;
+use crate::list_nav;
 use v_ide_notebook::tree::{Row, Tree};
 
 pub enum Panel {

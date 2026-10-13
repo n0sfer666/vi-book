@@ -1,5 +1,5 @@
-use crate::ui::app::App;
-use crate::ui::view::View;
+use crate::app::App;
+use crate::view::View;
 use v_ide_engine::editor::Editor;
 use v_ide_markdown::rendered::Rendered;
 use v_ide_markdown::wrap_mode::WrapMode;

@@ -1,4 +1,4 @@
-use crate::ui::list_nav;
+use crate::list_nav;
 use v_ide_vault::fuzzy;
 
 pub struct Picker {

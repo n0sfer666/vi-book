@@ -1,9 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::ui::app::App;
-use crate::ui::menu::Menu;
-use crate::ui::view::View;
-use crate::ui::{command_line, help, layout, read_view};
+use crate::app::App;
+use crate::menu::Menu;
+use crate::view::View;
+use crate::{command_line, help, layout, read_view};
 use v_ide_engine::editor::Editor;
 use v_ide_keys::key::Key;
 

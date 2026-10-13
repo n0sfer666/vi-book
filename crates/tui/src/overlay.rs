@@ -4,10 +4,10 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 
-use crate::ui::app::App;
-use crate::ui::help;
-use crate::ui::list_nav;
-use crate::ui::menu::Menu;
+use crate::app::App;
+use crate::help;
+use crate::list_nav;
+use crate::menu::Menu;
 
 pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
     let Some(panel) = app.panel.as_ref() else {

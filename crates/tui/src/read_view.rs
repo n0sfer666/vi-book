@@ -7,11 +7,11 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
 
-use crate::ui::app::App;
-use crate::ui::layout::{column_width, text_column};
-use crate::ui::theme::Theme;
-use crate::ui::view::View;
-use crate::ui::{clip_sync, event_map, hscroll, read_motion};
+use crate::app::App;
+use crate::layout::{column_width, text_column};
+use crate::theme::Theme;
+use crate::view::View;
+use crate::{clip_sync, event_map, hscroll, read_motion};
 use v_ide_engine::mode::Mode;
 use v_ide_engine::visual;
 use v_ide_keys::key::Key;
@@ -107,7 +107,7 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
                 clip_sync::sync_out(app);
                 app.message = String::from("copied code block to clipboard");
             } else {
-                crate::ui::link_follow::follow_at_cursor(app);
+                crate::link_follow::follow_at_cursor(app);
             }
         }
         _ => {}

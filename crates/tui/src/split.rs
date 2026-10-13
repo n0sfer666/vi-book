@@ -4,12 +4,12 @@ use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
 
-use crate::ui::layout::{column_width, text_column};
-use crate::ui::pane::Pane;
-use crate::ui::read_view::read_lines;
-use crate::ui::render::styled_line;
-use crate::ui::theme::Theme;
-use crate::ui::view::View;
+use crate::layout::{column_width, text_column};
+use crate::pane::Pane;
+use crate::read_view::read_lines;
+use crate::render::styled_line;
+use crate::theme::Theme;
+use crate::view::View;
 use v_ide_markdown::highlight::highlight;
 use v_ide_markdown::render::render_with;
 use v_ide_markdown::wrap_mode::WrapMode;

@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::ui::app::App;
+use crate::app::App;
 use v_ide_notebook::daily::{DEFAULT_TEMPLATE, daily_path, expand_template, parse_daily_path};
 use v_ide_notebook::date::Date;
 

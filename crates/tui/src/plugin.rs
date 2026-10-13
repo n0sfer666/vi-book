@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 use ratatui::style::Color;
 
-use crate::ui::app::App;
-use crate::ui::command_line;
-use crate::ui::config_path;
-use crate::ui::menu::MenuItem;
-use crate::ui::theme::{self, Face};
+use crate::app::App;
+use crate::command_line;
+use crate::config_path;
+use crate::menu::MenuItem;
+use crate::theme::{self, Face};
 use v_ide_keys::key::parse_keys;
 use v_ide_lua::host::PluginHost;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -87,7 +87,7 @@ pub fn follow_link(app: &mut App, target: &str) -> bool {
         None => return false,
     };
     if let Some(rel) = external.into_iter().next_back() {
-        match crate::ui::external::resolve(&app.session.root, &rel) {
+        match crate::external::resolve(&app.session.root, &rel) {
             Some(path) => app.external_request = Some(path),
             None => app.message = format!("file not found: {rel}"),
         }

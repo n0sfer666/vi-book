@@ -1,8 +1,8 @@
-use crate::ui::actions;
-use crate::ui::app::App;
-use crate::ui::external;
-use crate::ui::help;
-use crate::ui::plugin;
+use crate::actions;
+use crate::app::App;
+use crate::external;
+use crate::help;
+use crate::plugin;
 use v_ide_vault::follow::{Follow, follow};
 use v_ide_vault::link::Link;
 use v_ide_vault::target::{Target, target_at};
@@ -25,7 +25,7 @@ fn follow_wiki(app: &mut App, link: &Link) {
     match follow(&app.session.index, link) {
         Follow::Open(path) => app.open_rel(&path),
         Follow::Disambiguate(paths) => {
-            app.picker = Some(crate::ui::picker::Picker::new(paths));
+            app.picker = Some(crate::picker::Picker::new(paths));
         }
         Follow::Create(name) => {
             app.message = format!("note '{name}' does not exist (press : to create)");

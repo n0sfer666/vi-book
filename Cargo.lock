@@ -1387,7 +1387,6 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 name = "v-ide"
 version = "0.1.0"
 dependencies = [
- "arboard",
  "crossterm",
  "insta",
  "ratatui",
@@ -1399,6 +1398,7 @@ dependencies = [
  "v-ide-markdown",
  "v-ide-notebook",
  "v-ide-text",
+ "v-ide-tui",
  "v-ide-vault",
 ]
 
@@ -1453,6 +1453,22 @@ name = "v-ide-text"
 version = "0.1.0"
 dependencies = [
  "ropey",
+]
+
+[[package]]
+name = "v-ide-tui"
+version = "0.1.0"
+dependencies = [
+ "arboard",
+ "crossterm",
+ "ratatui",
+ "v-ide-engine",
+ "v-ide-keys",
+ "v-ide-lua",
+ "v-ide-markdown",
+ "v-ide-notebook",
+ "v-ide-text",
+ "v-ide-vault",
 ]
 
 [[package]]

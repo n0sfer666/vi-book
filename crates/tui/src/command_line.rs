@@ -2,9 +2,9 @@ use std::fs;
 
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::ui::app::App;
-use crate::ui::panel::Panel;
-use crate::ui::{actions, daily_cmd, plugin};
+use crate::app::App;
+use crate::panel::Panel;
+use crate::{actions, daily_cmd, plugin};
 use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn handle(app: &mut App, event: KeyEvent) {

@@ -1,7 +1,7 @@
-use crate::ui::app::App;
-use crate::ui::buffer_list::{BufferEntry, BufferList};
-use crate::ui::plugin;
-use crate::ui::view::View;
+use crate::app::App;
+use crate::buffer_list::{BufferEntry, BufferList};
+use crate::plugin;
+use crate::view::View;
 use v_ide_engine::editor::Editor;
 
 impl App {

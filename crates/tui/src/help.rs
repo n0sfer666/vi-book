@@ -1,7 +1,7 @@
-pub const MANUAL: &str = include_str!("../../docs/manual.md");
-pub const DEVELOPERS: &str = include_str!("../../docs/developers.md");
-pub const PLUGIN_DEV: &str = include_str!("../../docs/plugin-development.md");
-pub const PLUGIN_DEV_RU: &str = include_str!("../../docs/plugin-development.ru.md");
+pub const MANUAL: &str = include_str!("../../../docs/manual.md");
+pub const DEVELOPERS: &str = include_str!("../../../docs/developers.md");
+pub const PLUGIN_DEV: &str = include_str!("../../../docs/plugin-development.md");
+pub const PLUGIN_DEV_RU: &str = include_str!("../../../docs/plugin-development.ru.md");
 
 pub fn bundled_doc(name: &str) -> Option<&'static str> {
     match name {

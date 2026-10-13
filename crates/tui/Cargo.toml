@@ -1,0 +1,19 @@
+[package]
+name = "v-ide-tui"
+description = "Terminal UI for v-ide"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+v-ide-text = { path = "../text" }
+v-ide-keys = { path = "../keys" }
+v-ide-engine = { path = "../engine" }
+v-ide-markdown = { path = "../markdown" }
+v-ide-vault = { path = "../vault" }
+v-ide-notebook = { path = "../notebook" }
+v-ide-lua = { path = "../lua" }
+ratatui = "0.29"
+crossterm = "0.28"
+arboard = "3.4.1"

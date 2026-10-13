@@ -1,5 +1,5 @@
-use crate::ui::app::App;
-use crate::ui::clipboard;
+use crate::app::App;
+use crate::clipboard;
 use v_ide_engine::mode::Mode;
 use v_ide_keys::key::Key;
 

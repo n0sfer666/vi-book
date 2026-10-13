@@ -5,13 +5,13 @@ use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use ratatui::DefaultTerminal;
 use ratatui::layout::Rect;
 
-use crate::ui::menu::{Menu, MenuItem};
-use crate::ui::panel::Panel;
-use crate::ui::picker::Picker;
-use crate::ui::session::Session;
-use crate::ui::theme::Theme;
-use crate::ui::view::View;
-use crate::ui::{plugin, render, router};
+use crate::menu::{Menu, MenuItem};
+use crate::panel::Panel;
+use crate::picker::Picker;
+use crate::session::Session;
+use crate::theme::Theme;
+use crate::view::View;
+use crate::{plugin, render, router};
 use v_ide_engine::editor::Editor;
 use v_ide_engine::io::error::Error;
 use v_ide_keys::key::Key;
@@ -52,9 +52,9 @@ pub struct App {
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,
     pub insert_escape: Option<String>,
-    pub others: Vec<crate::ui::pane::Pane>,
-    pub buffers: Vec<crate::ui::pane::Pane>,
-    pub buffer_list: Option<crate::ui::buffer_list::BufferList>,
+    pub others: Vec<crate::pane::Pane>,
+    pub buffers: Vec<crate::pane::Pane>,
+    pub buffer_list: Option<crate::buffer_list::BufferList>,
     pub active: usize,
     pub pending_ctrl_w: bool,
     pub code_editor: Option<String>,
@@ -69,7 +69,7 @@ pub fn run() -> Result<(), Error> {
     let (session, open) = Session::open(arg.as_deref())?;
     let mut app = App::new(Editor::new(""), String::new());
     app.session = session;
-    app.today = crate::ui::clock::today();
+    app.today = crate::clock::today();
     app.load_config();
     app.install_keymaps();
     if let Some(rel) = open {
@@ -154,14 +154,14 @@ impl App {
             }
             if let Some(path) = self.external_request.take() {
                 if let Some(editor) = self.external_editor() {
-                    let _ = crate::ui::external::run(terminal, &editor, &path);
+                    let _ = crate::external::run(terminal, &editor, &path);
                 } else {
                     self.message =
                         String::from("no editor set (vibook.opt.code_editor or $EDITOR)");
                 }
             }
             if let Some(url) = self.url_request.take() {
-                crate::ui::external::open_url(&url);
+                crate::external::open_url(&url);
             }
             if self.quit {
                 return Ok(());
