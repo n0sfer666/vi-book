@@ -30,5 +30,5 @@ fn wrap_command_rejects_invalid_mode() {
     a.wrap = WrapMode::All;
     command_line::run(&mut a, "wrap bogus");
     assert_eq!(a.wrap, WrapMode::All, "invalid mode leaves wrap unchanged");
-    assert!(a.message.contains("wrap"), "message mentions wrap");
+    assert!(a.ui.message.contains("wrap"), "message mentions wrap");
 }

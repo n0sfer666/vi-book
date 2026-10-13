@@ -21,7 +21,7 @@ fn settings_wrap_all_sets_mode_and_closes() {
     press(&mut a, 'w');
     press(&mut a, 'a');
     assert_eq!(a.wrap, WrapMode::All);
-    assert!(a.menu.is_none(), "menu closes after a leaf choice");
+    assert!(a.ui.menu.is_none(), "menu closes after a leaf choice");
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn settings_scan_hidden_toggles_session_flag() {
     press(&mut a, 's');
     press(&mut a, 'h');
     assert!(a.session.scan_hidden, "menu toggles scan-hidden on");
-    assert!(a.menu.is_none(), "menu closes after the toggle");
+    assert!(a.ui.menu.is_none(), "menu closes after the toggle");
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn scan_hidden_state_is_marked_in_menu() {
     a.session.scan_hidden = true;
     actions::open_menu(&mut a);
     press(&mut a, 's');
-    let menu = a.menu.as_ref().unwrap();
+    let menu = a.ui.menu.as_ref().unwrap();
     let item = menu
         .items
         .iter()
@@ -79,11 +79,14 @@ fn esc_steps_back_through_levels_then_closes() {
     press(&mut a, 's');
     press(&mut a, 'w');
     actions::menu_key(&mut a, Some(Key::Esc));
-    assert!(a.menu.is_some(), "esc in wrap submenu returns to settings");
+    assert!(
+        a.ui.menu.is_some(),
+        "esc in wrap submenu returns to settings"
+    );
     actions::menu_key(&mut a, Some(Key::Esc));
-    assert!(a.menu.is_some(), "esc in settings returns to leader");
+    assert!(a.ui.menu.is_some(), "esc in settings returns to leader");
     actions::menu_key(&mut a, Some(Key::Esc));
-    assert!(a.menu.is_none(), "esc at root closes the menu");
+    assert!(a.ui.menu.is_none(), "esc at root closes the menu");
 }
 
 #[test]
@@ -93,7 +96,7 @@ fn current_wrap_mode_is_marked() {
     actions::open_menu(&mut a);
     press(&mut a, 's');
     press(&mut a, 'w');
-    let menu = a.menu.as_ref().unwrap();
+    let menu = a.ui.menu.as_ref().unwrap();
     let item = menu
         .items
         .iter()

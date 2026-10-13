@@ -81,9 +81,9 @@ fn focus_next_cycles_through_panes() {
 #[test]
 fn two_panes_render_side_by_side_with_a_divider() {
     let mut app = App::new(common::named_doc("AAAA", "a.md"));
-    app.view = View::Edit;
+    app.ui.read.view = View::Edit;
     app.vsplit(None);
-    app.view = View::Edit;
+    app.ui.read.view = View::Edit;
     let backend = TestBackend::new(80, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal
@@ -125,7 +125,7 @@ fn quit_refuses_when_an_inactive_window_is_dirty() {
     app.focus_next();
     v_ide_tui::command_line::run(&mut app, "q");
     assert!(!app.quit, "dirty split window blocks :q");
-    assert!(app.message.contains("unsaved"));
+    assert!(app.ui.message.contains("unsaved"));
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn close_refuses_a_dirty_window() {
     let mut app = app_with_dirty_split();
     v_ide_tui::command_line::run(&mut app, "close");
     assert_eq!(app.pane_count(), 2, "dirty window stays open");
-    assert!(app.message.contains("unsaved"));
+    assert!(app.ui.message.contains("unsaved"));
 }
 
 #[test]
@@ -142,5 +142,5 @@ fn only_refuses_when_another_window_is_dirty() {
     app.focus_next();
     v_ide_tui::command_line::run(&mut app, "only");
     assert_eq!(app.pane_count(), 2, "dirty window is not discarded");
-    assert!(app.message.contains("unsaved"));
+    assert!(app.ui.message.contains("unsaved"));
 }

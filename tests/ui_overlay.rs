@@ -64,7 +64,7 @@ fn assert_modal_is_opaque(grid: &[Vec<String>]) {
 #[test]
 fn help_modal_is_opaque() {
     let mut app = App::new(background());
-    app.help = true;
+    app.ui.help = true;
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
 }
@@ -72,7 +72,7 @@ fn help_modal_is_opaque() {
 #[test]
 fn picker_modal_is_opaque() {
     let mut app = App::new(background());
-    app.picker = Some(Picker::new(vec!["one".into(), "two".into()]));
+    app.ui.picker = Some(Picker::new(vec!["one".into(), "two".into()]));
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
 }
@@ -80,7 +80,7 @@ fn picker_modal_is_opaque() {
 #[test]
 fn buffer_list_modal_renders_markers_and_is_opaque() {
     let mut app = App::new(background());
-    app.buffer_list = Some(BufferList::new(vec![
+    app.ui.buffer_list = Some(BufferList::new(vec![
         BufferEntry {
             idx: 0,
             path: "architecture.md".into(),
@@ -122,7 +122,7 @@ fn buffer_list_modal_renders_markers_and_is_opaque() {
 fn menu_modal_is_opaque() {
     let mut app = App::new(background());
     app.handle(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE));
-    assert!(app.menu.is_some());
+    assert!(app.ui.menu.is_some());
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
 }

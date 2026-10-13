@@ -32,8 +32,8 @@ fn empty_backlinks_shows_message_and_no_panel() {
     let mut app = app_for(&root);
     app.open_rel("a.md");
     command_line::run(&mut app, "backlinks");
-    let panel = app.panel.is_some();
-    let message = app.message.clone();
+    let panel = app.ui.panel.is_some();
+    let message = app.ui.message.clone();
     let _ = fs::remove_dir_all(&root);
     assert!(!panel, "empty backlinks must not open a panel");
     assert!(!message.is_empty(), "empty backlinks must report a message");
@@ -47,7 +47,7 @@ fn non_empty_backlinks_opens_panel() {
     let mut app = app_for(&root);
     app.open_rel("a.md");
     command_line::run(&mut app, "backlinks");
-    let is_backlinks = matches!(app.panel, Some(Panel::Backlinks { .. }));
+    let is_backlinks = matches!(app.ui.panel, Some(Panel::Backlinks { .. }));
     let _ = fs::remove_dir_all(&root);
     assert!(is_backlinks, "backlinks with results must open the panel");
 }
@@ -62,8 +62,8 @@ fn enter_on_backlink_opens_file_and_closes_panel() {
     command_line::run(&mut app, "backlinks");
     input::panel_key(&mut app, Some(Key::Enter));
     let path = app.workspace.current().name.clone();
-    let panel = app.panel.is_some();
-    let focus = app.panel_focus;
+    let panel = app.ui.panel.is_some();
+    let focus = app.ui.panel_focus;
     let _ = fs::remove_dir_all(&root);
     assert_eq!(path, "b.md", "Enter must open the backlinked file");
     assert!(!panel, "Enter on a backlink must close the panel");

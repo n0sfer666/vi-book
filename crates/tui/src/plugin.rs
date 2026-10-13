@@ -46,16 +46,16 @@ pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'stati
     let host = match PluginHost::new() {
         Ok(host) => host,
         Err(err) => {
-            app.message = format!("plugin init error: {err}");
+            app.ui.message = format!("plugin init error: {err}");
             return;
         }
     };
     if let Some((_, Some(warning))) = &resolved {
-        app.message = warning.to_string();
+        app.ui.message = warning.to_string();
     }
     for (name, source) in v_ide_lua::defaults::ALL {
         if let Err(err) = host.load(source) {
-            app.message = format!("default plugin '{name}' error: {err}");
+            app.ui.message = format!("default plugin '{name}' error: {err}");
         }
     }
     if let Some((path, _)) = resolved
@@ -63,7 +63,7 @@ pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'stati
         && let Ok(script) = std::fs::read_to_string(&path)
         && let Err(err) = host.load(&script)
     {
-        app.message = format!("config error: {err}");
+        app.ui.message = format!("config error: {err}");
     }
     host.set_vault(app.session.items(), app.session.index.tags());
     app.host = Some(host);
@@ -79,7 +79,7 @@ pub fn follow_link(app: &mut App, target: &str) -> bool {
         .as_ref()
         .map(|host| host.fire_with("follow_link", target))
     {
-        app.message = format!("plugin error: {err}");
+        app.ui.message = format!("plugin error: {err}");
         return false;
     }
     let (opens, external) = match &app.host {
@@ -89,7 +89,7 @@ pub fn follow_link(app: &mut App, target: &str) -> bool {
     if let Some(rel) = external.into_iter().next_back() {
         match crate::external::resolve(&app.session.root, &rel) {
             Some(path) => app.external_request = Some(path),
-            None => app.message = format!("file not found: {rel}"),
+            None => app.ui.message = format!("file not found: {rel}"),
         }
         return true;
     }
@@ -170,7 +170,7 @@ pub fn fire(app: &mut App, event: &str) {
     sync_in(app);
     let result = app.host.as_ref().map(|host| host.fire(event));
     if let Some(Err(err)) = result {
-        app.message = format!("plugin error: {err}");
+        app.ui.message = format!("plugin error: {err}");
     } else {
         sync_out(app, false);
     }
@@ -192,7 +192,7 @@ pub fn run_command(app: &mut App, name: &str) -> bool {
             true
         }
         Err(err) => {
-            app.message = format!("plugin error: {err}");
+            app.ui.message = format!("plugin error: {err}");
             true
         }
     }

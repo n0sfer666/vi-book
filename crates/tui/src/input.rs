@@ -7,7 +7,7 @@ use v_ide_keys::key::Key;
 
 pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
     match mapped {
-        Some(Key::Char(':')) => app.command = Some(String::new()),
+        Some(Key::Char(':')) => app.ui.command = Some(String::new()),
         Some(Key::Ctrl('p')) => app.open_picker(),
         Some(Key::Ctrl('o')) => {
             if let Some(rel) = app.history.back() {
@@ -36,7 +36,7 @@ pub fn normal_builtin(app: &mut App, mapped: Option<Key>) -> bool {
 }
 
 pub fn panel_key(app: &mut App, key: Option<Key>) {
-    let Some(panel) = app.panel.as_mut() else {
+    let Some(panel) = app.ui.panel.as_mut() else {
         return;
     };
     match key {
@@ -44,15 +44,15 @@ pub fn panel_key(app: &mut App, key: Option<Key>) {
             panel.move_down();
         }
         Some(Key::Char('k') | Key::Char('b') | Key::Char('B')) | Some(Key::Up) => panel.move_up(),
-        Some(Key::Esc) | Some(Key::Ctrl('w')) => app.panel_focus = false,
+        Some(Key::Esc) | Some(Key::Ctrl('w')) => app.ui.panel_focus = false,
         Some(Key::Enter) => {
             let close_after = matches!(panel, Panel::Backlinks { .. });
             match panel.activate() {
                 Activation::Open(path) => {
                     app.open_rel(&path);
                     if close_after {
-                        app.panel = None;
-                        app.panel_focus = false;
+                        app.ui.panel = None;
+                        app.ui.panel_focus = false;
                     }
                 }
                 Activation::Toggled | Activation::None => {}
@@ -63,14 +63,14 @@ pub fn panel_key(app: &mut App, key: Option<Key>) {
 }
 
 pub fn buffer_list_key(app: &mut App, event: KeyEvent) {
-    let Some(list) = app.buffer_list.as_mut() else {
+    let Some(list) = app.ui.buffer_list.as_mut() else {
         return;
     };
     match event_map::to_key(event) {
-        Some(Key::Esc) => app.buffer_list = None,
+        Some(Key::Esc) => app.ui.buffer_list = None,
         Some(Key::Enter) => {
             let target = list.current().map(|e| e.idx);
-            app.buffer_list = None;
+            app.ui.buffer_list = None;
             if let Some(idx) = target
                 && idx > 0
             {
@@ -82,8 +82,8 @@ pub fn buffer_list_key(app: &mut App, event: KeyEvent) {
                 app.close_buffer(idx);
                 let entries = app.named_buffers();
                 if entries.is_empty() {
-                    app.buffer_list = None;
-                } else if let Some(list) = app.buffer_list.as_mut() {
+                    app.ui.buffer_list = None;
+                } else if let Some(list) = app.ui.buffer_list.as_mut() {
                     list.rebuild(entries);
                 }
             }
@@ -97,16 +97,16 @@ pub fn buffer_list_key(app: &mut App, event: KeyEvent) {
 }
 
 pub fn picker_key(app: &mut App, event: KeyEvent) {
-    let Some(picker) = app.picker.as_mut() else {
+    let Some(picker) = app.ui.picker.as_mut() else {
         return;
     };
     match event_map::to_key(event) {
-        Some(Key::Esc) => app.picker = None,
+        Some(Key::Esc) => app.ui.picker = None,
         Some(Key::Enter) => {
             if let Some(rel) = picker.current() {
                 app.open_rel(&rel);
             } else {
-                app.picker = None;
+                app.ui.picker = None;
             }
         }
         Some(Key::Backspace) => picker.pop(),

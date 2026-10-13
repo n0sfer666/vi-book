@@ -28,10 +28,10 @@ fn follow_wiki(app: &mut App, link: &Link) {
     match follow(&app.session.index, link) {
         Follow::Open(path) => app.open_rel(&path),
         Follow::Disambiguate(paths) => {
-            app.picker = Some(crate::picker::Picker::new(paths));
+            app.ui.picker = Some(crate::picker::Picker::new(paths));
         }
         Follow::Create(name) => {
-            app.message = format!("note '{name}' does not exist (press : to create)");
+            app.ui.message = format!("note '{name}' does not exist (press : to create)");
         }
     }
 }

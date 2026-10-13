@@ -32,7 +32,7 @@ fn note_opens_in_read_mode_by_default() {
     let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app.load("a.md");
-    let view = app.view;
+    let view = app.ui.read.view;
     let _ = fs::remove_dir_all(&root);
     assert_eq!(view, View::Read);
 }
@@ -40,9 +40,9 @@ fn note_opens_in_read_mode_by_default() {
 #[test]
 fn leader_opens_the_menu_in_normal_mode() {
     let mut app = App::new(common::named_doc("hi", "a.md"));
-    assert!(app.menu.is_none());
+    assert!(app.ui.menu.is_none());
     app.handle(key(KeyCode::Char(' ')));
-    assert!(app.menu.is_some());
+    assert!(app.ui.menu.is_some());
 }
 
 #[test]
@@ -50,18 +50,18 @@ fn menu_new_entry_prompts_for_a_name() {
     let mut app = App::new(common::named_doc("hi", "a.md"));
     app.handle(key(KeyCode::Char(' ')));
     app.handle(key(KeyCode::Char('n')));
-    assert_eq!(app.command.as_deref(), Some("new "));
+    assert_eq!(app.ui.command.as_deref(), Some("new "));
 }
 
 #[test]
 fn f1_opens_help_and_enter_reveals_the_manual() {
     let mut app = App::new(common::named_doc("hi", "a.md"));
     app.handle(key(KeyCode::F(1)));
-    assert!(app.help);
+    assert!(app.ui.help);
     actions::help_key(&mut app, key(KeyCode::Enter));
-    assert!(!app.help);
+    assert!(!app.ui.help);
     assert_eq!(app.workspace.current().editor.text(), help::MANUAL);
-    assert_eq!(app.view, View::Read);
+    assert_eq!(app.ui.read.view, View::Read);
 }
 
 #[test]

@@ -27,11 +27,11 @@ fn open_daily(app: &mut App, date: Date) {
         if let Some(parent) = abs.parent()
             && let Err(err) = fs::create_dir_all(parent)
         {
-            app.message = format!("daily failed: {err}");
+            app.ui.message = format!("daily failed: {err}");
             return;
         }
         if let Err(err) = fs::write(&abs, expand_template(DEFAULT_TEMPLATE, date)) {
-            app.message = format!("daily failed: {err}");
+            app.ui.message = format!("daily failed: {err}");
             return;
         }
         let _ = app.session.reindex();

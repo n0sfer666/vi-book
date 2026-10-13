@@ -10,7 +10,7 @@ use crate::list_nav;
 use crate::menu::Menu;
 
 pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
-    let Some(panel) = app.panel.as_ref() else {
+    let Some(panel) = app.ui.panel.as_ref() else {
         return;
     };
     let rows = panel.rows();
@@ -23,7 +23,7 @@ pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
         .skip(offset)
         .take(inner_height)
         .map(|(i, label)| {
-            if i == selected && app.panel_focus {
+            if i == selected && app.ui.panel_focus {
                 Line::styled(
                     label.clone(),
                     TuiStyle::default().add_modifier(Modifier::REVERSED),
@@ -33,7 +33,7 @@ pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
             }
         })
         .collect();
-    let border = if app.panel_focus {
+    let border = if app.ui.panel_focus {
         TuiStyle::default().add_modifier(Modifier::BOLD)
     } else {
         TuiStyle::default().add_modifier(Modifier::DIM)
@@ -47,7 +47,7 @@ pub fn draw_panel(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 pub fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
-    let Some(picker) = app.picker.as_ref() else {
+    let Some(picker) = app.ui.picker.as_ref() else {
         return;
     };
     let width = (area.width.saturating_sub(4)).min(70);
@@ -78,7 +78,7 @@ pub fn draw_picker(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 pub fn draw_buffer_list(frame: &mut Frame, app: &App, area: Rect) {
-    let Some(list) = app.buffer_list.as_ref() else {
+    let Some(list) = app.ui.buffer_list.as_ref() else {
         return;
     };
     let width = (area.width.saturating_sub(4)).min(70);

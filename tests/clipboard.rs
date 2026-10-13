@@ -24,22 +24,22 @@ fn osc52_wraps_base64_payload() {
 fn enter_on_a_code_block_copies_it() {
     let src = "# Title\n\n```rust\nfn main() {}\n```\n";
     let mut app = App::new(common::named_doc(src, "a.md"));
-    app.view = View::Read;
+    app.ui.read.view = View::Read;
     let rendered = v_ide_markdown::render::render(src, 80);
     let line = rendered
         .lines
         .iter()
         .position(|l| l.text().contains("fn main"))
         .expect("code line rendered");
-    app.read_cursor = (line, 3);
+    app.ui.read.read_cursor = (line, 3);
     app.handle(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
     assert_eq!(
         app.workspace.current().editor.yanked().as_deref(),
         Some("fn main() {}")
     );
     assert!(
-        app.message.contains("code block"),
+        app.ui.message.contains("code block"),
         "message should confirm the copy, got: {:?}",
-        app.message
+        app.ui.message
     );
 }

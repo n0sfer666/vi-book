@@ -30,6 +30,7 @@ pub mod router;
 pub mod session;
 pub mod split;
 pub mod theme;
+pub mod ui_state;
 pub mod view;
 
 pub use app::run;

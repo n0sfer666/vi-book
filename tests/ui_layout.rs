@@ -44,7 +44,7 @@ fn zero_width_clamps_to_one() {
 #[test]
 fn edit_content_starts_at_origin_not_centered() {
     let mut app = App::new(common::named_doc("hello", "a.md"));
-    app.view = View::Edit;
+    app.ui.read.view = View::Edit;
     let backend = TestBackend::new(100, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal

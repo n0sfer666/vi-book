@@ -71,7 +71,7 @@ fn app_with_file(path: &PathBuf) -> App {
 }
 
 fn run_command(app: &mut App, command: &str) {
-    app.command = Some(String::from(command));
+    app.ui.command = Some(String::from(command));
     command_line::handle(app, KeyEvent::from(KeyCode::Enter));
 }
 
@@ -95,7 +95,7 @@ fn write_on_bundled_doc_fails_without_touching_disk() {
     run_command(&mut app, "w");
     assert!(!std::path::Path::new(&label).exists());
     assert_eq!(
-        app.message,
+        app.ui.message,
         "save failed: buffer has no associated file path"
     );
 }
@@ -118,12 +118,12 @@ fn colon_opens_command_line_only_when_idle() {
     let mut app = app_with_file(&path);
     fs::remove_file(&path).unwrap();
     app.handle(KeyEvent::from(KeyCode::Char(':')));
-    assert_eq!(app.command.as_deref(), Some(""));
-    app.command = None;
+    assert_eq!(app.ui.command.as_deref(), Some(""));
+    app.ui.command = None;
     app.workspace.current_mut().editor.handle_keys("d");
     app.handle(KeyEvent::from(KeyCode::Char(':')));
     assert!(
-        app.command.is_none(),
+        app.ui.command.is_none(),
         "colon must not interrupt a pending operator"
     );
 }

@@ -22,24 +22,28 @@ fn load(label: &str, script: &str, warning: Option<&'static str>) -> App {
 #[test]
 fn warning_goes_to_status_line() {
     let app = load("warn", "vibook.opt.leader = \" \"", Some("config: old"));
-    assert_eq!(app.message, "config: old");
+    assert_eq!(app.ui.message, "config: old");
 }
 
 #[test]
 fn config_error_overrides_warning() {
     let app = load("error", "error(\"boom\")", Some("config: old"));
-    assert!(app.message.starts_with("config error:"), "{}", app.message);
+    assert!(
+        app.ui.message.starts_with("config error:"),
+        "{}",
+        app.ui.message
+    );
 }
 
 #[test]
 fn no_warning_leaves_status_line_empty() {
     let app = load("clean", "vibook.opt.leader = \" \"", None);
-    assert_eq!(app.message, "");
+    assert_eq!(app.ui.message, "");
 }
 
 #[test]
 fn no_config_leaves_status_line_empty() {
     let mut app = App::new(common::named_doc("x", "a.md"));
     plugin::load_config_from(&mut app, None);
-    assert_eq!(app.message, "");
+    assert_eq!(app.ui.message, "");
 }

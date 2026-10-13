@@ -25,13 +25,14 @@ type Select = (Mode, (usize, usize), (usize, usize));
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
     let text = app.workspace.current().editor.text();
     let wrap = app.wrap;
-    let hit =
-        matches!(&app.read_cache, Some((t, w, m, _)) if t == &text && *w == width && *m == wrap);
+    let hit = matches!(&app.ui.read.read_cache, Some((t, w, m, _)) if t == &text && *w == width && *m == wrap);
     if !hit {
         let rendered = render_with(&text, width, wrap);
-        app.read_cache = Some((text, width, wrap, rendered));
+        app.ui.read.read_cache = Some((text, width, wrap, rendered));
     }
-    app.read_cache
+    app.ui
+        .read
+        .read_cache
         .as_ref()
         .map(|(_, _, _, r)| r.clone())
         .unwrap_or_default()
@@ -40,17 +41,21 @@ pub fn cached_render(app: &mut App, width: usize) -> Rendered {
 pub fn enter(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     let idx = app.workspace.current().editor.text_index();
-    app.read_cursor = rendered.to_rendered(idx);
-    app.view = View::Read;
+    app.ui.read.read_cursor = rendered.to_rendered(idx);
+    app.ui.read.view = View::Read;
 }
 
 pub fn leave(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
-    if let Some(idx) = source_at(&rendered, app.read_cursor.0, app.read_cursor.1) {
+    if let Some(idx) = source_at(
+        &rendered,
+        app.ui.read.read_cursor.0,
+        app.ui.read.read_cursor.1,
+    ) {
         app.workspace.current_mut().editor.set_cursor_index(idx);
     }
-    app.read_select = None;
-    app.view = View::Edit;
+    app.ui.read_select = None;
+    app.ui.read.view = View::Edit;
 }
 
 pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
@@ -61,8 +66,8 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
         Key::Char('v') => return toggle_select(app, Mode::Visual),
         Key::Char('V') => return toggle_select(app, Mode::VisualLine),
         Key::Ctrl('v') => return toggle_select(app, Mode::VisualBlock),
-        Key::Esc => return app.read_select = None,
-        Key::Char('y') if app.read_select.is_some() => return yank_selection(app, width),
+        Key::Esc => return app.ui.read_select = None,
+        Key::Char('y') if app.ui.read_select.is_some() => return yank_selection(app, width),
         Key::Char('Y') => return yank_line(app, width),
         _ => {}
     }
@@ -73,29 +78,37 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     }
     let rendered = cached_render(app, width);
     let last_line = rendered.lines.len().saturating_sub(1);
-    let (line, col) = app.read_cursor;
+    let (line, col) = app.ui.read.read_cursor;
     match key {
-        Key::Char('j') | Key::Down => app.read_cursor = clamp(&rendered, line + 1, col),
-        Key::Char('k') | Key::Up => app.read_cursor = clamp(&rendered, line.saturating_sub(1), col),
-        Key::Char('h') | Key::Left => {
-            app.read_cursor = clamp(&rendered, line, col.saturating_sub(1))
+        Key::Char('j') | Key::Down => app.ui.read.read_cursor = clamp(&rendered, line + 1, col),
+        Key::Char('k') | Key::Up => {
+            app.ui.read.read_cursor = clamp(&rendered, line.saturating_sub(1), col)
         }
-        Key::Char('l') | Key::Right => app.read_cursor = clamp(&rendered, line, col + 1),
-        Key::Char('w') => app.read_cursor = read_motion::word_forward(&rendered, (line, col)),
-        Key::Char('b') => app.read_cursor = read_motion::word_back(&rendered, (line, col)),
-        Key::Char('e') => app.read_cursor = read_motion::word_end(&rendered, (line, col)),
-        Key::Char('W') => app.read_cursor = read_motion::element_forward(&rendered, (line, col)),
-        Key::Char('B') => app.read_cursor = read_motion::element_back(&rendered, (line, col)),
+        Key::Char('h') | Key::Left => {
+            app.ui.read.read_cursor = clamp(&rendered, line, col.saturating_sub(1))
+        }
+        Key::Char('l') | Key::Right => app.ui.read.read_cursor = clamp(&rendered, line, col + 1),
+        Key::Char('w') => {
+            app.ui.read.read_cursor = read_motion::word_forward(&rendered, (line, col))
+        }
+        Key::Char('b') => app.ui.read.read_cursor = read_motion::word_back(&rendered, (line, col)),
+        Key::Char('e') => app.ui.read.read_cursor = read_motion::word_end(&rendered, (line, col)),
+        Key::Char('W') => {
+            app.ui.read.read_cursor = read_motion::element_forward(&rendered, (line, col))
+        }
+        Key::Char('B') => {
+            app.ui.read.read_cursor = read_motion::element_back(&rendered, (line, col))
+        }
         Key::Char('g') => {
-            if app.read_pending_g {
-                app.read_cursor = (0, 0);
+            if app.ui.read.read_pending_g {
+                app.ui.read.read_cursor = (0, 0);
             }
-            app.read_pending_g = !app.read_pending_g;
+            app.ui.read.read_pending_g = !app.ui.read.read_pending_g;
             return;
         }
-        Key::Char('G') => app.read_cursor = clamp(&rendered, last_line, 0),
-        Key::Char('0') => app.read_cursor = (line, 0),
-        Key::Char('$') => app.read_cursor = clamp(&rendered, line, usize::MAX),
+        Key::Char('G') => app.ui.read.read_cursor = clamp(&rendered, last_line, 0),
+        Key::Char('0') => app.ui.read.read_cursor = (line, 0),
+        Key::Char('$') => app.ui.read.read_cursor = clamp(&rendered, line, usize::MAX),
         Key::Char('i') => leave(app, width),
         Key::Ctrl('t') => leave(app, width),
         Key::Enter => {
@@ -108,14 +121,14 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
             ) {
                 app.workspace.current_mut().editor.yank(code, false);
                 clip_sync::sync_out(app);
-                app.message = String::from("copied code block to clipboard");
+                app.ui.message = String::from("copied code block to clipboard");
             } else {
                 crate::link_follow::follow_at_cursor(app);
             }
         }
         _ => {}
     }
-    app.read_pending_g = false;
+    app.ui.read.read_pending_g = false;
 }
 
 pub(crate) fn read_lines(
@@ -179,37 +192,37 @@ fn delegates_to_edit(key: Key) -> bool {
 }
 
 fn toggle_select(app: &mut App, mode: Mode) {
-    app.read_select = match app.read_select {
+    app.ui.read_select = match app.ui.read_select {
         Some((current, _)) if current == mode => None,
         Some((_, anchor)) => Some((mode, anchor)),
-        None => Some((mode, app.read_cursor)),
+        None => Some((mode, app.ui.read.read_cursor)),
     };
 }
 
 fn yank_selection(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
-    if let Some((mode, anchor)) = app.read_select {
-        let text = selected_text(&rendered, mode, anchor, app.read_cursor);
+    if let Some((mode, anchor)) = app.ui.read_select {
+        let text = selected_text(&rendered, mode, anchor, app.ui.read.read_cursor);
         app.workspace
             .current_mut()
             .editor
             .yank(text, mode == Mode::VisualLine);
         clip_sync::sync_out(app);
-        app.read_select = None;
-        app.message = String::from("copied to clipboard");
+        app.ui.read_select = None;
+        app.ui.message = String::from("copied to clipboard");
     }
 }
 
 fn yank_line(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
-    if let Some(line) = rendered.lines.get(app.read_cursor.0) {
+    if let Some(line) = rendered.lines.get(app.ui.read.read_cursor.0) {
         let text = line.text();
         app.workspace
             .current_mut()
             .editor
             .yank(format!("{text}\n"), true);
         clip_sync::sync_out(app);
-        app.message = String::from("copied line to clipboard");
+        app.ui.message = String::from("copied line to clipboard");
     }
 }
 
@@ -277,29 +290,35 @@ fn source_at(rendered: &Rendered, line: usize, col: usize) -> Option<usize> {
 pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     let width = column_width(area);
     let rendered = cached_render(app, width);
-    app.read_cursor = clamp(&rendered, app.read_cursor.0, app.read_cursor.1);
+    app.ui.read.read_cursor = clamp(
+        &rendered,
+        app.ui.read.read_cursor.0,
+        app.ui.read.read_cursor.1,
+    );
     let height = area.height.max(1) as usize;
-    if app.read_cursor.0 < app.top {
-        app.top = app.read_cursor.0;
+    if app.ui.read.read_cursor.0 < app.ui.read.top {
+        app.ui.read.top = app.ui.read.read_cursor.0;
     }
-    if app.read_cursor.0 >= app.top + height {
-        app.top = app.read_cursor.0 + 1 - height;
+    if app.ui.read.read_cursor.0 >= app.ui.read.top + height {
+        app.ui.read.top = app.ui.read.read_cursor.0 + 1 - height;
     }
-    app.left = hscroll::scroll(app.left, app.read_cursor.1, width);
+    app.ui.left = hscroll::scroll(app.ui.left, app.ui.read.read_cursor.1, width);
     let inner = text_column(area);
     let select = app
+        .ui
         .read_select
-        .map(|(mode, anchor)| (mode, anchor, app.read_cursor));
-    let lines = read_lines(&rendered, app.top, height, &app.theme, select);
-    frame.render_widget(Paragraph::new(lines).scroll((0, app.left as u16)), inner);
-    hscroll::markers(frame, inner, app.left, height, |row| {
+        .map(|(mode, anchor)| (mode, anchor, app.ui.read.read_cursor));
+    let lines = read_lines(&rendered, app.ui.read.top, height, &app.theme, select);
+    frame.render_widget(Paragraph::new(lines).scroll((0, app.ui.left as u16)), inner);
+    hscroll::markers(frame, inner, app.ui.left, height, |row| {
         rendered
             .lines
-            .get(app.top + row)
+            .get(app.ui.read.top + row)
             .map(|line| line.text().chars().count())
     });
-    let row = area.y + (app.read_cursor.0 - app.top) as u16;
+    let row = area.y + (app.ui.read.read_cursor.0 - app.ui.read.top) as u16;
     let col = inner.x
-        + (app.read_cursor.1.saturating_sub(app.left) as u16).min(inner.width.saturating_sub(1));
+        + (app.ui.read.read_cursor.1.saturating_sub(app.ui.left) as u16)
+            .min(inner.width.saturating_sub(1));
     frame.set_cursor_position(ScreenPosition::new(col, row));
 }

@@ -49,7 +49,7 @@ fn rendered_code_block_paints_keyword_color() {
         "```python\ndef f():\n    pass\n```",
         "a.md",
     ));
-    app.view = View::Read;
+    app.ui.read.view = View::Read;
     let backend = TestBackend::new(60, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal

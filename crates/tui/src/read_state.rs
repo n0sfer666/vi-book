@@ -1,4 +1,3 @@
-use crate::app::App;
 use crate::view::View;
 use v_ide_markdown::rendered::Rendered;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -26,25 +25,5 @@ impl ReadState {
 impl Default for ReadState {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl App {
-    pub(crate) fn take_read_state(&mut self) -> ReadState {
-        ReadState {
-            top: self.top,
-            view: self.view,
-            read_cursor: self.read_cursor,
-            read_pending_g: self.read_pending_g,
-            read_cache: self.read_cache.take(),
-        }
-    }
-
-    pub(crate) fn put_read_state(&mut self, state: ReadState) {
-        self.top = state.top;
-        self.view = state.view;
-        self.read_cursor = state.read_cursor;
-        self.read_pending_g = state.read_pending_g;
-        self.read_cache = state.read_cache;
     }
 }

@@ -6,38 +6,38 @@ use crate::{actions, clip_sync, command_line, event_map, input, layout, plugin, 
 use v_ide_keys::key::Key;
 
 pub fn handle(app: &mut App, key: KeyEvent) {
-    app.message.clear();
-    if app.help {
+    app.ui.message.clear();
+    if app.ui.help {
         actions::help_key(app, key);
         return;
     }
-    if app.buffer_list.is_some() {
+    if app.ui.buffer_list.is_some() {
         input::buffer_list_key(app, key);
         return;
     }
-    if app.picker.is_some() {
+    if app.ui.picker.is_some() {
         input::picker_key(app, key);
         return;
     }
-    if app.command.is_some() {
+    if app.ui.command.is_some() {
         command_line::handle(app, key);
         return;
     }
     let mapped = event_map::to_key(key);
-    if app.pending_ctrl_w {
-        app.pending_ctrl_w = false;
+    if app.ui.pending_ctrl_w {
+        app.ui.pending_ctrl_w = false;
         window_command(app, mapped);
         return;
     }
-    if app.menu.is_some() {
+    if app.ui.menu.is_some() {
         actions::menu_key(app, mapped);
         return;
     }
     if key.code == KeyCode::F(1) {
-        app.help = true;
+        app.ui.help = true;
         return;
     }
-    if app.panel_focus && app.panel.is_some() {
+    if app.ui.panel_focus && app.ui.panel.is_some() {
         input::panel_key(app, mapped);
         return;
     }
@@ -47,18 +47,18 @@ pub fn handle(app: &mut App, key: KeyEvent) {
             return;
         }
         if mapped == Some(Key::Char('?')) {
-            app.help = true;
+            app.ui.help = true;
             return;
         }
     }
-    if (app.view == View::Read || app.workspace.current().editor.idle_normal())
+    if (app.ui.read.view == View::Read || app.workspace.current().editor.idle_normal())
         && mapped == Some(Key::Ctrl('w'))
     {
-        app.pending_ctrl_w = true;
+        app.ui.pending_ctrl_w = true;
         return;
     }
-    let width = layout::column_width(app.text_area);
-    if app.view == View::Read {
+    let width = layout::column_width(app.ui.text_area);
+    if app.ui.read.view == View::Read {
         if !input::global_nav(app, mapped) {
             read_view::handle_key(app, key, width);
         }
@@ -86,8 +86,8 @@ fn window_command(app: &mut App, mapped: Option<Key>) {
     match mapped {
         Some(Key::Char('w')) | Some(Key::Ctrl('w')) => app.focus_next(),
         Some(Key::Char('p')) => {
-            if app.panel.is_some() {
-                app.panel_focus = true;
+            if app.ui.panel.is_some() {
+                app.ui.panel_focus = true;
             }
         }
         Some(Key::Char('s')) | Some(Key::Char('v')) => app.vsplit(None),

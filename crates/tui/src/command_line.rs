@@ -8,19 +8,19 @@ use crate::{actions, daily_cmd, plugin};
 use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn handle(app: &mut App, event: KeyEvent) {
-    let Some(command) = app.command.as_mut() else {
+    let Some(command) = app.ui.command.as_mut() else {
         return;
     };
     match event.code {
         KeyCode::Char(c) => command.push(c),
         KeyCode::Backspace => {
             if command.pop().is_none() {
-                app.command = None;
+                app.ui.command = None;
             }
         }
-        KeyCode::Esc => app.command = None,
+        KeyCode::Esc => app.ui.command = None,
         KeyCode::Enter => {
-            let command = app.command.take().unwrap_or_default();
+            let command = app.ui.command.take().unwrap_or_default();
             run(app, &command);
         }
         _ => {}
@@ -44,7 +44,7 @@ pub fn run(app: &mut App, command: &str) {
         "daily-next" => daily_cmd::open_next(app),
         "tree" => toggle_panel(app, PanelKind::Tree),
         "backlinks" => toggle_panel(app, PanelKind::Backlinks),
-        "help" => app.help = true,
+        "help" => app.ui.help = true,
         "pick" => app.open_picker(),
         "buffers" => app.open_buffer_list(),
         "toggle-view" => actions::toggle_view(app),
@@ -65,7 +65,7 @@ pub fn run(app: &mut App, command: &str) {
             } else if let Some(arg) = other.strip_prefix("scan-hidden ") {
                 set_scan_hidden(app, arg.trim());
             } else if !plugin::run_command(app, other) {
-                app.message = format!("not an editor command: {other}");
+                app.ui.message = format!("not an editor command: {other}");
             }
         }
     }
@@ -75,10 +75,10 @@ fn set_wrap(app: &mut App, mode: &str) {
     match WrapMode::parse(mode) {
         Some(wrap) => {
             app.wrap = wrap;
-            app.read_cache = None;
-            app.message = format!("wrap: {mode}");
+            app.ui.read.read_cache = None;
+            app.ui.message = format!("wrap: {mode}");
         }
-        None => app.message = format!("unknown wrap mode: {mode} (none|text|all)"),
+        None => app.ui.message = format!("unknown wrap mode: {mode} (none|text|all)"),
     }
 }
 
@@ -88,7 +88,7 @@ fn set_scan_hidden(app: &mut App, arg: &str) {
         "off" => false,
         "toggle" => !app.session.scan_hidden,
         _ => {
-            app.message = String::from("scan-hidden: on|off|toggle");
+            app.ui.message = String::from("scan-hidden: on|off|toggle");
             return;
         }
     };
@@ -97,9 +97,9 @@ fn set_scan_hidden(app: &mut App, arg: &str) {
     match app.session.reindex() {
         Ok(()) => {
             plugin::sync_vault_host(app);
-            app.message = format!("scan hidden folders: {state}");
+            app.ui.message = format!("scan hidden folders: {state}");
         }
-        Err(err) => app.message = format!("reindex failed: {err}"),
+        Err(err) => app.ui.message = format!("reindex failed: {err}"),
     }
 }
 
@@ -118,7 +118,7 @@ fn create_note(app: &mut App, name: &str) {
         if let Some(parent) = abs.parent()
             && let Err(err) = fs::create_dir_all(parent)
         {
-            app.message = format!("create failed: {err}");
+            app.ui.message = format!("create failed: {err}");
             return;
         }
         let stem = rel
@@ -127,7 +127,7 @@ fn create_note(app: &mut App, name: &str) {
             .next()
             .unwrap_or(&rel);
         if let Err(err) = fs::write(&abs, format!("# {stem}\n\n")) {
-            app.message = format!("create failed: {err}");
+            app.ui.message = format!("create failed: {err}");
             return;
         }
         let _ = app.session.reindex();
@@ -142,13 +142,13 @@ enum PanelKind {
 
 fn toggle_panel(app: &mut App, kind: PanelKind) {
     let same = matches!(
-        (&app.panel, &kind),
+        (&app.ui.panel, &kind),
         (Some(Panel::Tree { .. }), PanelKind::Tree)
             | (Some(Panel::Backlinks { .. }), PanelKind::Backlinks)
     );
     if same {
-        app.panel = None;
-        app.panel_focus = false;
+        app.ui.panel = None;
+        app.ui.panel_focus = false;
         return;
     }
     let panel = match kind {
@@ -162,25 +162,25 @@ fn toggle_panel(app: &mut App, kind: PanelKind) {
                 .map(|n| n.path.clone())
                 .collect();
             if items.is_empty() {
-                app.message = String::from("no notes link here");
+                app.ui.message = String::from("no notes link here");
                 return;
             }
             Panel::backlinks(items)
         }
     };
-    app.panel = Some(panel);
-    app.panel_focus = true;
+    app.ui.panel = Some(panel);
+    app.ui.panel_focus = true;
 }
 
 fn save(app: &mut App) -> bool {
     match app.workspace.current_mut().save() {
         Ok(()) => {
-            app.message = String::from("written");
+            app.ui.message = String::from("written");
             plugin::fire(app, "note_save");
             true
         }
         Err(err) => {
-            app.message = format!("save failed: {err}");
+            app.ui.message = format!("save failed: {err}");
             false
         }
     }
@@ -188,7 +188,7 @@ fn save(app: &mut App) -> bool {
 
 fn quit(app: &mut App, force: bool) {
     if !force && app.any_dirty() {
-        app.message = String::from("unsaved changes (use :q! to discard)");
+        app.ui.message = String::from("unsaved changes (use :q! to discard)");
     } else {
         app.quit = true;
     }

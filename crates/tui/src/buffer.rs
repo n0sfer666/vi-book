@@ -11,18 +11,18 @@ impl App {
                 doc.editor.set_insert_escape(self.insert_escape.clone());
                 doc.name = rel.to_string();
                 if let Some(id) = self.workspace.open(doc) {
-                    let state = self.take_read_state();
+                    let state = std::mem::take(&mut self.ui.read);
                     self.read_states.insert(id, state);
                 }
-                self.top = 0;
-                self.left = 0;
-                self.view = View::Read;
-                self.read_cursor = (0, 0);
-                self.read_cache = None;
-                self.picker = None;
-                self.menu = None;
+                self.ui.read.top = 0;
+                self.ui.left = 0;
+                self.ui.read.view = View::Read;
+                self.ui.read.read_cursor = (0, 0);
+                self.ui.read.read_cache = None;
+                self.ui.picker = None;
+                self.ui.menu = None;
             }
-            Err(err) => self.message = format!("open failed: {err}"),
+            Err(err) => self.ui.message = format!("open failed: {err}"),
         }
     }
 
@@ -68,28 +68,28 @@ impl App {
     }
 
     pub fn open_buffer_list(&mut self) {
-        self.buffer_list = Some(BufferList::new(self.named_buffers()));
+        self.ui.buffer_list = Some(BufferList::new(self.named_buffers()));
     }
 
     pub fn switch_to_buffer(&mut self, idx: usize) {
         let Some(id) = self.workspace.switch(idx) else {
             return;
         };
-        let state = self.take_read_state();
+        let state = std::mem::take(&mut self.ui.read);
         self.read_states.insert(id, state);
         let state = self
             .read_states
             .remove(&self.workspace.current_id())
             .unwrap_or_default();
-        self.put_read_state(state);
-        self.left = 0;
+        self.ui.read = state;
+        self.ui.left = 0;
         let path = self.workspace.current().name.clone();
         self.history.visit(&path);
     }
 
     pub fn close_buffer(&mut self, idx: usize) {
         if self.is_buffer_dirty(idx) {
-            self.message = String::from("unsaved changes (write with :w or force-close)");
+            self.ui.message = String::from("unsaved changes (write with :w or force-close)");
             return;
         }
         if idx == 0 {
@@ -132,9 +132,9 @@ impl App {
 
     fn blank_active(&mut self) {
         let _ = self.workspace.replace(Document::new(""));
-        self.top = 0;
-        self.left = 0;
-        self.read_cursor = (0, 0);
-        self.read_cache = None;
+        self.ui.read.top = 0;
+        self.ui.left = 0;
+        self.ui.read.read_cursor = (0, 0);
+        self.ui.read.read_cache = None;
     }
 }

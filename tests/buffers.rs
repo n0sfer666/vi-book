@@ -202,7 +202,7 @@ fn buffers_command_opens_list_selecting_previous_buffer() {
     app.open_rel("a.md");
 
     v_ide_tui::command_line::run(&mut app, "buffers");
-    let bl = app.buffer_list.as_ref().expect("buffer list opens");
+    let bl = app.ui.buffer_list.as_ref().expect("buffer list opens");
     let entries = bl.filtered();
     assert_eq!(entries.len(), 2, "active + one pooled buffer");
     assert_eq!(entries[0].path, "a.md");
@@ -247,7 +247,7 @@ fn buffer_list_enter_switches_and_closes() {
         "b.md",
         "Enter switches to the selected buffer"
     );
-    assert!(app.buffer_list.is_none(), "Enter closes the list");
+    assert!(app.ui.buffer_list.is_none(), "Enter closes the list");
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -265,8 +265,8 @@ fn buffer_list_ctrl_d_closes_buffer_and_stays_open() {
 
     v_ide_tui::command_line::run(&mut app, "buffers");
     v_ide_tui::input::buffer_list_key(&mut app, ctrl('d'));
-    assert!(app.buffer_list.is_some(), "Ctrl-d keeps the list open");
-    let entries = app.buffer_list.as_ref().unwrap().filtered();
+    assert!(app.ui.buffer_list.is_some(), "Ctrl-d keeps the list open");
+    let entries = app.ui.buffer_list.as_ref().unwrap().filtered();
     assert!(
         entries.iter().all(|e| e.path != "b.md"),
         "selected (previous) buffer is closed"
@@ -289,7 +289,7 @@ fn buffer_list_esc_closes() {
 
     v_ide_tui::command_line::run(&mut app, "buffers");
     v_ide_tui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Esc));
-    assert!(app.buffer_list.is_none());
+    assert!(app.ui.buffer_list.is_none());
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -308,7 +308,7 @@ fn quit_is_blocked_when_a_pooled_buffer_is_dirty() {
 
     v_ide_tui::command_line::run(&mut app, "q");
     assert!(!app.quit, "q is blocked by a dirty pooled buffer");
-    assert!(app.message.contains("unsaved"));
+    assert!(app.ui.message.contains("unsaved"));
 
     v_ide_tui::command_line::run(&mut app, "q!");
     assert!(app.quit, "q! force-quits regardless of dirty buffers");
@@ -352,7 +352,7 @@ fn close_dirty_buffer_is_blocked() {
 
     app.close_buffer(0);
     assert!(
-        app.message.contains("unsaved"),
+        app.ui.message.contains("unsaved"),
         "dirty close is blocked with a message"
     );
     assert_eq!(app.workspace.current().name, "a.md", "buffer stays");
@@ -393,7 +393,10 @@ fn close_last_buffer_opens_picker() {
     assert!(app.workspace.pool().is_empty());
 
     app.close_buffer(0);
-    assert!(app.picker.is_some(), "closing last buffer opens the picker");
+    assert!(
+        app.ui.picker.is_some(),
+        "closing last buffer opens the picker"
+    );
     assert!(
         app.workspace.current().name.is_empty(),
         "no active named buffer remains"
@@ -413,9 +416,9 @@ fn switch_to_buffer_preserves_active_state_and_mru() {
     doc.name = "a.md".into();
     let mut app = App::new(doc);
     app.session = session;
-    app.view = View::Edit;
+    app.ui.read.view = View::Edit;
     app.workspace.current_mut().editor.handle_keys("ix<Esc>");
-    app.top = 7;
+    app.ui.read.top = 7;
     let dirty_text = app.workspace.current().editor.text();
     let cursor = app.workspace.current().editor.cursor();
     assert!(app.workspace.current().is_dirty());

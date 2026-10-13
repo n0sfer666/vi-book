@@ -8,7 +8,7 @@ use v_ide_editor::document::Document;
 use v_ide_keys::key::Key;
 
 pub fn open_menu(app: &mut App) {
-    app.menu = Some(Menu::leader(
+    app.ui.menu = Some(Menu::leader(
         app.menu_extra.clone(),
         app.menu_center,
         app.wrap,
@@ -21,13 +21,15 @@ pub fn help_key(app: &mut App, event: KeyEvent) {
     match event.code {
         KeyCode::Enter if shift => open_doc(app, "developers.md", help::DEVELOPERS),
         KeyCode::Enter => open_doc(app, "manual.md", help::MANUAL),
-        KeyCode::Esc | KeyCode::F(1) | KeyCode::Char('?') | KeyCode::Char('q') => app.help = false,
+        KeyCode::Esc | KeyCode::F(1) | KeyCode::Char('?') | KeyCode::Char('q') => {
+            app.ui.help = false
+        }
         _ => {}
     }
 }
 
 pub fn menu_key(app: &mut App, mapped: Option<Key>) {
-    let Some(menu) = app.menu.as_mut() else {
+    let Some(menu) = app.ui.menu.as_mut() else {
         return;
     };
     match mapped {
@@ -35,7 +37,7 @@ pub fn menu_key(app: &mut App, mapped: Option<Key>) {
         Some(Key::Up) | Some(Key::Char('k')) => menu.move_up(),
         Some(Key::Esc) => {
             if !menu.back() {
-                app.menu = None;
+                app.ui.menu = None;
             }
         }
         Some(Key::Enter) => {
@@ -52,7 +54,7 @@ pub fn menu_key(app: &mut App, mapped: Option<Key>) {
 }
 
 fn activate(app: &mut App, idx: usize) {
-    let Some(menu) = app.menu.as_mut() else {
+    let Some(menu) = app.ui.menu.as_mut() else {
         return;
     };
     if menu.has_children(idx) {
@@ -63,20 +65,20 @@ fn activate(app: &mut App, idx: usize) {
 }
 
 pub fn dispatch(app: &mut App, action: &str) {
-    app.menu = None;
+    app.ui.menu = None;
     match action {
         ":pick" => app.open_picker(),
         ":buffers" => app.open_buffer_list(),
-        ":newprompt" => app.command = Some("new ".to_string()),
+        ":newprompt" => app.ui.command = Some("new ".to_string()),
         ":toggle-view" => toggle_view(app),
-        ":help" => app.help = true,
+        ":help" => app.ui.help = true,
         cmd => command_line::run(app, cmd.trim_start_matches(':')),
     }
 }
 
 pub fn toggle_view(app: &mut App) {
-    let width = layout::column_width(app.text_area);
-    if app.view == View::Read {
+    let width = layout::column_width(app.ui.text_area);
+    if app.ui.read.view == View::Read {
         read_view::leave(app, width);
     } else {
         read_view::enter(app, width);
@@ -85,16 +87,16 @@ pub fn toggle_view(app: &mut App) {
 
 pub fn open_doc(app: &mut App, label: &str, content: &str) {
     if app.workspace.current().is_dirty() {
-        app.message = String::from("unsaved changes (write with :w or discard)");
+        app.ui.message = String::from("unsaved changes (write with :w or discard)");
         return;
     }
     let mut doc = Document::new(content);
     doc.name = label.to_string();
     let _ = app.workspace.replace(doc);
-    app.view = View::Read;
-    app.read_cursor = (0, 0);
-    app.read_cache = None;
-    app.help = false;
-    app.menu = None;
-    app.top = 0;
+    app.ui.read.view = View::Read;
+    app.ui.read.read_cursor = (0, 0);
+    app.ui.read.read_cache = None;
+    app.ui.help = false;
+    app.ui.menu = None;
+    app.ui.read.top = 0;
 }

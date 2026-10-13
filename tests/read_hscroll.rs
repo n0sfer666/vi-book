@@ -21,7 +21,7 @@ fn draw_row0(app: &mut App, w: u16) -> String {
 
 fn read_app() -> App {
     let mut app = App::new(common::named_doc(LINE, "a.md"));
-    app.view = View::Read;
+    app.ui.read.view = View::Read;
     app.wrap = WrapMode::None;
     app
 }
@@ -30,7 +30,7 @@ fn read_app() -> App {
 fn long_line_is_not_wrapped_and_marks_right_overflow() {
     let mut app = read_app();
     let row = draw_row0(&mut app, 10);
-    assert_eq!(app.left, 0);
+    assert_eq!(app.ui.left, 0);
     assert!(row.starts_with("012345678"), "row: {row:?}");
     assert!(row.ends_with(RIGHT), "right overflow marker, row: {row:?}");
 }
@@ -38,9 +38,9 @@ fn long_line_is_not_wrapped_and_marks_right_overflow() {
 #[test]
 fn cursor_past_edge_scrolls_right_with_both_markers() {
     let mut app = read_app();
-    app.read_cursor = (0, 12);
+    app.ui.read.read_cursor = (0, 12);
     let row = draw_row0(&mut app, 10);
-    assert_eq!(app.left, 3, "left = 12 + 1 - 10");
+    assert_eq!(app.ui.left, 3, "left = 12 + 1 - 10");
     assert!(row.starts_with(LEFT), "left marker, row: {row:?}");
     assert!(row.ends_with(RIGHT), "right marker, row: {row:?}");
 }
@@ -48,10 +48,10 @@ fn cursor_past_edge_scrolls_right_with_both_markers() {
 #[test]
 fn scrolls_back_to_origin_when_cursor_returns() {
     let mut app = read_app();
-    app.read_cursor = (0, 12);
+    app.ui.read.read_cursor = (0, 12);
     draw_row0(&mut app, 10);
-    assert!(app.left > 0);
-    app.read_cursor = (0, 0);
+    assert!(app.ui.left > 0);
+    app.ui.read.read_cursor = (0, 0);
     draw_row0(&mut app, 10);
-    assert_eq!(app.left, 0);
+    assert_eq!(app.ui.left, 0);
 }

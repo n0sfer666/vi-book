@@ -13,13 +13,13 @@ impl App {
 
     pub fn vsplit(&mut self, target: Option<&str>) {
         if self.pane_count() >= MAX_PANES {
-            self.message = format!("max {MAX_PANES} columns");
+            self.ui.message = format!("max {MAX_PANES} columns");
             return;
         }
         let buf = self.make_buffer(target);
         self.stash_window();
         self.workspace.split(buf);
-        self.put_read_state(ReadState::new());
+        self.ui.read = ReadState::new();
     }
 
     pub fn focus_next(&mut self) {
@@ -36,7 +36,7 @@ impl App {
             .iter()
             .any(|w| w.id != active && w.buf.doc.is_dirty());
         if others_dirty {
-            self.message = String::from(UNSAVED);
+            self.ui.message = String::from(UNSAVED);
             return;
         }
         for window in self.workspace.only() {
@@ -46,7 +46,7 @@ impl App {
 
     pub fn close_active(&mut self) {
         if self.pane_count() > 1 && self.workspace.current().is_dirty() {
-            self.message = String::from(UNSAVED);
+            self.ui.message = String::from(UNSAVED);
             return;
         }
         if self.workspace.close_window().is_some() {
@@ -55,7 +55,7 @@ impl App {
     }
 
     fn stash_window(&mut self) {
-        let state = self.take_read_state();
+        let state = std::mem::take(&mut self.ui.read);
         self.window_states
             .insert(self.workspace.active_window(), state);
     }
@@ -65,7 +65,7 @@ impl App {
             .window_states
             .remove(&self.workspace.active_window())
             .unwrap_or_default();
-        self.put_read_state(state);
+        self.ui.read = state;
     }
 
     fn make_buffer(&mut self, target: Option<&str>) -> Buffer {
