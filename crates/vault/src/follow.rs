@@ -1,5 +1,5 @@
-use crate::vault::index::{Index, Resolution};
-use crate::vault::link::{self, Link};
+use crate::index::{Index, Resolution};
+use crate::link::{self, Link};
 use v_ide_markdown::extract::extract;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

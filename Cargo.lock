@@ -1391,7 +1391,6 @@ dependencies = [
  "crossterm",
  "insta",
  "mlua",
- "notify",
  "ratatui",
  "serde",
  "serde_json",
@@ -1400,6 +1399,7 @@ dependencies = [
  "v-ide-keys",
  "v-ide-markdown",
  "v-ide-text",
+ "v-ide-vault",
 ]
 
 [[package]]
@@ -1441,6 +1441,16 @@ name = "v-ide-text"
 version = "0.1.0"
 dependencies = [
  "ropey",
+]
+
+[[package]]
+name = "v-ide-vault"
+version = "0.1.0"
+dependencies = [
+ "notify",
+ "serde",
+ "serde_json",
+ "v-ide-markdown",
 ]
 
 [[package]]

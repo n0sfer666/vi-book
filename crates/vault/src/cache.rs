@@ -6,8 +6,8 @@ use std::time::UNIX_EPOCH;
 
 use serde::{Deserialize, Serialize};
 
-use crate::vault::note::Note;
-use crate::vault::scan;
+use crate::note::Note;
+use crate::scan;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Entry {

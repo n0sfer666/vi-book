@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide::vault::cache::{self, Cache, Entry};
-use v_ide::vault::note::Note;
-use v_ide::vault::scan::{scan, scan_with};
+use v_ide_vault::cache::{self, Cache, Entry};
+use v_ide_vault::note::Note;
+use v_ide_vault::scan::{scan, scan_with};
 
 struct TempVault {
     root: PathBuf,

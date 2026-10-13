@@ -1,4 +1,4 @@
-use v_ide::vault::rename::{Affected, plan, update_links};
+use v_ide_vault::rename::{Affected, plan, update_links};
 
 #[test]
 fn rewrites_plain_link() {

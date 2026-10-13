@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 
-use crate::vault::note::{self, Note};
+use crate::note::{self, Note};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Resolution {

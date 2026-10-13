@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::vault::link::{self, Link};
+use crate::link::{self, Link};
 use v_ide_markdown::extract::extract;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

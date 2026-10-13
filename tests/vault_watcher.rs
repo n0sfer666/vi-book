@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use v_ide::vault::watcher::{DiskChange, Reaction, Watcher, react};
+use v_ide_vault::watcher::{DiskChange, Reaction, Watcher, react};
 
 #[test]
 fn clean_buffer_reloads_on_disk_modify() {

@@ -1,5 +1,5 @@
-use crate::vault::follow::link_at;
-use crate::vault::link::Link;
+use crate::follow::link_at;
+use crate::link::Link;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Target {

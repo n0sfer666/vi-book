@@ -1,4 +1,4 @@
-use crate::vault::link;
+use crate::link;
 use v_ide_markdown::extract::extract;
 
 pub fn update_links(source: &str, old: &str, new: &str) -> String {

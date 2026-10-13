@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use crate::vault::note::Note;
+use crate::note::Note;
 
 pub fn scan(root: &Path) -> io::Result<Vec<Note>> {
     scan_with(root, false)

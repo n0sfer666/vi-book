@@ -1,5 +1,5 @@
 use crate::ui::list_nav;
-use crate::vault::fuzzy;
+use v_ide_vault::fuzzy;
 
 #[derive(Clone)]
 pub struct BufferEntry {

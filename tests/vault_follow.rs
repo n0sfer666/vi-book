@@ -1,8 +1,8 @@
 use v_ide::ui::picker::Picker;
-use v_ide::vault::follow::{Follow, follow, link_at};
-use v_ide::vault::fuzzy::{filter, score};
-use v_ide::vault::index::Index;
-use v_ide::vault::note::Note;
+use v_ide_vault::follow::{Follow, follow, link_at};
+use v_ide_vault::fuzzy::{filter, score};
+use v_ide_vault::index::Index;
+use v_ide_vault::note::Note;
 
 #[test]
 fn fuzzy_matches_subsequence_case_insensitively() {

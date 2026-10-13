@@ -28,15 +28,15 @@ v-ide-text = { path = "crates/text" }
 v-ide-keys = { path = "crates/keys" }
 v-ide-engine = { path = "crates/engine" }
 v-ide-markdown = { path = "crates/markdown" }
+v-ide-vault = { path = "crates/vault" }
 thiserror = "2"
 ratatui = "0.29"
 crossterm = "0.28"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
-notify = "8.2.0"
 arboard = "3.4.1"
 mlua = { version = "0.11.6", features = ["lua54", "vendored"] }
 
 [dev-dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
 crossterm = "0.28"
 insta = "1.48.0"

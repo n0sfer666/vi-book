@@ -1,8 +1,8 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::vault::index::Index;
-use crate::vault::scan::{scan, scan_with};
+use v_ide_vault::index::Index;
+use v_ide_vault::scan::{scan, scan_with};
 
 pub struct Session {
     pub root: PathBuf,
