@@ -6,6 +6,7 @@ pub mod clip_sync;
 pub mod clipboard;
 pub mod clock;
 pub mod command_line;
+pub mod config_path;
 pub mod daily_cmd;
 pub mod event_map;
 pub mod external;

@@ -1,6 +1,6 @@
-# vi-book plugin development
+# v-ide plugin development
 
-vi-book is configured and extended with **Lua**. This guide is the complete
+v-ide is configured and extended with **Lua**. This guide is the complete
 reference for plugin authors: the runtime model, the full `vibook` API, every
 event and option, the syntax-highlighting palette, and a line-by-line
 walkthrough of the bundled `links` plugin.
@@ -11,12 +11,13 @@ walkthrough of the bundled `links` plugin.
 
 ## 1. How plugins are loaded
 
-On start-up vi-book builds one sandboxed Lua runtime and runs, in order:
+On start-up v-ide builds one sandboxed Lua runtime and runs, in order:
 
 1. The **prelude** — defines the `vibook` table and helpers.
 2. The **default plugins** bundled into the binary (currently `links`; see §8).
-3. Your **user config**: `~/.config/vi-book/init.lua`
-   (override the path with the `VIBOOK_CONFIG` environment variable).
+3. Your **user config**: `~/.config/v-ide/init.lua`
+   (override the path with the `V_IDE_CONFIG` environment variable; the legacy
+   `VIBOOK_CONFIG` and `~/.config/vi-book/init.lua` still work, with a warning).
 
 Because your config runs *after* the default plugins, you can change their
 behaviour through options (for example disable a default plugin) and add your
@@ -26,7 +27,7 @@ A configuration file is just a Lua script. There is no separate manifest: call
 the `vibook.*` functions described below and they take effect immediately.
 
 ```lua
--- ~/.config/vi-book/init.lua
+-- ~/.config/v-ide/init.lua
 vibook.opt.leader = " "
 vibook.command("hello", function() vibook.buf.set_text("hello!\n") end)
 ```
@@ -42,11 +43,11 @@ The runtime is deliberately small and safe:
   `dofile`, `loadfile`, `load`/`loadstring`. There is no network access.
 - `print` and `warn` are `nil` — they would corrupt the TUI. Use the editor
   buffer or commands to surface information instead.
-- A plugin error is reported in the status line; it **never** crashes vi-book.
+- A plugin error is reported in the status line; it **never** crashes v-ide.
 - Long-running scripts are interrupted by an instruction budget, so an
   accidental infinite loop cannot freeze the event loop.
 
-If a future capability needs the filesystem or a process, vi-book exposes a
+If a future capability needs the filesystem or a process, v-ide exposes a
 *narrow, purpose-built* function for it (for example `vibook.open_external`,
 §6) rather than handing a plugin raw `os.execute`.
 
@@ -135,13 +136,13 @@ Multiple handlers for the same event all run, in registration order.
 
 ## 6. Opening notes and files
 
-These functions express an *intent*; vi-book performs the action after the
+These functions express an *intent*; v-ide performs the action after the
 handler returns.
 
-- `vibook.open(target)` — open `target` inside vi-book (a note path such as
+- `vibook.open(target)` — open `target` inside v-ide (a note path such as
   `"ideas.md"` or a subfolder path `"proj/spec.md"`).
 - `vibook.open_external(target)` — open `target` in the external editor
-  (`vibook.opt.code_editor`, else `$EDITOR`). vi-book resolves the file inside
+  (`vibook.opt.code_editor`, else `$EDITOR`). v-ide resolves the file inside
   the vault (by relative path, otherwise by file name) and suspends the TUI
   while the editor runs.
 - `vibook.vault.create(name)` — create a new note `name`.
@@ -164,7 +165,7 @@ handler returns.
 - `vibook.vault.tags()` → list of `#tags` seen across the vault.
 - `vibook.vault.backlinks(path)` → notes that link to `path`.
 
-The *vault* is the active folder vi-book was opened on; tag and link search are
+The *vault* is the active folder v-ide was opened on; tag and link search are
 scoped to it.
 
 ---
@@ -201,7 +202,7 @@ vibook.color("link",     { fg = "blue", underline = true })
 `italic`, `codespan`, `codeblock`, `frame`, `link`, `hashtag`, `quote`,
 `frontmatter`.
 
-> vi-book is a terminal app: it cannot choose your *font*. For ligatures and
+> v-ide is a terminal app: it cannot choose your *font*. For ligatures and
 > glyphs, set your terminal to a Nerd Font (the installer offers
 > JetBrainsMono Nerd Font).
 
@@ -211,8 +212,8 @@ vibook.color("link",     { fg = "blue", underline = true })
 
 This is the default plugin shipped in the binary
 (`assets/plugins/links.lua`). It decides how the target of a followed
-`[[link]]` opens: text notes in vi-book, code files in your editor, bare names
-left to vi-book's own resolver.
+`[[link]]` opens: text notes in v-ide, code files in your editor, bare names
+left to v-ide's own resolver.
 
 ```lua
 local text_ext = {
@@ -233,10 +234,10 @@ vibook.on("follow_link", function(target)
   end
   local ext = extension(target)
   if ext == nil then
-    return                      -- [[note]] → vi-book resolves aliases/anchors
+    return                      -- [[note]] → v-ide resolves aliases/anchors
   end
   if text_ext[ext:lower()] then
-    vibook.open(target)         -- [[notes.md]] → open inside vi-book
+    vibook.open(target)         -- [[notes.md]] → open inside v-ide
   else
     vibook.open_external(target) -- [[main.rs]] → external editor
   end
@@ -250,10 +251,10 @@ How it works:
 2. `disabled()` honours `vibook.opt.plugins.links = false`, so a user can turn
    the plugin off without removing it.
 3. A target **without** an extension returns early. The handler produced no
-   open intent, so vi-book falls back to its built-in resolver (which handles
+   open intent, so v-ide falls back to its built-in resolver (which handles
    name collisions, aliases and anchors).
-4. A **text** extension calls `vibook.open` — vi-book opens it internally.
-5. Any other extension calls `vibook.open_external` — vi-book finds the file in
+4. A **text** extension calls `vibook.open` — v-ide opens it internally.
+5. Any other extension calls `vibook.open_external` — v-ide finds the file in
    the vault and hands it to your editor.
 
 ### Make your own variant

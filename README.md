@@ -1,4 +1,4 @@
-# vi-book
+# v-ide
 
 A terminal note-taking app with vim-style editing — "Obsidian for the terminal".
 
@@ -14,10 +14,12 @@ Lua plugins — over plain Markdown files.
 Then run `v-ide` inside a folder of notes, `v-ide ~/notes`, or
 `v-ide note.md`. An empty folder shows a start screen offering to create your
 first note. No environment variables are required; config lives at
-`~/.config/vi-book/init.lua`.
+`~/.config/v-ide/init.lua`.
 
 The installer also fetches **JetBrainsMono Nerd Font** (skip with
-`VIBOOK_NO_FONT=1`). Set your terminal font to *JetBrainsMono Nerd Font* for the
+`V_IDE_NO_FONT=1`; legacy `VIBOOK_NO_FONT=1` still works). The install dir is
+`$V_IDE_BIN` (legacy `$VIBOOK_BIN`), else `$PREFIX/bin`, else `~/.local/bin`.
+Set your terminal font to *JetBrainsMono Nerd Font* for the
 best rendering of code blocks and glyphs.
 
 ## Keys (essentials)
@@ -27,7 +29,7 @@ best rendering of code blocks and glyphs.
   reveals the full manual / developer guide).
 - `h j k l` or **arrows** move; `w`/`b`/`e` words; `W`/`B` blocks; `gg`/`G` ends.
 - `<C-p>` fuzzy-find, `<CR>` follow `[[link]]` / `[md](link)` / URL, `<C-o>/<C-i>` history.
-- `y` copies to the system clipboard; `p` pastes the newer of vi-book's register
+- `y` copies to the system clipboard; `p` pastes the newer of v-ide's register
   and the system clipboard (so you can paste from other apps).
 - `<C-w>` is the window prefix: `<C-w> w` cycles split focus, `<C-w> p` focuses
   the side panel, `<C-w> s`/`v` splits, `<C-w> o` keeps only the active column.

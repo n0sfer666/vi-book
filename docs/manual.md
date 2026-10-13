@@ -1,6 +1,6 @@
-# vi-book — manual
+# v-ide — manual
 
-vi-book is a terminal note-taking app: an "Obsidian for the terminal" with
+v-ide is a terminal note-taking app: an "Obsidian for the terminal" with
 vim-style editing, a pretty markdown reader, `[[wiki-links]]`, tags, daily
 notes and Lua plugins. It only ever touches **Markdown** files.
 
@@ -15,11 +15,11 @@ v-ide ~/notes        # open a folder
 v-ide ~/notes/a.md   # open a single note (its folder becomes the vault)
 ```
 
-If the folder has no notes yet, vi-book shows a start screen and offers to
+If the folder has no notes yet, v-ide shows a start screen and offers to
 create your first note.
 
 For the best rendering, set your terminal font to a **Nerd Font** (the
-installer fetches *JetBrainsMono Nerd Font* unless `VIBOOK_NO_FONT=1`).
+installer fetches *JetBrainsMono Nerd Font* unless `V_IDE_NO_FONT=1`; legacy `VIBOOK_NO_FONT=1` still works).
 
 ## Two modes: read and edit
 
@@ -43,7 +43,7 @@ Three wrap modes, via `<Space> s w` or `:wrap <mode>`:
 - `text` — wrap prose: paragraphs, quotes, list items.
 - `all` — wrap everything except tables.
 
-Set the startup default in `~/.config/vi-book/init.lua`:
+Set the startup default in `~/.config/v-ide/init.lua`:
 
 ```lua
 vibook.opt.wrap = "text"   -- "none" | "text" | "all"
@@ -66,7 +66,7 @@ Bundled languages (grammars are compiled into the binary — nothing to install)
 html, yaml** (plus aliases like `rs`, `py`, `ts`, `sh`). An unknown or missing
 tag falls back to a single colour.
 
-The palette is themeable from `~/.config/vi-book/init.lua`:
+The palette is themeable from `~/.config/v-ide/init.lua`:
 
 ```lua
 vibook.color("keyword",  { fg = "magenta", bold = true })
@@ -107,8 +107,8 @@ In **read** mode you can select and copy without leaving the rendered view:
 
 Yanking — `y`/`Y` here, and `y`, `yy`, visual `y` in edit mode — copies to your
 **system clipboard** (locally via the OS clipboard, and over SSH via OSC 52) as
-well as to vi-book's own register. Conversely, `p`/`P` paste whichever is
-**newer**: vi-book's register or the system clipboard, so you can paste text you
+well as to v-ide's own register. Conversely, `p`/`P` paste whichever is
+**newer**: v-ide's register or the system clipboard, so you can paste text you
 copied in another app. A status message confirms the copy. (For the OSC 52 path,
 your terminal must allow it; most modern terminals do, and tmux needs `set -g
 set-clipboard on`.)
@@ -131,7 +131,7 @@ press the highlighted letter. Entries marked `→` open a submenu (e.g.
 
 ## Splits (columns)
 
-vi-book shows up to **three** independent columns side by side — each with its
+v-ide shows up to **three** independent columns side by side — each with its
 own buffer, cursor and mode. `<C-w>` is the *window prefix*:
 
 - `<C-w> w` — move focus to the next column.
@@ -154,5 +154,8 @@ Type `:` then a command:
 
 ## Configuration
 
-vi-book reads `~/.config/vi-book/init.lua` on start (no environment variables
-needed). See the developer guide for the Lua API.
+v-ide reads `~/.config/v-ide/init.lua` on start (no environment variables
+needed). See the developer guide for the Lua API. The legacy
+`~/.config/vi-book/init.lua` and `VIBOOK_CONFIG` still work, with a warning in
+the status line; move the folder with `mv ~/.config/vi-book ~/.config/v-ide`
+(or just `init.lua`, if `~/.config/v-ide` already exists).

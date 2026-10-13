@@ -7,6 +7,7 @@ use crate::lua::host::PluginHost;
 use crate::markdown::wrap_mode::WrapMode;
 use crate::ui::app::App;
 use crate::ui::command_line;
+use crate::ui::config_path;
 use crate::ui::menu::MenuItem;
 use crate::ui::theme::{self, Face};
 use v_ide_keys::key::parse_keys;
@@ -37,6 +38,11 @@ pub fn apply_keymap(app: &mut App, rhs: &str) {
 }
 
 pub fn load_config(app: &mut App) {
+    let resolved = config_path::resolve(|key| env::var_os(key), |path| path.exists());
+    load_config_from(app, resolved);
+}
+
+pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'static str>)>) {
     let host = match PluginHost::new() {
         Ok(host) => host,
         Err(err) => {
@@ -44,12 +50,15 @@ pub fn load_config(app: &mut App) {
             return;
         }
     };
+    if let Some((_, Some(warning))) = &resolved {
+        app.message = warning.to_string();
+    }
     for (name, source) in crate::lua::defaults::ALL {
         if let Err(err) = host.load(source) {
             app.message = format!("default plugin '{name}' error: {err}");
         }
     }
-    if let Some(path) = config_path()
+    if let Some((path, _)) = resolved
         && path.exists()
         && let Ok(script) = std::fs::read_to_string(&path)
         && let Err(err) = host.load(&script)
@@ -151,13 +160,6 @@ fn apply_colors(app: &mut App) {
         };
         app.theme.set(style, face);
     }
-}
-
-fn config_path() -> Option<PathBuf> {
-    if let Some(path) = env::var_os("VIBOOK_CONFIG") {
-        return Some(PathBuf::from(path));
-    }
-    env::var_os("HOME").map(|home| PathBuf::from(home).join(".config/vi-book/init.lua"))
 }
 
 pub fn fire(app: &mut App, event: &str) {

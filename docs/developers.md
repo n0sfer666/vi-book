@@ -1,8 +1,9 @@
-# vi-book — developer / plugin guide
+# v-ide — developer / plugin guide
 
-vi-book is configured and extended with **Lua**, loaded from
-`~/.config/vi-book/init.lua` (override with the `VIBOOK_CONFIG` env var). The
-Lua runtime is sandboxed: no `io`/`os`/network unless explicitly granted, and a
+v-ide is configured and extended with **Lua**, loaded from
+`~/.config/v-ide/init.lua` (override with the `V_IDE_CONFIG` env var; the
+legacy `VIBOOK_CONFIG` and `~/.config/vi-book/init.lua` still work, with a
+warning). The Lua runtime is sandboxed: no `io`/`os`/network unless explicitly granted, and a
 plugin error never crashes the editor.
 
 > This is the quick reference. For the full guide — sandbox model, every event,
