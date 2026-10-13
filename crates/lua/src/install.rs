@@ -1,8 +1,8 @@
 use mlua::Table;
 
-use crate::lua::config::Shared;
-use crate::lua::error::Error;
-use crate::lua::runtime::Runtime;
+use crate::config::Shared;
+use crate::error::Error;
+use crate::runtime::Runtime;
 
 pub fn install_buf(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
     let lua = rt.lua();

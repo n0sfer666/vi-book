@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use mlua::{Function, Table};
 
-use crate::lua::config::{Bridge, ColorSpec, Keymap, PRELUDE, Shared};
-use crate::lua::error::Error;
-use crate::lua::install::{install_buf, install_open, install_vault};
-use crate::lua::runtime::Runtime;
+use crate::config::{Bridge, ColorSpec, Keymap, PRELUDE, Shared};
+use crate::error::Error;
+use crate::install::{install_buf, install_open, install_vault};
+use crate::runtime::Runtime;
 
 pub struct PluginHost {
     rt: Runtime,

@@ -1,4 +1,4 @@
-use v_ide::lua::host::PluginHost;
+use v_ide_lua::host::PluginHost;
 
 #[test]
 fn options_are_collected() {

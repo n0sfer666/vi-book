@@ -30,11 +30,10 @@ v-ide-engine = { path = "crates/engine" }
 v-ide-markdown = { path = "crates/markdown" }
 v-ide-vault = { path = "crates/vault" }
 v-ide-notebook = { path = "crates/notebook" }
-thiserror = "2"
+v-ide-lua = { path = "crates/lua" }
 ratatui = "0.29"
 crossterm = "0.28"
 arboard = "3.4.1"
-mlua = { version = "0.11.6", features = ["lua54", "vendored"] }
 
 [dev-dependencies]
 serde = { version = "1.0.228", features = ["derive"] }

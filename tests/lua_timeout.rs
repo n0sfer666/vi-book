@@ -1,5 +1,5 @@
-use v_ide::lua::host::PluginHost;
-use v_ide::lua::runtime::Runtime;
+use v_ide_lua::host::PluginHost;
+use v_ide_lua::runtime::Runtime;
 
 #[test]
 fn infinite_loop_in_exec_returns_err() {

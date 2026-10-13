@@ -1,5 +1,5 @@
-use v_ide::lua::config::ColorSpec;
-use v_ide::lua::host::PluginHost;
+use v_ide_lua::config::ColorSpec;
+use v_ide_lua::host::PluginHost;
 
 fn host_with(script: &str) -> PluginHost {
     let host = PluginHost::new().unwrap();

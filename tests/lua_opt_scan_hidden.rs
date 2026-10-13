@@ -1,7 +1,7 @@
-use v_ide::lua::host::PluginHost;
 use v_ide::ui::app::App;
 use v_ide::ui::plugin;
 use v_ide_engine::Editor;
+use v_ide_lua::host::PluginHost;
 
 fn app_with_opt(label: &str, script: &str) -> App {
     let dir =

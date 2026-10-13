@@ -1,7 +1,7 @@
-use v_ide::lua::host::PluginHost;
 use v_ide::ui::app::App;
 use v_ide::ui::plugin;
 use v_ide_engine::Editor;
+use v_ide_lua::host::PluginHost;
 use v_ide_markdown::wrap_mode::WrapMode;
 
 fn app_with_opt(script: &str) -> App {

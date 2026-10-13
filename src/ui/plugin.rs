@@ -3,13 +3,13 @@ use std::path::PathBuf;
 
 use ratatui::style::Color;
 
-use crate::lua::host::PluginHost;
 use crate::ui::app::App;
 use crate::ui::command_line;
 use crate::ui::config_path;
 use crate::ui::menu::MenuItem;
 use crate::ui::theme::{self, Face};
 use v_ide_keys::key::parse_keys;
+use v_ide_lua::host::PluginHost;
 use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn install_keymaps(app: &mut App) {
@@ -53,7 +53,7 @@ pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'stati
     if let Some((_, Some(warning))) = &resolved {
         app.message = warning.to_string();
     }
-    for (name, source) in crate::lua::defaults::ALL {
+    for (name, source) in v_ide_lua::defaults::ALL {
         if let Err(err) = host.load(source) {
             app.message = format!("default plugin '{name}' error: {err}");
         }

@@ -211,7 +211,7 @@ vibook.color("link",     { fg = "blue", underline = true })
 ## 9. Worked example — the `links` plugin
 
 This is the default plugin shipped in the binary
-(`assets/plugins/links.lua`). It decides how the target of a followed
+(`crates/lua/assets/plugins/links.lua`). It decides how the target of a followed
 `[[link]]` opens: text notes in v-ide, code files in your editor, bare names
 left to v-ide's own resolver.
 

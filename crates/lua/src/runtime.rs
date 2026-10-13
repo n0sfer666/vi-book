@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use mlua::{HookTriggers, Lua, LuaOptions, StdLib, VmState};
 
-use crate::lua::error::Error;
+use crate::error::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Capability {

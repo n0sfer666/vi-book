@@ -1390,13 +1390,12 @@ dependencies = [
  "arboard",
  "crossterm",
  "insta",
- "mlua",
  "ratatui",
  "serde",
  "serde_json",
- "thiserror",
  "v-ide-engine",
  "v-ide-keys",
+ "v-ide-lua",
  "v-ide-markdown",
  "v-ide-notebook",
  "v-ide-text",
@@ -1415,6 +1414,14 @@ dependencies = [
 [[package]]
 name = "v-ide-keys"
 version = "0.1.0"
+
+[[package]]
+name = "v-ide-lua"
+version = "0.1.0"
+dependencies = [
+ "mlua",
+ "thiserror",
+]
 
 [[package]]
 name = "v-ide-markdown"

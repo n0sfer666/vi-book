@@ -5,7 +5,6 @@ use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use ratatui::DefaultTerminal;
 use ratatui::layout::Rect;
 
-use crate::lua::host::PluginHost;
 use crate::ui::menu::{Menu, MenuItem};
 use crate::ui::panel::Panel;
 use crate::ui::picker::Picker;
@@ -16,6 +15,7 @@ use crate::ui::{plugin, render, router};
 use v_ide_engine::editor::Editor;
 use v_ide_engine::io::error::Error;
 use v_ide_keys::key::Key;
+use v_ide_lua::host::PluginHost;
 use v_ide_markdown::rendered::Rendered;
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_notebook::date::Date;
