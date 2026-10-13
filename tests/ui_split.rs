@@ -2,10 +2,10 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
 
-use v_ide::ui::app::App;
-use v_ide::ui::split::split_rects;
-use v_ide::ui::view::View;
 use v_ide_engine::Editor;
+use v_ide_tui::app::App;
+use v_ide_tui::split::split_rects;
+use v_ide_tui::view::View;
 
 #[test]
 fn one_pane_fills_the_area() {
@@ -79,7 +79,7 @@ fn two_panes_render_side_by_side_with_a_divider() {
     let backend = TestBackend::new(80, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal
-        .draw(|frame| v_ide::ui::render::draw(frame, &mut app))
+        .draw(|frame| v_ide_tui::render::draw(frame, &mut app))
         .unwrap();
     let buf = terminal.backend().buffer().clone();
     let row0: Vec<String> = (0..80).map(|x| buf[(x, 0)].symbol().to_string()).collect();

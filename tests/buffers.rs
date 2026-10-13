@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide::ui::app::App;
-use v_ide::ui::pane::Pane;
-use v_ide::ui::session::Session;
-use v_ide::ui::view::View;
 use v_ide_engine::editor::Editor;
+use v_ide_tui::app::App;
+use v_ide_tui::pane::Pane;
+use v_ide_tui::session::Session;
+use v_ide_tui::view::View;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-buf-{}-{name}", std::process::id()));
@@ -109,7 +109,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
     let dirty = app.editor.text();
     assert_ne!(dirty, "B body");
 
-    v_ide::ui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('o')));
+    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('o')));
     assert_eq!(app.path, "a.md", "Ctrl-o switches back through the pool");
     assert!(
         app.buffers
@@ -118,7 +118,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
         "b.md is stashed dirty, not written or reloaded"
     );
 
-    v_ide::ui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('i')));
+    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('i')));
     assert_eq!(app.path, "b.md", "Ctrl-i switches forward through the pool");
     assert_eq!(
         app.editor.text(),
@@ -167,7 +167,7 @@ fn buffers_command_opens_list_selecting_previous_buffer() {
     app.open_rel("b.md");
     app.open_rel("a.md");
 
-    v_ide::ui::command_line::run(&mut app, "buffers");
+    v_ide_tui::command_line::run(&mut app, "buffers");
     let bl = app.buffer_list.as_ref().expect("buffer list opens");
     let entries = bl.filtered();
     assert_eq!(entries.len(), 2, "active + one pooled buffer");
@@ -206,8 +206,8 @@ fn buffer_list_enter_switches_and_closes() {
     app.open_rel("b.md");
     app.open_rel("a.md");
 
-    v_ide::ui::command_line::run(&mut app, "buffers");
-    v_ide::ui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Enter));
+    v_ide_tui::command_line::run(&mut app, "buffers");
+    v_ide_tui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Enter));
     assert_eq!(app.path, "b.md", "Enter switches to the selected buffer");
     assert!(app.buffer_list.is_none(), "Enter closes the list");
 
@@ -225,8 +225,8 @@ fn buffer_list_ctrl_d_closes_buffer_and_stays_open() {
     app.open_rel("b.md");
     app.open_rel("a.md");
 
-    v_ide::ui::command_line::run(&mut app, "buffers");
-    v_ide::ui::input::buffer_list_key(&mut app, ctrl('d'));
+    v_ide_tui::command_line::run(&mut app, "buffers");
+    v_ide_tui::input::buffer_list_key(&mut app, ctrl('d'));
     assert!(app.buffer_list.is_some(), "Ctrl-d keeps the list open");
     let entries = app.buffer_list.as_ref().unwrap().filtered();
     assert!(
@@ -248,8 +248,8 @@ fn buffer_list_esc_closes() {
     let mut app = three_buffer_app(&root);
     app.open_rel("a.md");
 
-    v_ide::ui::command_line::run(&mut app, "buffers");
-    v_ide::ui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Esc));
+    v_ide_tui::command_line::run(&mut app, "buffers");
+    v_ide_tui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Esc));
     assert!(app.buffer_list.is_none());
 
     let _ = fs::remove_dir_all(&root);
@@ -267,11 +267,11 @@ fn quit_is_blocked_when_a_pooled_buffer_is_dirty() {
     assert_eq!(app.editor.text(), app.saved_text, "active a.md is clean");
     assert!(app.buffers.iter().any(|p| p.editor.text() != p.saved_text));
 
-    v_ide::ui::command_line::run(&mut app, "q");
+    v_ide_tui::command_line::run(&mut app, "q");
     assert!(!app.quit, "q is blocked by a dirty pooled buffer");
     assert!(app.message.contains("unsaved"));
 
-    v_ide::ui::command_line::run(&mut app, "q!");
+    v_ide_tui::command_line::run(&mut app, "q!");
     assert!(app.quit, "q! force-quits regardless of dirty buffers");
 
     let _ = fs::remove_dir_all(&root);

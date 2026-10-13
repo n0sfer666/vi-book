@@ -1,8 +1,8 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide::ui::app::App;
 use v_ide_engine::editor::Editor;
 use v_ide_lua::host::PluginHost;
+use v_ide_tui::app::App;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)

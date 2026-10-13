@@ -16,14 +16,14 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
-[lib]
-name = "v_ide"
-
 [[bin]]
 name = "v-ide"
 path = "src/main.rs"
 
 [dependencies]
+v-ide-tui = { path = "crates/tui" }
+
+[dev-dependencies]
 v-ide-text = { path = "crates/text" }
 v-ide-keys = { path = "crates/keys" }
 v-ide-engine = { path = "crates/engine" }
@@ -31,9 +31,6 @@ v-ide-markdown = { path = "crates/markdown" }
 v-ide-vault = { path = "crates/vault" }
 v-ide-notebook = { path = "crates/notebook" }
 v-ide-lua = { path = "crates/lua" }
-v-ide-tui = { path = "crates/tui" }
-
-[dev-dependencies]
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 ratatui = "0.29"

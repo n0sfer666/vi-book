@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use v_ide::ui::app::App;
-use v_ide::ui::plugin;
 use v_ide_engine::Editor;
+use v_ide_tui::app::App;
+use v_ide_tui::plugin;
 
 fn config_file(label: &str, script: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("v-ide-config-msg-{}-{label}", std::process::id()));

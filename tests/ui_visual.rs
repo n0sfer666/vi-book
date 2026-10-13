@@ -3,10 +3,10 @@ use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Modifier;
 
-use v_ide::ui::app::App;
-use v_ide::ui::view::View;
 use v_ide_engine::Editor;
 use v_ide_engine::mode::Mode;
+use v_ide_tui::app::App;
+use v_ide_tui::view::View;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)
@@ -20,7 +20,7 @@ fn reversed_at(app: &mut App, x: u16, y: u16) -> bool {
     let backend = TestBackend::new(100, 24);
     let mut terminal = Terminal::new(backend).unwrap();
     terminal
-        .draw(|frame| v_ide::ui::render::draw(frame, app))
+        .draw(|frame| v_ide_tui::render::draw(frame, app))
         .unwrap();
     let buf = terminal.backend().buffer().clone();
     buf[(x, y)]

@@ -1,12 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide::ui::app::App;
-use v_ide::ui::link_follow::follow_at_cursor;
-use v_ide::ui::session::Session;
 use v_ide_engine::Editor;
 use v_ide_lua::defaults::LINKS;
 use v_ide_lua::host::PluginHost;
+use v_ide_tui::app::App;
+use v_ide_tui::link_follow::follow_at_cursor;
+use v_ide_tui::session::Session;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-links-{}-{name}", std::process::id()));

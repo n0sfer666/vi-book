@@ -1,9 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide::ui::app::App;
-use v_ide::ui::clipboard::{base64, osc52};
-use v_ide::ui::view::View;
 use v_ide_engine::Editor;
+use v_ide_tui::app::App;
+use v_ide_tui::clipboard::{base64, osc52};
+use v_ide_tui::view::View;
 
 #[test]
 fn base64_matches_known_vectors() {

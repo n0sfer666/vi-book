@@ -1,4 +1,4 @@
-use v_ide::ui::picker::Picker;
+use v_ide_tui::picker::Picker;
 use v_ide_vault::follow::{Follow, follow, link_at};
 use v_ide_vault::fuzzy::{filter, score};
 use v_ide_vault::index::Index;

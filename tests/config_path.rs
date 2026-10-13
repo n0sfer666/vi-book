@@ -1,7 +1,7 @@
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-use v_ide::ui::config_path::resolve;
+use v_ide_tui::config_path::resolve;
 
 const NEW: &str = "/h/.config/v-ide/init.lua";
 const OLD: &str = "/h/.config/vi-book/init.lua";

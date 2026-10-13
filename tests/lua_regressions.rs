@@ -1,11 +1,11 @@
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide::ui::app::App;
-use v_ide::ui::session::Session;
 use v_ide_engine::editor::Editor;
 use v_ide_lua::host::PluginHost;
 use v_ide_lua::runtime::Runtime;
+use v_ide_tui::app::App;
+use v_ide_tui::session::Session;
 
 #[test]
 fn print_and_warn_are_denied() {

@@ -1,5 +1,5 @@
-use v_ide::ui::clip_sync::freshest;
 use v_ide_engine::Editor;
+use v_ide_tui::clip_sync::freshest;
 
 #[test]
 fn freshest_prefers_externally_changed_system_clipboard() {

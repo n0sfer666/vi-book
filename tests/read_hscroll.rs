@@ -1,10 +1,10 @@
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 
-use v_ide::ui::app::App;
-use v_ide::ui::view::View;
 use v_ide_engine::Editor;
 use v_ide_markdown::wrap_mode::WrapMode;
+use v_ide_tui::app::App;
+use v_ide_tui::view::View;
 
 const LINE: &str = "0123456789ABCDEF";
 const LEFT: char = '\u{2039}';
@@ -13,7 +13,7 @@ const RIGHT: char = '\u{203a}';
 fn draw_row0(app: &mut App, w: u16) -> String {
     let backend = TestBackend::new(w, 3);
     let mut terminal = Terminal::new(backend).unwrap();
-    terminal.draw(|f| v_ide::ui::render::draw(f, app)).unwrap();
+    terminal.draw(|f| v_ide_tui::render::draw(f, app)).unwrap();
     let buf = terminal.backend().buffer().clone();
     (0..w).map(|x| buf[(x, 0)].symbol().to_string()).collect()
 }
