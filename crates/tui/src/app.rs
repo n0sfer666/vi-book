@@ -13,6 +13,7 @@ use crate::ui_state::UiState;
 use crate::{plugin, render, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
+use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
 use v_ide_keys::key::Key;
 use v_ide_lua::host::PluginHost;
@@ -22,6 +23,7 @@ use v_ide_notebook::history::History;
 
 pub struct App {
     pub workspace: Workspace,
+    pub modules: Modules,
     pub ui: UiState,
     pub read_states: HashMap<DocId, ReadState>,
     pub quit: bool,
@@ -69,6 +71,7 @@ impl App {
     pub fn new(doc: Document) -> Self {
         Self {
             workspace: Workspace::new(doc),
+            modules: Modules::new(Vec::new()),
             ui: UiState::new(),
             read_states: HashMap::new(),
             quit: false,
