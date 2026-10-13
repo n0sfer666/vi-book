@@ -1,9 +1,9 @@
-use ratatui::backend::TestBackend;
 use ratatui::Terminal;
+use ratatui::backend::TestBackend;
 
+use vi_book::Editor;
 use vi_book::ui::app::App;
 use vi_book::ui::view::View;
-use vi_book::Editor;
 
 const LINE: &str = "0123456789ABCDEF";
 const LEFT: char = '\u{2039}';

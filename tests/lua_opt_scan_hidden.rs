@@ -1,7 +1,7 @@
+use vi_book::Editor;
 use vi_book::lua::host::PluginHost;
 use vi_book::ui::app::App;
 use vi_book::ui::plugin;
-use vi_book::Editor;
 
 fn app_with_opt(label: &str, script: &str) -> App {
     let dir =

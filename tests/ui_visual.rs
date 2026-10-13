@@ -1,12 +1,12 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Modifier;
-use ratatui::Terminal;
 
+use vi_book::Editor;
 use vi_book::ui::app::App;
 use vi_book::ui::view::View;
 use vi_book::vim::mode::Mode;
-use vi_book::Editor;
 
 fn ctrl(c: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)

@@ -1,8 +1,8 @@
+use vi_book::Editor;
 use vi_book::markdown::wrap_mode::WrapMode;
 use vi_book::ui::actions;
 use vi_book::ui::app::App;
 use vi_book::vim::key::Key;
-use vi_book::Editor;
 
 fn app() -> App {
     App::new(Editor::new("x"), "a.md".into())

@@ -1,5 +1,5 @@
 use vi_book::vim::mode::Mode;
-use vi_book::{parse_keys, Editor, Position};
+use vi_book::{Editor, Position, parse_keys};
 
 #[test]
 fn arrows_parse_as_keys() {

@@ -1,5 +1,5 @@
-use vi_book::ui::clip_sync::freshest;
 use vi_book::Editor;
+use vi_book::ui::clip_sync::freshest;
 
 #[test]
 fn freshest_prefers_externally_changed_system_clipboard() {

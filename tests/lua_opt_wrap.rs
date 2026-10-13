@@ -1,8 +1,8 @@
+use vi_book::Editor;
 use vi_book::lua::host::PluginHost;
 use vi_book::markdown::wrap_mode::WrapMode;
 use vi_book::ui::app::App;
 use vi_book::ui::plugin;
-use vi_book::Editor;
 
 fn app_with_opt(script: &str) -> App {
     let mut app = App::new(Editor::new("x"), "a.md".into());

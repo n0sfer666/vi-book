@@ -1,4 +1,4 @@
-use crate::markdown::atom::{split_lines, Atom};
+use crate::markdown::atom::{Atom, split_lines};
 use crate::markdown::blocks::{self, Block, BlockKind, ListItem};
 use crate::markdown::render_block::{frame_rule, table};
 use crate::markdown::rendered::{Rendered, RenderedLine};

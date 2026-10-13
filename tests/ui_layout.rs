@@ -1,11 +1,11 @@
+use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
-use ratatui::Terminal;
 
+use vi_book::Editor;
 use vi_book::ui::app::App;
 use vi_book::ui::layout::{column_width, text_column};
 use vi_book::ui::view::View;
-use vi_book::Editor;
 
 #[test]
 fn wide_terminal_uses_full_width() {

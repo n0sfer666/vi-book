@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use vi_book::Editor;
 use vi_book::markdown::render::render;
 use vi_book::ui::actions;
 use vi_book::ui::app::App;
@@ -10,7 +11,6 @@ use vi_book::ui::help;
 use vi_book::ui::read_motion;
 use vi_book::ui::session::Session;
 use vi_book::ui::view::View;
-use vi_book::Editor;
 
 fn key(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::NONE)

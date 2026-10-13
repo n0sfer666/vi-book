@@ -1,13 +1,13 @@
 use std::fs;
 use std::path::PathBuf;
 
+use vi_book::Editor;
+use vi_book::Key;
 use vi_book::ui::app::App;
 use vi_book::ui::command_line;
 use vi_book::ui::input;
 use vi_book::ui::panel::Panel;
 use vi_book::ui::session::Session;
-use vi_book::Editor;
-use vi_book::Key;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root =

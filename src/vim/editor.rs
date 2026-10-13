@@ -8,7 +8,7 @@ use crate::core::transaction::Transaction;
 use crate::io::error::Error;
 use crate::io::file;
 use crate::vim::desired_col::DesiredCol;
-use crate::vim::key::{parse_keys, Key};
+use crate::vim::key::{Key, parse_keys};
 use crate::vim::mode::Mode;
 use crate::vim::pending::{Pending, Stage};
 use crate::vim::register::Registers;

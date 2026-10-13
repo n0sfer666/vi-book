@@ -1,13 +1,13 @@
-use ratatui::backend::TestBackend;
 use ratatui::Terminal;
+use ratatui::backend::TestBackend;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use vi_book::Editor;
 use vi_book::ui::app::App;
 use vi_book::ui::buffer_list::{BufferEntry, BufferList};
 use vi_book::ui::picker::Picker;
 use vi_book::ui::render;
-use vi_book::Editor;
 
 fn background() -> Editor {
     let line = "X".repeat(70);

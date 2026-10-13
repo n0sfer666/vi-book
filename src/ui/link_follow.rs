@@ -3,9 +3,9 @@ use crate::ui::app::App;
 use crate::ui::external;
 use crate::ui::help;
 use crate::ui::plugin;
-use crate::vault::follow::{follow, Follow};
+use crate::vault::follow::{Follow, follow};
 use crate::vault::link::Link;
-use crate::vault::target::{target_at, Target};
+use crate::vault::target::{Target, target_at};
 
 pub fn follow_at_cursor(app: &mut App) {
     let Some(target) = target_at(&app.editor.text(), app.editor.text_index()) else {

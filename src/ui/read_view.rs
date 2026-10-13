@@ -290,6 +290,7 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
             .map(|line| line.text().chars().count())
     });
     let row = area.y + (app.read_cursor.0 - app.top) as u16;
-    let col = inner.x + (app.read_cursor.1.saturating_sub(app.left) as u16).min(inner.width.saturating_sub(1));
+    let col = inner.x
+        + (app.read_cursor.1.saturating_sub(app.left) as u16).min(inner.width.saturating_sub(1));
     frame.set_cursor_position(ScreenPosition::new(col, row));
 }

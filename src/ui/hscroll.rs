@@ -1,6 +1,6 @@
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style as TuiStyle};
-use ratatui::Frame;
 
 pub const LEFT: char = '\u{2039}';
 pub const RIGHT: char = '\u{203a}';
