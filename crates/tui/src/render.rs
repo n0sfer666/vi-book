@@ -1,5 +1,5 @@
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Layout, Position as ScreenPosition, Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style as TuiStyle};
 use ratatui::text::{Line, Span as TuiSpan};
 use ratatui::widgets::Paragraph;
@@ -9,7 +9,7 @@ use crate::layout::{column_width, text_column};
 use crate::read_state::ReadState;
 use crate::theme::Theme;
 use crate::view::View;
-use crate::{hscroll, overlay, read_view, split};
+use crate::{cursor, hscroll, overlay, read_view, split, status};
 use v_ide_engine::mode::Mode;
 use v_ide_markdown::highlight::highlight;
 use v_ide_markdown::style::SourceSpan;
@@ -53,8 +53,8 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         app.ui.left = hscroll::scroll(app.ui.left, col, column_width(active_rect));
         draw_text(frame, app, &text, active_rect);
     }
-    draw_status(frame, app, status_area);
-    draw_message(frame, app, message_area);
+    status::draw_status(frame, app, status_area);
+    status::draw_message(frame, app, message_area);
     if app.ui.help {
         overlay::draw_help(frame, app, text_area);
         return;
@@ -72,9 +72,9 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         return;
     }
     if app.ui.read.view == View::Edit {
-        place_cursor(frame, app, active_rect, message_area);
+        cursor::place_cursor(frame, app, active_rect, message_area);
     } else if app.ui.command.is_some() || app.workspace.current().editor.search_input().is_some() {
-        place_bottom_cursor(frame, app, message_area);
+        cursor::place_bottom_cursor(frame, app, message_area);
     }
 }
 
@@ -159,65 +159,4 @@ pub(crate) fn styled_line(
         parts.push(TuiSpan::styled(run, run_style));
     }
     Line::from(parts)
-}
-
-fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
-    let doc = app.workspace.current();
-    let mode = if app.ui.read.view == View::Read {
-        "READ"
-    } else {
-        match doc.editor.mode() {
-            Mode::Normal => "NORMAL",
-            Mode::Insert => "INSERT",
-            Mode::Visual => "VISUAL",
-            Mode::VisualLine => "V-LINE",
-            Mode::VisualBlock => "V-BLOCK",
-        }
-    };
-    let dirty = if doc.is_dirty() { " [+]" } else { "" };
-    let cursor = doc.editor.cursor();
-    let status = format!(
-        " {mode}  {}{dirty}  {}:{} ",
-        doc.name,
-        cursor.line + 1,
-        cursor.col + 1
-    );
-    let style = TuiStyle::default().add_modifier(Modifier::REVERSED);
-    frame.render_widget(Paragraph::new(status).style(style), area);
-}
-
-fn draw_message(frame: &mut Frame, app: &App, area: Rect) {
-    let content = if let Some(command) = &app.ui.command {
-        format!(":{command}")
-    } else if let Some(input) = app.workspace.current().editor.search_input() {
-        format!("/{input}")
-    } else {
-        app.ui.message.clone()
-    };
-    frame.render_widget(Paragraph::new(content), area);
-}
-
-fn place_bottom_cursor(frame: &mut Frame, app: &App, message_area: Rect) {
-    let len = app
-        .ui
-        .command
-        .as_deref()
-        .or(app.workspace.current().editor.search_input())
-        .map_or(0, |s| s.chars().count());
-    let col = message_area.x + 1 + len as u16;
-    frame.set_cursor_position(ScreenPosition::new(col, message_area.y));
-}
-
-fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, message_area: Rect) {
-    let editor = &app.workspace.current().editor;
-    if app.ui.command.is_some() || editor.search_input().is_some() {
-        place_bottom_cursor(frame, app, message_area);
-        return;
-    }
-    let inner = text_column(text_area);
-    let cursor = editor.cursor();
-    let row = inner.y + (cursor.line - app.ui.read.top) as u16;
-    let col = inner.x
-        + (cursor.col.saturating_sub(app.ui.left) as u16).min(inner.width.saturating_sub(1));
-    frame.set_cursor_position(ScreenPosition::new(col, row));
 }
