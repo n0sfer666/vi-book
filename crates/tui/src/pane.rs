@@ -1,5 +1,6 @@
 use crate::app::App;
 use crate::view::View;
+use v_ide_editor::document::Document;
 use v_ide_engine::editor::Editor;
 use v_ide_markdown::rendered::Rendered;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -8,6 +9,7 @@ const MAX_PANES: usize = 3;
 
 pub struct Pane {
     pub editor: Editor,
+    pub file: Option<std::path::PathBuf>,
     pub path: String,
     pub saved_text: String,
     pub top: usize,
@@ -74,11 +76,16 @@ impl App {
     fn make_pane(&self, target: Option<&str>) -> Pane {
         if let Some(name) = target {
             let rel = normalize(name);
-            if let Ok(mut editor) = Editor::open(self.session.absolute(&rel)) {
+            if let Ok(Document {
+                mut editor,
+                path: file,
+            }) = Document::open(self.session.absolute(&rel))
+            {
                 editor.set_insert_escape(self.insert_escape.clone());
                 let saved_text = editor.text();
                 return Pane {
                     editor,
+                    file,
                     path: rel,
                     saved_text,
                     top: 0,
@@ -93,16 +100,20 @@ impl App {
     }
 
     fn duplicate_active(&self) -> Pane {
-        let mut editor = if self.path.is_empty() {
-            Editor::new(&self.editor.text())
+        let Document {
+            mut editor,
+            path: file,
+        } = if self.path.is_empty() {
+            Document::new(&self.editor.text())
         } else {
-            Editor::open(self.session.absolute(&self.path))
-                .unwrap_or_else(|_| Editor::new(&self.editor.text()))
+            Document::open(self.session.absolute(&self.path))
+                .unwrap_or_else(|_| Document::new(&self.editor.text()))
         };
         editor.set_insert_escape(self.insert_escape.clone());
         let saved_text = editor.text();
         Pane {
             editor,
+            file,
             path: self.path.clone(),
             saved_text,
             top: 0,
@@ -116,6 +127,7 @@ impl App {
     pub(crate) fn take_active(&mut self) -> Pane {
         Pane {
             editor: std::mem::replace(&mut self.editor, Editor::new("")),
+            file: self.file.take(),
             path: std::mem::take(&mut self.path),
             saved_text: std::mem::take(&mut self.saved_text),
             top: self.top,
@@ -128,6 +140,7 @@ impl App {
 
     pub(crate) fn put_active(&mut self, pane: Pane) {
         self.editor = pane.editor;
+        self.file = pane.file;
         self.path = pane.path;
         self.saved_text = pane.saved_text;
         self.top = pane.top;

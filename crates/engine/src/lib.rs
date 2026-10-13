@@ -1,7 +1,6 @@
 pub mod desired_col;
 pub mod editor;
 pub mod insert;
-pub mod io;
 pub mod mode;
 pub mod motion;
 pub mod normal;
@@ -15,5 +14,4 @@ pub mod visual;
 pub mod word;
 
 pub use crate::editor::Editor;
-pub use crate::io::error::Error;
 pub use crate::mode::Mode;

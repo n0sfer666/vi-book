@@ -9,4 +9,3 @@ repository.workspace = true
 [dependencies]
 v-ide-text = { path = "../text" }
 v-ide-keys = { path = "../keys" }
-thiserror = "2"

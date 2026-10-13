@@ -1,0 +1,11 @@
+[package]
+name = "v-ide-editor"
+description = "Editor state for v-ide: documents, windows and the module host"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+v-ide-engine = { path = "../engine" }
+thiserror = "2"

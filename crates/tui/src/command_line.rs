@@ -173,7 +173,7 @@ fn toggle_panel(app: &mut App, kind: PanelKind) {
 }
 
 fn save(app: &mut App) -> bool {
-    match app.editor.save() {
+    match app.write_file() {
         Ok(()) => {
             app.saved_text = app.editor.text();
             app.message = String::from("written");

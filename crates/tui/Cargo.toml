@@ -10,6 +10,7 @@ repository.workspace = true
 v-ide-text = { path = "../text" }
 v-ide-keys = { path = "../keys" }
 v-ide-engine = { path = "../engine" }
+v-ide-editor = { path = "../editor" }
 v-ide-markdown = { path = "../markdown" }
 v-ide-vault = { path = "../vault" }
 v-ide-notebook = { path = "../notebook" }

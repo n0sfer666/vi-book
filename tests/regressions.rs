@@ -5,8 +5,10 @@ use std::path::PathBuf;
 
 use common::{check, editor_at, t};
 use crossterm::event::{KeyCode, KeyEvent};
+use v_ide_editor::document::Document;
 use v_ide_engine::{Editor, Mode};
 use v_ide_keys::{Key, parse_keys};
+use v_ide_tui::actions;
 use v_ide_tui::app::App;
 use v_ide_tui::command_line;
 
@@ -63,8 +65,10 @@ fn temp_file(name: &str, content: &[u8]) -> PathBuf {
 }
 
 fn app_with_file(path: &PathBuf) -> App {
-    let editor = Editor::open(path).unwrap();
-    App::new(editor, path.display().to_string())
+    let doc = Document::open(path).unwrap();
+    let mut app = App::new(doc.editor, path.display().to_string());
+    app.file = doc.path;
+    app
 }
 
 fn run_command(app: &mut App, command: &str) {
@@ -82,6 +86,19 @@ fn wq_saves_and_quits() {
     fs::remove_file(&path).unwrap();
     assert!(app.quit, "wq must quit after a successful save");
     assert_eq!(written, b"ello\n");
+}
+
+#[test]
+fn write_on_bundled_doc_fails_without_touching_disk() {
+    let label = format!("vi-book-regr-{}-bundled.md", std::process::id());
+    let mut app = App::new(Editor::new(""), String::new());
+    actions::open_doc(&mut app, &label, "bundled\n");
+    run_command(&mut app, "w");
+    assert!(!std::path::Path::new(&label).exists());
+    assert_eq!(
+        app.message,
+        "save failed: buffer has no associated file path"
+    );
 }
 
 #[test]

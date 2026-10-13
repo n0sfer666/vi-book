@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use v_ide_editor::document::Document;
 use v_ide_engine::editor::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::pane::Pane;
@@ -17,10 +18,11 @@ fn temp_vault(name: &str) -> PathBuf {
 }
 
 fn pool_buffer(root: &std::path::Path, rel: &str) -> Pane {
-    let editor = Editor::open(root.join(rel)).unwrap();
-    let saved_text = editor.text();
+    let doc = Document::open(root.join(rel)).unwrap();
+    let saved_text = doc.editor.text();
     Pane {
-        editor,
+        editor: doc.editor,
+        file: doc.path,
         path: rel.to_string(),
         saved_text,
         top: 0,
@@ -360,7 +362,9 @@ fn switch_to_buffer_preserves_active_state_and_mru() {
     fs::write(root.join("b.md"), "target body").unwrap();
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
-    let mut app = App::new(Editor::open(root.join("a.md")).unwrap(), "a.md".into());
+    let doc = Document::open(root.join("a.md")).unwrap();
+    let mut app = App::new(doc.editor, "a.md".into());
+    app.file = doc.path;
     app.session = session;
     app.saved_text = app.editor.text();
     app.view = View::Edit;

@@ -89,6 +89,7 @@ pub fn open_doc(app: &mut App, label: &str, content: &str) {
         return;
     }
     app.editor = Editor::new(content);
+    app.file = None;
     app.path = label.to_string();
     app.saved_text = content.to_string();
     app.view = View::Read;

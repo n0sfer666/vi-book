@@ -1,8 +1,4 @@
-use std::path::{Path, PathBuf};
-
 use crate::desired_col::DesiredCol;
-use crate::io::error::Error;
-use crate::io::file;
 use crate::mode::Mode;
 use crate::pending::{Pending, Stage};
 use crate::register::Registers;
@@ -28,7 +24,6 @@ pub struct Editor {
     pub(crate) search: SearchState,
     pub(crate) insert_escape: Option<String>,
     pub(crate) insert_run: String,
-    path: Option<PathBuf>,
 }
 
 impl Editor {
@@ -46,24 +41,11 @@ impl Editor {
             search: SearchState::default(),
             insert_escape: None,
             insert_run: String::new(),
-            path: None,
         }
     }
 
     pub fn set_insert_escape(&mut self, seq: Option<String>) {
         self.insert_escape = seq.filter(|s| !s.is_empty());
-    }
-
-    pub fn open(path: impl AsRef<Path>) -> Result<Self, Error> {
-        let text = file::read(path.as_ref())?;
-        let mut editor = Self::new(&text);
-        editor.path = Some(path.as_ref().to_path_buf());
-        Ok(editor)
-    }
-
-    pub fn save(&mut self) -> Result<(), Error> {
-        let path = self.path.as_ref().ok_or(Error::NoPath)?;
-        file::write(path, &self.buffer.text())
     }
 
     pub fn text(&self) -> String {

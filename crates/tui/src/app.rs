@@ -12,8 +12,8 @@ use crate::session::Session;
 use crate::theme::Theme;
 use crate::view::View;
 use crate::{plugin, render, router};
+use v_ide_editor::Error;
 use v_ide_engine::editor::Editor;
-use v_ide_engine::io::error::Error;
 use v_ide_keys::key::Key;
 use v_ide_lua::host::PluginHost;
 use v_ide_markdown::rendered::Rendered;
@@ -23,6 +23,7 @@ use v_ide_notebook::history::History;
 
 pub struct App {
     pub editor: Editor,
+    pub file: Option<std::path::PathBuf>,
     pub path: String,
     pub saved_text: String,
     pub top: usize,
@@ -90,6 +91,7 @@ impl App {
         let saved_text = editor.text();
         Self {
             editor,
+            file: None,
             path,
             saved_text,
             top: 0,

@@ -2,12 +2,18 @@ use crate::app::App;
 use crate::buffer_list::{BufferEntry, BufferList};
 use crate::plugin;
 use crate::view::View;
+use v_ide_editor::Error;
+use v_ide_editor::document::Document;
+use v_ide_editor::io::file;
 use v_ide_engine::editor::Editor;
 
 impl App {
     pub fn load(&mut self, rel: &str) {
-        match Editor::open(self.session.absolute(rel)) {
-            Ok(mut editor) => {
+        match Document::open(self.session.absolute(rel)) {
+            Ok(Document {
+                mut editor,
+                path: file,
+            }) => {
                 editor.set_insert_escape(self.insert_escape.clone());
                 let old = self.take_active();
                 if !old.path.is_empty() {
@@ -15,6 +21,7 @@ impl App {
                 }
                 self.saved_text = editor.text();
                 self.editor = editor;
+                self.file = file;
                 self.path = rel.to_string();
                 self.top = 0;
                 self.left = 0;
@@ -103,6 +110,11 @@ impl App {
         }
     }
 
+    pub(crate) fn write_file(&self) -> Result<(), Error> {
+        let path = self.file.as_ref().ok_or(Error::NoPath)?;
+        file::write(path, &self.editor.text())
+    }
+
     pub fn any_dirty(&self) -> bool {
         self.editor.text() != self.saved_text
             || self.buffers.iter().any(|p| p.editor.text() != p.saved_text)
@@ -120,6 +132,7 @@ impl App {
 
     fn blank_active(&mut self) {
         self.editor = Editor::new("");
+        self.file = None;
         self.path = String::new();
         self.saved_text = String::new();
         self.top = 0;

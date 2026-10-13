@@ -1392,6 +1392,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "v-ide-editor",
  "v-ide-engine",
  "v-ide-keys",
  "v-ide-lua",
@@ -1403,10 +1404,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "v-ide-engine"
+name = "v-ide-editor"
 version = "0.1.0"
 dependencies = [
  "thiserror",
+ "v-ide-engine",
+]
+
+[[package]]
+name = "v-ide-engine"
+version = "0.1.0"
+dependencies = [
  "v-ide-keys",
  "v-ide-text",
 ]
@@ -1462,6 +1470,7 @@ dependencies = [
  "arboard",
  "crossterm",
  "ratatui",
+ "v-ide-editor",
  "v-ide-engine",
  "v-ide-keys",
  "v-ide-lua",
