@@ -23,7 +23,7 @@ use v_ide_text::position::Position;
 type Select = (Mode, (usize, usize), (usize, usize));
 
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
-    let text = app.editor.text();
+    let text = app.workspace.current().editor.text();
     let wrap = app.wrap;
     let hit =
         matches!(&app.read_cache, Some((t, w, m, _)) if t == &text && *w == width && *m == wrap);
@@ -39,7 +39,7 @@ pub fn cached_render(app: &mut App, width: usize) -> Rendered {
 
 pub fn enter(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
-    let idx = app.editor.text_index();
+    let idx = app.workspace.current().editor.text_index();
     app.read_cursor = rendered.to_rendered(idx);
     app.view = View::Read;
 }
@@ -47,7 +47,7 @@ pub fn enter(app: &mut App, width: usize) {
 pub fn leave(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some(idx) = source_at(&rendered, app.read_cursor.0, app.read_cursor.1) {
-        app.editor.set_cursor_index(idx);
+        app.workspace.current_mut().editor.set_cursor_index(idx);
     }
     app.read_select = None;
     app.view = View::Edit;
@@ -100,10 +100,13 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
         Key::Ctrl('t') => leave(app, width),
         Key::Enter => {
             if let Some(idx) = source_at(&rendered, line, col) {
-                app.editor.set_cursor_index(idx);
+                app.workspace.current_mut().editor.set_cursor_index(idx);
             }
-            if let Some(code) = code_block_at(&app.editor.text(), app.editor.cursor().line) {
-                app.editor.yank(code, false);
+            if let Some(code) = code_block_at(
+                &app.workspace.current().editor.text(),
+                app.workspace.current().editor.cursor().line,
+            ) {
+                app.workspace.current_mut().editor.yank(code, false);
                 clip_sync::sync_out(app);
                 app.message = String::from("copied code block to clipboard");
             } else {
@@ -187,7 +190,10 @@ fn yank_selection(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some((mode, anchor)) = app.read_select {
         let text = selected_text(&rendered, mode, anchor, app.read_cursor);
-        app.editor.yank(text, mode == Mode::VisualLine);
+        app.workspace
+            .current_mut()
+            .editor
+            .yank(text, mode == Mode::VisualLine);
         clip_sync::sync_out(app);
         app.read_select = None;
         app.message = String::from("copied to clipboard");
@@ -198,7 +204,10 @@ fn yank_line(app: &mut App, width: usize) {
     let rendered = cached_render(app, width);
     if let Some(line) = rendered.lines.get(app.read_cursor.0) {
         let text = line.text();
-        app.editor.yank(format!("{text}\n"), true);
+        app.workspace
+            .current_mut()
+            .editor
+            .yank(format!("{text}\n"), true);
         clip_sync::sync_out(app);
         app.message = String::from("copied line to clipboard");
     }

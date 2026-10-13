@@ -1,7 +1,8 @@
+mod common;
+
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 
-use v_ide_engine::Editor;
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_tui::app::App;
 use v_ide_tui::view::View;
@@ -19,7 +20,7 @@ fn draw_row0(app: &mut App, w: u16) -> String {
 }
 
 fn read_app() -> App {
-    let mut app = App::new(Editor::new(LINE), "a.md".into());
+    let mut app = App::new(common::named_doc(LINE, "a.md"));
     app.view = View::Read;
     app.wrap = WrapMode::None;
     app

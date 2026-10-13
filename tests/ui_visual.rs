@@ -1,9 +1,10 @@
+mod common;
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Modifier;
 
-use v_ide_engine::Editor;
 use v_ide_engine::mode::Mode;
 use v_ide_tui::app::App;
 use v_ide_tui::view::View;
@@ -31,9 +32,9 @@ fn reversed_at(app: &mut App, x: u16, y: u16) -> bool {
 
 #[test]
 fn visual_selection_is_highlighted_in_edit() {
-    let mut app = App::new(Editor::new("hello world"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello world", "a.md"));
     app.view = View::Edit;
-    app.editor.handle_keys("vll");
+    app.workspace.current_mut().editor.handle_keys("vll");
     assert!(
         reversed_at(&mut app, 0, 0),
         "selected cell should be reversed"
@@ -42,7 +43,7 @@ fn visual_selection_is_highlighted_in_edit() {
 
 #[test]
 fn read_mode_v_selects_without_leaving_read() {
-    let mut app = App::new(Editor::new("hello"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello", "a.md"));
     app.view = View::Read;
     app.handle(plain('v'));
     assert_eq!(app.view, View::Read, "selection stays in read mode");
@@ -51,7 +52,7 @@ fn read_mode_v_selects_without_leaving_read() {
 
 #[test]
 fn read_mode_ctrl_v_selects_block_in_read() {
-    let mut app = App::new(Editor::new("abc\ndef"), "a.md".into());
+    let mut app = App::new(common::named_doc("abc\ndef", "a.md"));
     app.view = View::Read;
     app.handle(ctrl('v'));
     assert_eq!(app.view, View::Read);
@@ -63,7 +64,7 @@ fn read_mode_ctrl_v_selects_block_in_read() {
 
 #[test]
 fn read_mode_selection_is_highlighted() {
-    let mut app = App::new(Editor::new("hello world"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello world", "a.md"));
     app.view = View::Read;
     app.handle(plain('v'));
     app.handle(plain('l'));
@@ -75,29 +76,35 @@ fn read_mode_selection_is_highlighted() {
 
 #[test]
 fn read_mode_yank_copies_the_selected_text() {
-    let mut app = App::new(Editor::new("hello world"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello world", "a.md"));
     app.view = View::Read;
     app.handle(plain('v'));
     for _ in 0..4 {
         app.handle(plain('l'));
     }
     app.handle(plain('y'));
-    assert_eq!(app.editor.yanked().as_deref(), Some("hello"));
+    assert_eq!(
+        app.workspace.current().editor.yanked().as_deref(),
+        Some("hello")
+    );
     assert!(app.read_select.is_none(), "yank ends the selection");
     assert_eq!(app.view, View::Read, "stays in read after copy");
 }
 
 #[test]
 fn read_mode_capital_y_copies_the_line() {
-    let mut app = App::new(Editor::new("hello world"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello world", "a.md"));
     app.view = View::Read;
     app.handle(plain('Y'));
-    assert_eq!(app.editor.yanked().as_deref(), Some("hello world\n"));
+    assert_eq!(
+        app.workspace.current().editor.yanked().as_deref(),
+        Some("hello world\n")
+    );
 }
 
 #[test]
 fn read_mode_motions_still_work() {
-    let mut app = App::new(Editor::new("# Title\n\nbody"), "a.md".into());
+    let mut app = App::new(common::named_doc("# Title\n\nbody", "a.md"));
     app.view = View::Read;
     app.handle(plain('j'));
     assert_eq!(app.view, View::Read, "j stays in read mode");
@@ -105,7 +112,7 @@ fn read_mode_motions_still_work() {
 
 #[test]
 fn read_mode_editing_keys_still_delegate_to_edit() {
-    let mut app = App::new(Editor::new("hello"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello", "a.md"));
     app.view = View::Read;
     app.handle(plain('o'));
     assert_eq!(app.view, View::Edit, "o opens a line in edit mode");

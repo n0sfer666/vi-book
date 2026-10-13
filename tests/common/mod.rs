@@ -65,3 +65,9 @@ pub fn check(cases: &[Case]) {
         failures.join("\n")
     );
 }
+
+pub fn named_doc(text: &str, name: &str) -> v_ide_editor::document::Document {
+    let mut doc = v_ide_editor::document::Document::new(text);
+    doc.name = name.to_string();
+    doc
+}

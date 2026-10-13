@@ -1,9 +1,10 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide_engine::Editor;
 use v_ide_markdown::render::render;
 use v_ide_tui::actions;
 use v_ide_tui::app::App;
@@ -28,7 +29,7 @@ fn note_opens_in_read_mode_by_default() {
     let root = temp_vault("read");
     fs::write(root.join("a.md"), "# Title\n\nbody").unwrap();
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app.load("a.md");
     let view = app.view;
@@ -38,7 +39,7 @@ fn note_opens_in_read_mode_by_default() {
 
 #[test]
 fn leader_opens_the_menu_in_normal_mode() {
-    let mut app = App::new(Editor::new("hi"), "a.md".into());
+    let mut app = App::new(common::named_doc("hi", "a.md"));
     assert!(app.menu.is_none());
     app.handle(key(KeyCode::Char(' ')));
     assert!(app.menu.is_some());
@@ -46,7 +47,7 @@ fn leader_opens_the_menu_in_normal_mode() {
 
 #[test]
 fn menu_new_entry_prompts_for_a_name() {
-    let mut app = App::new(Editor::new("hi"), "a.md".into());
+    let mut app = App::new(common::named_doc("hi", "a.md"));
     app.handle(key(KeyCode::Char(' ')));
     app.handle(key(KeyCode::Char('n')));
     assert_eq!(app.command.as_deref(), Some("new "));
@@ -54,12 +55,12 @@ fn menu_new_entry_prompts_for_a_name() {
 
 #[test]
 fn f1_opens_help_and_enter_reveals_the_manual() {
-    let mut app = App::new(Editor::new("hi"), "a.md".into());
+    let mut app = App::new(common::named_doc("hi", "a.md"));
     app.handle(key(KeyCode::F(1)));
     assert!(app.help);
     actions::help_key(&mut app, key(KeyCode::Enter));
     assert!(!app.help);
-    assert_eq!(app.editor.text(), help::MANUAL);
+    assert_eq!(app.workspace.current().editor.text(), help::MANUAL);
     assert_eq!(app.view, View::Read);
 }
 

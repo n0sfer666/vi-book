@@ -1,12 +1,12 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use v_ide_editor::document::Document;
-use v_ide_engine::editor::Editor;
 use v_ide_tui::app::App;
-use v_ide_tui::pane::Pane;
 use v_ide_tui::session::Session;
 use v_ide_tui::view::View;
 
@@ -17,20 +17,10 @@ fn temp_vault(name: &str) -> PathBuf {
     root
 }
 
-fn pool_buffer(root: &std::path::Path, rel: &str) -> Pane {
-    let doc = Document::open(root.join(rel)).unwrap();
-    let saved_text = doc.editor.text();
-    Pane {
-        editor: doc.editor,
-        file: doc.path,
-        path: rel.to_string(),
-        saved_text,
-        top: 0,
-        view: View::Read,
-        read_cursor: (0, 0),
-        read_pending_g: false,
-        read_cache: None,
-    }
+fn pool_buffer(root: &std::path::Path, rel: &str) -> Document {
+    let mut doc = Document::open(root.join(rel)).unwrap();
+    doc.name = rel.to_string();
+    doc
 }
 
 #[test]
@@ -40,28 +30,36 @@ fn open_rel_dedups_to_existing_buffer_without_reload() {
     fs::write(root.join("b.md"), "B body").unwrap();
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app.open_rel("a.md");
     app.open_rel("b.md");
-    assert_eq!(app.path, "b.md");
+    assert_eq!(app.workspace.current().name, "b.md");
     assert_eq!(
-        app.buffers.len(),
+        app.workspace.pool().len(),
         1,
         "a.md is pooled, no empty buffer leaks in"
     );
 
-    app.editor.handle_keys("ix<Esc>");
-    let dirty = app.editor.text();
+    app.workspace.current_mut().editor.handle_keys("ix<Esc>");
+    let dirty = app.workspace.current().editor.text();
     assert_ne!(dirty, "B body");
 
     app.open_rel("a.md");
-    assert_eq!(app.path, "a.md", "open of pooled file switches to it");
+    assert_eq!(
+        app.workspace.current().name,
+        "a.md",
+        "open of pooled file switches to it"
+    );
 
     app.open_rel("b.md");
-    assert_eq!(app.path, "b.md", "switching back reaches the pooled b.md");
     assert_eq!(
-        app.editor.text(),
+        app.workspace.current().name,
+        "b.md",
+        "switching back reaches the pooled b.md"
+    );
+    assert_eq!(
+        app.workspace.current().editor.text(),
         dirty,
         "dedup must not reload from disk — dirty edits survive"
     );
@@ -80,17 +78,27 @@ fn open_rel_of_active_file_is_a_noop() {
     fs::write(root.join("a.md"), "A body line\nsecond").unwrap();
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app.open_rel("a.md");
-    app.editor
+    app.workspace
+        .current_mut()
+        .editor
         .set_cursor(v_ide_text::Position { line: 1, col: 2 });
-    let cursor = app.editor.cursor();
-    let pool_len = app.buffers.len();
+    let cursor = app.workspace.current().editor.cursor();
+    let pool_len = app.workspace.pool().len();
 
     app.open_rel("a.md");
-    assert_eq!(app.editor.cursor(), cursor, "reopening active keeps cursor");
-    assert_eq!(app.buffers.len(), pool_len, "no self-stash on no-op open");
+    assert_eq!(
+        app.workspace.current().editor.cursor(),
+        cursor,
+        "reopening active keeps cursor"
+    );
+    assert_eq!(
+        app.workspace.pool().len(),
+        pool_len,
+        "no self-stash on no-op open"
+    );
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -107,23 +115,32 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
     let mut app = three_buffer_app(&root);
     app.open_rel("a.md");
     app.open_rel("b.md");
-    app.editor.handle_keys("ix<Esc>");
-    let dirty = app.editor.text();
+    app.workspace.current_mut().editor.handle_keys("ix<Esc>");
+    let dirty = app.workspace.current().editor.text();
     assert_ne!(dirty, "B body");
 
     v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('o')));
-    assert_eq!(app.path, "a.md", "Ctrl-o switches back through the pool");
+    assert_eq!(
+        app.workspace.current().name,
+        "a.md",
+        "Ctrl-o switches back through the pool"
+    );
     assert!(
-        app.buffers
+        app.workspace
+            .pool()
             .iter()
-            .any(|p| p.path == "b.md" && p.editor.text() == dirty),
+            .any(|b| b.doc.name == "b.md" && b.doc.editor.text() == dirty),
         "b.md is stashed dirty, not written or reloaded"
     );
 
     v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('i')));
-    assert_eq!(app.path, "b.md", "Ctrl-i switches forward through the pool");
     assert_eq!(
-        app.editor.text(),
+        app.workspace.current().name,
+        "b.md",
+        "Ctrl-i switches forward through the pool"
+    );
+    assert_eq!(
+        app.workspace.current().editor.text(),
         dirty,
         "forward navigation reuses the buffer, never reloads from disk"
     );
@@ -140,18 +157,33 @@ fn buffer_pool_is_global_across_split_focus_changes() {
     let mut app = three_buffer_app(&root);
     app.open_rel("a.md");
     app.open_rel("b.md");
-    let pool: Vec<String> = app.buffers.iter().map(|p| p.path.clone()).collect();
+    let pool: Vec<String> = app
+        .workspace
+        .pool()
+        .iter()
+        .map(|b| b.doc.name.clone())
+        .collect();
     assert_eq!(pool, vec!["a.md"], "pool holds the previous buffer");
 
     app.vsplit(Some("c.md"));
-    let after_split: Vec<String> = app.buffers.iter().map(|p| p.path.clone()).collect();
+    let after_split: Vec<String> = app
+        .workspace
+        .pool()
+        .iter()
+        .map(|b| b.doc.name.clone())
+        .collect();
     assert_eq!(
         after_split, pool,
         "splitting does not move the pool into the new pane"
     );
 
     app.focus_next();
-    let after_focus: Vec<String> = app.buffers.iter().map(|p| p.path.clone()).collect();
+    let after_focus: Vec<String> = app
+        .workspace
+        .pool()
+        .iter()
+        .map(|b| b.doc.name.clone())
+        .collect();
     assert_eq!(
         after_focus, pool,
         "the pool stays global on App when focus moves between panes"
@@ -210,7 +242,11 @@ fn buffer_list_enter_switches_and_closes() {
 
     v_ide_tui::command_line::run(&mut app, "buffers");
     v_ide_tui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Enter));
-    assert_eq!(app.path, "b.md", "Enter switches to the selected buffer");
+    assert_eq!(
+        app.workspace.current().name,
+        "b.md",
+        "Enter switches to the selected buffer"
+    );
     assert!(app.buffer_list.is_none(), "Enter closes the list");
 
     let _ = fs::remove_dir_all(&root);
@@ -236,7 +272,8 @@ fn buffer_list_ctrl_d_closes_buffer_and_stays_open() {
         "selected (previous) buffer is closed"
     );
     assert_eq!(
-        app.path, "a.md",
+        app.workspace.current().name,
+        "a.md",
         "closing a pooled buffer leaves active alone"
     );
 
@@ -264,10 +301,10 @@ fn quit_is_blocked_when_a_pooled_buffer_is_dirty() {
     fs::write(root.join("b.md"), "B").unwrap();
     let mut app = three_buffer_app(&root);
     app.open_rel("b.md");
-    app.editor.handle_keys("ix<Esc>");
+    app.workspace.current_mut().editor.handle_keys("ix<Esc>");
     app.open_rel("a.md");
-    assert_eq!(app.editor.text(), app.saved_text, "active a.md is clean");
-    assert!(app.buffers.iter().any(|p| p.editor.text() != p.saved_text));
+    assert!(!app.workspace.current().is_dirty(), "active a.md is clean");
+    assert!(app.workspace.pool().iter().any(|b| b.doc.is_dirty()));
 
     v_ide_tui::command_line::run(&mut app, "q");
     assert!(!app.quit, "q is blocked by a dirty pooled buffer");
@@ -281,7 +318,7 @@ fn quit_is_blocked_when_a_pooled_buffer_is_dirty() {
 
 fn three_buffer_app(root: &std::path::Path) -> App {
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app
 }
@@ -294,12 +331,12 @@ fn close_clean_pool_buffer_removes_it() {
     let mut app = three_buffer_app(&root);
     app.open_rel("b.md");
     app.open_rel("a.md");
-    assert_eq!(app.path, "a.md");
-    assert_eq!(app.buffers.len(), 1, "b.md is pooled");
+    assert_eq!(app.workspace.current().name, "a.md");
+    assert_eq!(app.workspace.pool().len(), 1, "b.md is pooled");
 
     app.close_buffer(1);
-    assert_eq!(app.path, "a.md", "active untouched");
-    assert!(app.buffers.is_empty(), "pooled buffer removed");
+    assert_eq!(app.workspace.current().name, "a.md", "active untouched");
+    assert!(app.workspace.pool().is_empty(), "pooled buffer removed");
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -310,15 +347,15 @@ fn close_dirty_buffer_is_blocked() {
     fs::write(root.join("a.md"), "A").unwrap();
     let mut app = three_buffer_app(&root);
     app.open_rel("a.md");
-    app.editor.handle_keys("ix<Esc>");
-    assert_ne!(app.editor.text(), app.saved_text);
+    app.workspace.current_mut().editor.handle_keys("ix<Esc>");
+    assert!(app.workspace.current().is_dirty());
 
     app.close_buffer(0);
     assert!(
         app.message.contains("unsaved"),
         "dirty close is blocked with a message"
     );
-    assert_eq!(app.path, "a.md", "buffer stays");
+    assert_eq!(app.workspace.current().name, "a.md", "buffer stays");
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -331,11 +368,18 @@ fn close_active_switches_to_mru() {
     let mut app = three_buffer_app(&root);
     app.open_rel("b.md");
     app.open_rel("a.md");
-    assert_eq!(app.path, "a.md");
+    assert_eq!(app.workspace.current().name, "a.md");
 
     app.close_buffer(0);
-    assert_eq!(app.path, "b.md", "closing active switches to MRU");
-    assert!(app.buffers.is_empty(), "old active is gone, not re-pooled");
+    assert_eq!(
+        app.workspace.current().name,
+        "b.md",
+        "closing active switches to MRU"
+    );
+    assert!(
+        app.workspace.pool().is_empty(),
+        "old active is gone, not re-pooled"
+    );
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -346,11 +390,14 @@ fn close_last_buffer_opens_picker() {
     fs::write(root.join("a.md"), "A").unwrap();
     let mut app = three_buffer_app(&root);
     app.open_rel("a.md");
-    assert!(app.buffers.is_empty());
+    assert!(app.workspace.pool().is_empty());
 
     app.close_buffer(0);
     assert!(app.picker.is_some(), "closing last buffer opens the picker");
-    assert!(app.path.is_empty(), "no active named buffer remains");
+    assert!(
+        app.workspace.current().name.is_empty(),
+        "no active named buffer remains"
+    );
 
     let _ = fs::remove_dir_all(&root);
 }
@@ -362,47 +409,59 @@ fn switch_to_buffer_preserves_active_state_and_mru() {
     fs::write(root.join("b.md"), "target body").unwrap();
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
-    let doc = Document::open(root.join("a.md")).unwrap();
-    let mut app = App::new(doc.editor, "a.md".into());
-    app.file = doc.path;
+    let mut doc = Document::open(root.join("a.md")).unwrap();
+    doc.name = "a.md".into();
+    let mut app = App::new(doc);
     app.session = session;
-    app.saved_text = app.editor.text();
     app.view = View::Edit;
-    app.editor.handle_keys("ix<Esc>");
+    app.workspace.current_mut().editor.handle_keys("ix<Esc>");
     app.top = 7;
-    let dirty_text = app.editor.text();
-    let cursor = app.editor.cursor();
-    assert_ne!(dirty_text, app.saved_text);
+    let dirty_text = app.workspace.current().editor.text();
+    let cursor = app.workspace.current().editor.cursor();
+    assert!(app.workspace.current().is_dirty());
 
-    app.buffers.push(pool_buffer(&root, "b.md"));
-
-    app.switch_to_buffer(0);
-
-    assert_eq!(app.path, "b.md", "active buffer is now the switch target");
-    assert_eq!(app.editor.text(), "target body");
-    assert_eq!(app.buffers.len(), 1);
-
-    let stashed = &app.buffers[0];
-    assert_eq!(stashed.path, "a.md", "previous active stashed at MRU front");
-    assert_eq!(stashed.editor.text(), dirty_text, "dirty text preserved");
-    assert_ne!(
-        stashed.editor.text(),
-        stashed.saved_text,
-        "dirty flag preserved"
-    );
-    assert_eq!(stashed.editor.cursor(), cursor, "cursor preserved");
-    assert_eq!(stashed.view, View::Edit, "view preserved");
-    assert_eq!(stashed.top, 7, "viewport top preserved");
+    app.workspace.add(pool_buffer(&root, "b.md"));
 
     app.switch_to_buffer(0);
-    assert_eq!(app.path, "a.md", "switching back restores stashed buffer");
+
     assert_eq!(
-        app.buffers[0].path, "b.md",
+        app.workspace.current().name,
+        "b.md",
+        "active buffer is now the switch target"
+    );
+    assert_eq!(app.workspace.current().editor.text(), "target body");
+    assert_eq!(app.workspace.pool().len(), 1);
+
+    let stashed = &app.workspace.pool()[0];
+    assert_eq!(
+        stashed.doc.name, "a.md",
+        "previous active stashed at MRU front"
+    );
+    assert_eq!(
+        stashed.doc.editor.text(),
+        dirty_text,
+        "dirty text preserved"
+    );
+    assert!(stashed.doc.is_dirty(), "dirty flag preserved");
+    assert_eq!(stashed.doc.editor.cursor(), cursor, "cursor preserved");
+    let state = &app.read_states[&stashed.id];
+    assert_eq!(state.view, View::Edit, "view preserved");
+    assert_eq!(state.top, 7, "viewport top preserved");
+
+    app.switch_to_buffer(0);
+    assert_eq!(
+        app.workspace.current().name,
+        "a.md",
+        "switching back restores stashed buffer"
+    );
+    assert_eq!(
+        app.workspace.pool()[0].doc.name,
+        "b.md",
         "MRU: prev active moves to front"
     );
-    app.editor.handle_keys("u");
+    app.workspace.current_mut().editor.handle_keys("u");
     assert_eq!(
-        app.editor.text(),
+        app.workspace.current().editor.text(),
         "hello",
         "undo history preserved across switch"
     );

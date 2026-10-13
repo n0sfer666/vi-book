@@ -1,6 +1,7 @@
+mod common;
+
 use std::path::PathBuf;
 
-use v_ide_engine::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::plugin;
 
@@ -13,7 +14,7 @@ fn config_file(label: &str, script: &str) -> PathBuf {
 }
 
 fn load(label: &str, script: &str, warning: Option<&'static str>) -> App {
-    let mut app = App::new(Editor::new("x"), "a.md".into());
+    let mut app = App::new(common::named_doc("x", "a.md"));
     plugin::load_config_from(&mut app, Some((config_file(label, script), warning)));
     app
 }
@@ -38,7 +39,7 @@ fn no_warning_leaves_status_line_empty() {
 
 #[test]
 fn no_config_leaves_status_line_empty() {
-    let mut app = App::new(Editor::new("x"), "a.md".into());
+    let mut app = App::new(common::named_doc("x", "a.md"));
     plugin::load_config_from(&mut app, None);
     assert_eq!(app.message, "");
 }

@@ -1,10 +1,11 @@
-use v_ide_engine::Editor;
+mod common;
+
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_tui::app::App;
 use v_ide_tui::command_line;
 
 fn app() -> App {
-    App::new(Editor::new("x"), "a.md".into())
+    App::new(common::named_doc("x", "a.md"))
 }
 
 #[test]

@@ -1,6 +1,7 @@
+mod common;
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide_engine::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::clipboard::{base64, osc52};
 use v_ide_tui::view::View;
@@ -22,7 +23,7 @@ fn osc52_wraps_base64_payload() {
 #[test]
 fn enter_on_a_code_block_copies_it() {
     let src = "# Title\n\n```rust\nfn main() {}\n```\n";
-    let mut app = App::new(Editor::new(src), "a.md".into());
+    let mut app = App::new(common::named_doc(src, "a.md"));
     app.view = View::Read;
     let rendered = v_ide_markdown::render::render(src, 80);
     let line = rendered
@@ -32,7 +33,10 @@ fn enter_on_a_code_block_copies_it() {
         .expect("code line rendered");
     app.read_cursor = (line, 3);
     app.handle(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    assert_eq!(app.editor.yanked().as_deref(), Some("fn main() {}"));
+    assert_eq!(
+        app.workspace.current().editor.yanked().as_deref(),
+        Some("fn main() {}")
+    );
     assert!(
         app.message.contains("code block"),
         "message should confirm the copy, got: {:?}",

@@ -65,10 +65,9 @@ fn temp_file(name: &str, content: &[u8]) -> PathBuf {
 }
 
 fn app_with_file(path: &PathBuf) -> App {
-    let doc = Document::open(path).unwrap();
-    let mut app = App::new(doc.editor, path.display().to_string());
-    app.file = doc.path;
-    app
+    let mut doc = Document::open(path).unwrap();
+    doc.name = path.display().to_string();
+    App::new(doc)
 }
 
 fn run_command(app: &mut App, command: &str) {
@@ -80,7 +79,7 @@ fn run_command(app: &mut App, command: &str) {
 fn wq_saves_and_quits() {
     let path = temp_file("wq", b"hello\n");
     let mut app = app_with_file(&path);
-    app.editor.handle_keys("x");
+    app.workspace.current_mut().editor.handle_keys("x");
     run_command(&mut app, "wq");
     let written = fs::read(&path).unwrap();
     fs::remove_file(&path).unwrap();
@@ -91,7 +90,7 @@ fn wq_saves_and_quits() {
 #[test]
 fn write_on_bundled_doc_fails_without_touching_disk() {
     let label = format!("vi-book-regr-{}-bundled.md", std::process::id());
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     actions::open_doc(&mut app, &label, "bundled\n");
     run_command(&mut app, "w");
     assert!(!std::path::Path::new(&label).exists());
@@ -105,7 +104,7 @@ fn write_on_bundled_doc_fails_without_touching_disk() {
 fn q_refuses_unsaved_changes_and_q_bang_discards() {
     let path = temp_file("q", b"hello\n");
     let mut app = app_with_file(&path);
-    app.editor.handle_keys("x");
+    app.workspace.current_mut().editor.handle_keys("x");
     run_command(&mut app, "q");
     assert!(!app.quit, "q must refuse to quit with unsaved changes");
     run_command(&mut app, "q!");
@@ -121,7 +120,7 @@ fn colon_opens_command_line_only_when_idle() {
     app.handle(KeyEvent::from(KeyCode::Char(':')));
     assert_eq!(app.command.as_deref(), Some(""));
     app.command = None;
-    app.editor.handle_keys("d");
+    app.workspace.current_mut().editor.handle_keys("d");
     app.handle(KeyEvent::from(KeyCode::Char(':')));
     assert!(
         app.command.is_none(),

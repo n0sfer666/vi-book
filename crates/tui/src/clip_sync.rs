@@ -9,15 +9,15 @@ pub fn freshest<'a>(system: &'a str, last_synced: &str) -> Option<&'a str> {
 
 pub fn editor_key(app: &mut App, key: Key) {
     inject_paste(app, key);
-    let before = app.editor.clip_yank_version();
-    app.editor.handle_key(key);
-    if app.editor.clip_yank_version() != before {
+    let before = app.workspace.current().editor.clip_yank_version();
+    app.workspace.current_mut().editor.handle_key(key);
+    if app.workspace.current().editor.clip_yank_version() != before {
         sync_out(app);
     }
 }
 
 pub fn sync_out(app: &mut App) {
-    if let Some(text) = app.editor.yanked() {
+    if let Some(text) = app.workspace.current().editor.yanked() {
         app.last_clip = text.clone();
         clipboard::set(&text);
     }
@@ -27,7 +27,9 @@ fn inject_paste(app: &mut App, key: Key) {
     if !matches!(key, Key::Char('p') | Key::Char('P')) {
         return;
     }
-    if app.editor.mode() != Mode::Normal || app.editor.pending_register().is_some() {
+    if app.workspace.current().editor.mode() != Mode::Normal
+        || app.workspace.current().editor.pending_register().is_some()
+    {
         return;
     }
     let Some(system) = clipboard::get() else {
@@ -35,6 +37,9 @@ fn inject_paste(app: &mut App, key: Key) {
     };
     if let Some(fresh) = freshest(&system, &app.last_clip) {
         let linewise = fresh.ends_with('\n');
-        app.editor.set_unnamed(fresh.to_string(), linewise);
+        app.workspace
+            .current_mut()
+            .editor
+            .set_unnamed(fresh.to_string(), linewise);
     }
 }

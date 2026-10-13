@@ -41,7 +41,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         input::panel_key(app, mapped);
         return;
     }
-    if app.editor.idle_normal() {
+    if app.workspace.current().editor.idle_normal() {
         if mapped == Some(Key::Char(app.leader)) {
             actions::open_menu(app);
             return;
@@ -51,7 +51,9 @@ pub fn handle(app: &mut App, key: KeyEvent) {
             return;
         }
     }
-    if (app.view == View::Read || app.editor.idle_normal()) && mapped == Some(Key::Ctrl('w')) {
+    if (app.view == View::Read || app.workspace.current().editor.idle_normal())
+        && mapped == Some(Key::Ctrl('w'))
+    {
         app.pending_ctrl_w = true;
         return;
     }
@@ -62,16 +64,16 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         }
         return;
     }
-    if app.editor.idle_normal() && input::normal_builtin(app, mapped) {
+    if app.workspace.current().editor.idle_normal() && input::normal_builtin(app, mapped) {
         return;
     }
-    if app.editor.idle_normal()
+    if app.workspace.current().editor.idle_normal()
         && let Some(rhs) = mapped.and_then(|k| app.normal_maps.get(&k).cloned())
     {
         plugin::apply_keymap(app, &rhs);
         return;
     }
-    if app.editor.idle_normal() && mapped == Some(Key::Ctrl('t')) {
+    if app.workspace.current().editor.idle_normal() && mapped == Some(Key::Ctrl('t')) {
         read_view::enter(app, width);
         return;
     }

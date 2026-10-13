@@ -32,7 +32,7 @@ pub fn apply_keymap(app: &mut App, rhs: &str) {
         command_line::run(app, cmd);
     } else {
         for key in parse_keys(rhs) {
-            app.editor.handle_key(key);
+            app.workspace.current_mut().editor.handle_key(key);
         }
     }
 }
@@ -181,7 +181,10 @@ pub fn run_command(app: &mut App, name: &str) -> bool {
     let Some(host) = &app.host else {
         return false;
     };
-    host.set_buffer(&app.editor.text(), app.editor.text_index());
+    host.set_buffer(
+        &app.workspace.current().editor.text(),
+        app.workspace.current().editor.text_index(),
+    );
     match host.run_command(name) {
         Ok(false) => false,
         Ok(true) => {
@@ -197,7 +200,10 @@ pub fn run_command(app: &mut App, name: &str) -> bool {
 
 fn sync_in(app: &App) {
     if let Some(host) = &app.host {
-        host.set_buffer(&app.editor.text(), app.editor.text_index());
+        host.set_buffer(
+            &app.workspace.current().editor.text(),
+            app.workspace.current().editor.text_index(),
+        );
     }
 }
 
@@ -211,8 +217,8 @@ fn sync_out(app: &mut App, apply_opens: bool) {
     } else {
         Vec::new()
     };
-    if new_text != app.editor.text() {
-        app.editor.replace_all(&new_text);
+    if new_text != app.workspace.current().editor.text() {
+        app.workspace.current_mut().editor.replace_all(&new_text);
     }
     if let Some(rel) = opens.into_iter().next_back() {
         app.open_rel(&rel);

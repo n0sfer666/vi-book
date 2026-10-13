@@ -8,12 +8,14 @@ use ratatui::layout::Rect;
 use crate::menu::{Menu, MenuItem};
 use crate::panel::Panel;
 use crate::picker::Picker;
+use crate::read_state::ReadState;
 use crate::session::Session;
 use crate::theme::Theme;
 use crate::view::View;
 use crate::{plugin, render, router};
 use v_ide_editor::Error;
-use v_ide_engine::editor::Editor;
+use v_ide_editor::document::Document;
+use v_ide_editor::workspace::{DocId, Workspace};
 use v_ide_keys::key::Key;
 use v_ide_lua::host::PluginHost;
 use v_ide_markdown::rendered::Rendered;
@@ -22,10 +24,8 @@ use v_ide_notebook::date::Date;
 use v_ide_notebook::history::History;
 
 pub struct App {
-    pub editor: Editor,
-    pub file: Option<std::path::PathBuf>,
-    pub path: String,
-    pub saved_text: String,
+    pub workspace: Workspace,
+    pub read_states: HashMap<DocId, ReadState>,
     pub top: usize,
     pub left: usize,
     pub command: Option<String>,
@@ -54,7 +54,6 @@ pub struct App {
     pub menu_extra: Vec<MenuItem>,
     pub insert_escape: Option<String>,
     pub others: Vec<crate::pane::Pane>,
-    pub buffers: Vec<crate::pane::Pane>,
     pub buffer_list: Option<crate::buffer_list::BufferList>,
     pub active: usize,
     pub pending_ctrl_w: bool,
@@ -68,7 +67,7 @@ pub struct App {
 pub fn run() -> Result<(), Error> {
     let arg = env::args().nth(1);
     let (session, open) = Session::open(arg.as_deref())?;
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(Document::new(""));
     app.session = session;
     app.today = crate::clock::today();
     app.load_config();
@@ -87,13 +86,10 @@ pub fn run() -> Result<(), Error> {
 }
 
 impl App {
-    pub fn new(editor: Editor, path: String) -> Self {
-        let saved_text = editor.text();
+    pub fn new(doc: Document) -> Self {
         Self {
-            editor,
-            file: None,
-            path,
-            saved_text,
+            workspace: Workspace::new(doc),
+            read_states: HashMap::new(),
             top: 0,
             left: 0,
             command: None,
@@ -122,7 +118,6 @@ impl App {
             menu_extra: Vec::new(),
             insert_escape: Some(String::from("jj")),
             others: Vec::new(),
-            buffers: Vec::new(),
             buffer_list: None,
             active: 0,
             pending_ctrl_w: false,

@@ -57,17 +57,17 @@ pub fn draw_divider(frame: &mut Frame, area: Rect, x: u16) {
 
 pub fn draw_pane(frame: &mut Frame, theme: &Theme, pane: &Pane, area: Rect, wrap: WrapMode) {
     let height = area.height as usize;
-    let lines = match pane.view {
+    let lines = match pane.state.view {
         View::Read => {
-            let rendered = render_with(&pane.editor.text(), column_width(area), wrap);
-            read_lines(&rendered, pane.top, height, theme, None)
+            let rendered = render_with(&pane.buf.doc.editor.text(), column_width(area), wrap);
+            read_lines(&rendered, pane.state.top, height, theme, None)
         }
         View::Edit => {
-            let text = pane.editor.text();
+            let text = pane.buf.doc.editor.text();
             let highlights = highlight(&text);
             text.split('\n')
                 .enumerate()
-                .skip(pane.top)
+                .skip(pane.state.top)
                 .take(height)
                 .map(|(idx, line)| {
                     styled_line(

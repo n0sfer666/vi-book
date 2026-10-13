@@ -40,15 +40,16 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     }
     let active_rect = rects[app.active];
     app.text_area = active_rect;
-    let text = app.editor.text();
+    let text = app.workspace.current().editor.text();
     if app.view == View::Read {
         read_view::draw(frame, app, active_rect);
     } else {
         scroll_into_view(app, active_rect);
-        app.left = hscroll::scroll(app.left, app.editor.cursor().col, column_width(active_rect));
+        let col = app.workspace.current().editor.cursor().col;
+        app.left = hscroll::scroll(app.left, col, column_width(active_rect));
         draw_text(frame, app, &text, active_rect);
     }
-    draw_status(frame, app, &text, status_area);
+    draw_status(frame, app, status_area);
     draw_message(frame, app, message_area);
     if app.help {
         overlay::draw_help(frame, app, text_area);
@@ -68,14 +69,14 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     }
     if app.view == View::Edit {
         place_cursor(frame, app, active_rect, message_area);
-    } else if app.command.is_some() || app.editor.search_input().is_some() {
+    } else if app.command.is_some() || app.workspace.current().editor.search_input().is_some() {
         place_bottom_cursor(frame, app, message_area);
     }
 }
 
 fn scroll_into_view(app: &mut App, area: Rect) {
     let height = area.height.max(1) as usize;
-    let line = app.editor.cursor().line;
+    let line = app.workspace.current().editor.cursor().line;
     if line < app.top {
         app.top = line;
     }
@@ -86,9 +87,10 @@ fn scroll_into_view(app: &mut App, area: Rect) {
 
 fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
     let highlights = highlight(text);
-    let selecting = !matches!(app.editor.mode(), Mode::Normal | Mode::Insert);
-    let anchor = app.editor.visual_anchor();
-    let cursor = app.editor.cursor();
+    let editor = &app.workspace.current().editor;
+    let selecting = !matches!(editor.mode(), Mode::Normal | Mode::Insert);
+    let anchor = editor.visual_anchor();
+    let cursor = editor.cursor();
     let lines: Vec<Line> = text
         .split('\n')
         .enumerate()
@@ -98,7 +100,7 @@ fn draw_text(frame: &mut Frame, app: &App, text: &str, area: Rect) {
             let selection = selecting
                 .then(|| {
                     v_ide_engine::visual::selection_cols(
-                        app.editor.mode(),
+                        editor.mode(),
                         anchor,
                         cursor,
                         idx,
@@ -153,11 +155,12 @@ pub(crate) fn styled_line(
     Line::from(parts)
 }
 
-fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
+fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
+    let doc = app.workspace.current();
     let mode = if app.view == View::Read {
         "READ"
     } else {
-        match app.editor.mode() {
+        match doc.editor.mode() {
             Mode::Normal => "NORMAL",
             Mode::Insert => "INSERT",
             Mode::Visual => "VISUAL",
@@ -165,11 +168,11 @@ fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
             Mode::VisualBlock => "V-BLOCK",
         }
     };
-    let dirty = if text != app.saved_text { " [+]" } else { "" };
-    let cursor = app.editor.cursor();
+    let dirty = if doc.is_dirty() { " [+]" } else { "" };
+    let cursor = doc.editor.cursor();
     let status = format!(
         " {mode}  {}{dirty}  {}:{} ",
-        app.path,
+        doc.name,
         cursor.line + 1,
         cursor.col + 1
     );
@@ -180,7 +183,7 @@ fn draw_status(frame: &mut Frame, app: &App, text: &str, area: Rect) {
 fn draw_message(frame: &mut Frame, app: &App, area: Rect) {
     let content = if let Some(command) = &app.command {
         format!(":{command}")
-    } else if let Some(input) = app.editor.search_input() {
+    } else if let Some(input) = app.workspace.current().editor.search_input() {
         format!("/{input}")
     } else {
         app.message.clone()
@@ -192,19 +195,20 @@ fn place_bottom_cursor(frame: &mut Frame, app: &App, message_area: Rect) {
     let len = app
         .command
         .as_deref()
-        .or(app.editor.search_input())
+        .or(app.workspace.current().editor.search_input())
         .map_or(0, |s| s.chars().count());
     let col = message_area.x + 1 + len as u16;
     frame.set_cursor_position(ScreenPosition::new(col, message_area.y));
 }
 
 fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, message_area: Rect) {
-    if app.command.is_some() || app.editor.search_input().is_some() {
+    let editor = &app.workspace.current().editor;
+    if app.command.is_some() || editor.search_input().is_some() {
         place_bottom_cursor(frame, app, message_area);
         return;
     }
     let inner = text_column(text_area);
-    let cursor = app.editor.cursor();
+    let cursor = editor.cursor();
     let row = inner.y + (cursor.line - app.top) as u16;
     let col =
         inner.x + (cursor.col.saturating_sub(app.left) as u16).min(inner.width.saturating_sub(1));

@@ -1,6 +1,7 @@
+mod common;
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide_engine::editor::Editor;
 use v_ide_lua::host::PluginHost;
 use v_ide_tui::app::App;
 
@@ -20,29 +21,29 @@ fn normal_keymap_runs_plugin_command() {
         "vibook.command('shout', function() vibook.buf.set_text('SHOUTED') end)\n\
          vibook.keymap('n', '<C-s>', ':shout')",
     );
-    let mut app = App::new(Editor::new("hi"), "a.md".into());
+    let mut app = App::new(common::named_doc("hi", "a.md"));
     app.host = Some(host);
     app.install_keymaps();
 
     app.handle(ctrl('s'));
-    assert_eq!(app.editor.text(), "SHOUTED");
+    assert_eq!(app.workspace.current().editor.text(), "SHOUTED");
 }
 
 #[test]
 fn normal_keymap_feeds_editor_keys() {
     let host = host_with("vibook.keymap('n', '<C-d>', 'dd')");
-    let mut app = App::new(Editor::new("one\ntwo"), "a.md".into());
+    let mut app = App::new(common::named_doc("one\ntwo", "a.md"));
     app.host = Some(host);
     app.install_keymaps();
 
     app.handle(ctrl('d'));
-    assert_eq!(app.editor.text(), "two");
+    assert_eq!(app.workspace.current().editor.text(), "two");
 }
 
 #[test]
 fn keymaps_without_host_do_nothing() {
-    let mut app = App::new(Editor::new("hi"), "a.md".into());
+    let mut app = App::new(common::named_doc("hi", "a.md"));
     app.install_keymaps();
     app.handle(ctrl('s'));
-    assert_eq!(app.editor.text(), "hi");
+    assert_eq!(app.workspace.current().editor.text(), "hi");
 }

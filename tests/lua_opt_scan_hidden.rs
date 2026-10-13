@@ -1,4 +1,5 @@
-use v_ide_engine::Editor;
+mod common;
+
 use v_ide_lua::host::PluginHost;
 use v_ide_tui::app::App;
 use v_ide_tui::plugin;
@@ -8,7 +9,7 @@ fn app_with_opt(label: &str, script: &str) -> App {
         std::env::temp_dir().join(format!("vi-book-opt-hidden-{}-{label}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    let mut app = App::new(Editor::new("x"), "a.md".into());
+    let mut app = App::new(common::named_doc("x", "a.md"));
     app.session.root = dir;
     let host = PluginHost::new().unwrap();
     host.load(script).unwrap();

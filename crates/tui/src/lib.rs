@@ -23,6 +23,7 @@ pub mod panel;
 pub mod picker;
 pub mod plugin;
 pub mod read_motion;
+pub mod read_state;
 pub mod read_view;
 pub mod render;
 pub mod router;

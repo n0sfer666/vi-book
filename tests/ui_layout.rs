@@ -1,8 +1,9 @@
+mod common;
+
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
 
-use v_ide_engine::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::layout::{column_width, text_column};
 use v_ide_tui::view::View;
@@ -42,7 +43,7 @@ fn zero_width_clamps_to_one() {
 
 #[test]
 fn edit_content_starts_at_origin_not_centered() {
-    let mut app = App::new(Editor::new("hello"), "a.md".into());
+    let mut app = App::new(common::named_doc("hello", "a.md"));
     app.view = View::Edit;
     let backend = TestBackend::new(100, 24);
     let mut terminal = Terminal::new(backend).unwrap();

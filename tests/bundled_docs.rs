@@ -1,7 +1,8 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide_engine::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::help;
 use v_ide_tui::link_follow::follow_at_cursor;
@@ -16,7 +17,7 @@ fn temp_vault(name: &str) -> PathBuf {
 
 fn app_for(root: &std::path::Path) -> App {
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app
 }
@@ -32,12 +33,18 @@ fn bundled_doc_lookup_resolves_the_known_docs() {
 
 #[test]
 fn enter_on_a_link_between_bundled_docs_opens_the_target() {
-    let mut app = App::new(Editor::new(help::DEVELOPERS), "developers.md".into());
+    let mut app = App::new(common::named_doc(help::DEVELOPERS, "developers.md"));
     let idx = help::DEVELOPERS.find("plugin-development.md").unwrap();
-    app.editor.set_cursor_index(idx);
+    app.workspace.current_mut().editor.set_cursor_index(idx);
     follow_at_cursor(&mut app);
-    assert_eq!(app.path, "plugin-development.md");
-    assert!(app.editor.text().contains("plugin development"));
+    assert_eq!(app.workspace.current().name, "plugin-development.md");
+    assert!(
+        app.workspace
+            .current()
+            .editor
+            .text()
+            .contains("plugin development")
+    );
 }
 
 #[test]
@@ -47,10 +54,10 @@ fn links_in_ordinary_notes_are_not_shadowed_by_bundled_names() {
     fs::write(root.join("note.md"), "see [m](manual.md)\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("note.md");
-    app.editor.set_cursor_index(7);
+    app.workspace.current_mut().editor.set_cursor_index(7);
     follow_at_cursor(&mut app);
-    let path = app.path.clone();
-    let text = app.editor.text();
+    let path = app.workspace.current().name.clone();
+    let text = app.workspace.current().editor.text();
     let _ = fs::remove_dir_all(&root);
     assert_eq!(path, "manual.md");
     assert_eq!(text, "# Vault manual\n");

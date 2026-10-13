@@ -1,4 +1,5 @@
-use v_ide_engine::editor::Editor;
+mod common;
+
 use v_ide_markdown::render::{render, render_with};
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_tui::app::App;
@@ -6,7 +7,7 @@ use v_ide_tui::read_view::cached_render;
 
 #[test]
 fn cached_render_matches_direct_render() {
-    let mut app = App::new(Editor::new("# Title\n\ntext"), "a.md".into());
+    let mut app = App::new(common::named_doc("# Title\n\ntext", "a.md"));
     let cached = cached_render(&mut app, 40);
     assert_eq!(
         cached.text(),
@@ -16,14 +17,14 @@ fn cached_render_matches_direct_render() {
 
 #[test]
 fn cache_reflects_buffer_changes() {
-    let mut app = App::new(Editor::new("# Title"), "a.md".into());
+    let mut app = App::new(common::named_doc("# Title", "a.md"));
     let first = cached_render(&mut app, 40);
     assert_eq!(
         first.text(),
         render_with("# Title", 40, WrapMode::All).text()
     );
 
-    app.editor.replace_all("## Other");
+    app.workspace.current_mut().editor.replace_all("## Other");
     let second = cached_render(&mut app, 40);
     assert_eq!(
         second.text(),
@@ -33,7 +34,7 @@ fn cache_reflects_buffer_changes() {
 
 #[test]
 fn cache_reflects_width_changes() {
-    let mut app = App::new(Editor::new("aaa bbb ccc"), "a.md".into());
+    let mut app = App::new(common::named_doc("aaa bbb ccc", "a.md"));
     app.wrap = WrapMode::All;
     let narrow = cached_render(&mut app, 7);
     let wide = cached_render(&mut app, 40);
@@ -43,7 +44,7 @@ fn cache_reflects_width_changes() {
 
 #[test]
 fn cache_reflects_wrap_mode_changes() {
-    let mut app = App::new(Editor::new("aaa bbb ccc"), "a.md".into());
+    let mut app = App::new(common::named_doc("aaa bbb ccc", "a.md"));
     app.wrap = WrapMode::None;
     let none = cached_render(&mut app, 7).text();
     app.wrap = WrapMode::All;

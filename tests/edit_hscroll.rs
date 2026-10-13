@@ -1,7 +1,8 @@
+mod common;
+
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 
-use v_ide_engine::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::view::View;
 
@@ -18,7 +19,7 @@ fn draw_row0(app: &mut App, w: u16) -> String {
 }
 
 fn edit_app() -> App {
-    let mut app = App::new(Editor::new(LINE), "a.md".into());
+    let mut app = App::new(common::named_doc(LINE, "a.md"));
     app.view = View::Edit;
     app
 }
@@ -35,7 +36,7 @@ fn long_line_marks_right_overflow_in_edit() {
 #[test]
 fn cursor_past_edge_scrolls_edit_with_both_markers() {
     let mut app = edit_app();
-    app.editor.handle_keys("12l");
+    app.workspace.current_mut().editor.handle_keys("12l");
     let row = draw_row0(&mut app, 10);
     assert!(app.left > 0, "left = {}", app.left);
     assert!(row.starts_with(LEFT), "left marker, row: {row:?}");

@@ -1,8 +1,9 @@
+mod common;
+
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::layout::Rect;
 
-use v_ide_engine::Editor;
 use v_ide_tui::app::App;
 use v_ide_tui::split::split_rects;
 use v_ide_tui::view::View;
@@ -38,7 +39,7 @@ fn three_panes_fit_within_the_area() {
 
 #[test]
 fn vsplit_adds_independent_panes_up_to_three() {
-    let mut app = App::new(Editor::new("alpha"), "a.md".into());
+    let mut app = App::new(common::named_doc("alpha", "a.md"));
     assert_eq!(app.pane_count(), 1);
     app.vsplit(None);
     assert_eq!(app.pane_count(), 2);
@@ -50,18 +51,25 @@ fn vsplit_adds_independent_panes_up_to_three() {
 
 #[test]
 fn editing_active_pane_does_not_touch_others() {
-    let mut app = App::new(Editor::new("alpha"), "a.md".into());
+    let mut app = App::new(common::named_doc("alpha", "a.md"));
     app.vsplit(None);
-    app.editor.handle_key(v_ide_keys::Key::Char('x'));
-    let active_text = app.editor.text();
+    app.workspace
+        .current_mut()
+        .editor
+        .handle_key(v_ide_keys::Key::Char('x'));
+    let active_text = app.workspace.current().editor.text();
     app.focus_next();
-    assert_ne!(app.editor.text(), active_text, "other pane is independent");
-    assert_eq!(app.editor.text(), "alpha");
+    assert_ne!(
+        app.workspace.current().editor.text(),
+        active_text,
+        "other pane is independent"
+    );
+    assert_eq!(app.workspace.current().editor.text(), "alpha");
 }
 
 #[test]
 fn focus_next_cycles_through_panes() {
-    let mut app = App::new(Editor::new("one"), "a.md".into());
+    let mut app = App::new(common::named_doc("one", "a.md"));
     app.vsplit(None);
     app.active = 0;
     app.focus_next();
@@ -72,7 +80,7 @@ fn focus_next_cycles_through_panes() {
 
 #[test]
 fn two_panes_render_side_by_side_with_a_divider() {
-    let mut app = App::new(Editor::new("AAAA"), "a.md".into());
+    let mut app = App::new(common::named_doc("AAAA", "a.md"));
     app.view = View::Edit;
     app.vsplit(None);
     app.view = View::Edit;
@@ -92,7 +100,7 @@ fn two_panes_render_side_by_side_with_a_divider() {
 
 #[test]
 fn only_collapses_to_a_single_pane() {
-    let mut app = App::new(Editor::new("one"), "a.md".into());
+    let mut app = App::new(common::named_doc("one", "a.md"));
     app.vsplit(None);
     app.vsplit(None);
     assert_eq!(app.pane_count(), 3);

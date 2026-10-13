@@ -1,18 +1,20 @@
+mod common;
+
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide_engine::Editor;
+use v_ide_editor::document::Document;
 use v_ide_tui::app::App;
 use v_ide_tui::buffer_list::{BufferEntry, BufferList};
 use v_ide_tui::picker::Picker;
 use v_ide_tui::render;
 
-fn background() -> Editor {
+fn background() -> Document {
     let line = "X".repeat(70);
     let text = vec![line; 30].join("\n");
-    Editor::new(&text)
+    common::named_doc(&text, "a.md")
 }
 
 fn render_app(app: &mut App) -> Vec<Vec<String>> {
@@ -61,7 +63,7 @@ fn assert_modal_is_opaque(grid: &[Vec<String>]) {
 
 #[test]
 fn help_modal_is_opaque() {
-    let mut app = App::new(background(), "a.md".into());
+    let mut app = App::new(background());
     app.help = true;
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
@@ -69,7 +71,7 @@ fn help_modal_is_opaque() {
 
 #[test]
 fn picker_modal_is_opaque() {
-    let mut app = App::new(background(), "a.md".into());
+    let mut app = App::new(background());
     app.picker = Some(Picker::new(vec!["one".into(), "two".into()]));
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
@@ -77,7 +79,7 @@ fn picker_modal_is_opaque() {
 
 #[test]
 fn buffer_list_modal_renders_markers_and_is_opaque() {
-    let mut app = App::new(background(), "a.md".into());
+    let mut app = App::new(background());
     app.buffer_list = Some(BufferList::new(vec![
         BufferEntry {
             idx: 0,
@@ -118,7 +120,7 @@ fn buffer_list_modal_renders_markers_and_is_opaque() {
 
 #[test]
 fn menu_modal_is_opaque() {
-    let mut app = App::new(background(), "a.md".into());
+    let mut app = App::new(background());
     app.handle(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE));
     assert!(app.menu.is_some());
     let grid = render_app(&mut app);

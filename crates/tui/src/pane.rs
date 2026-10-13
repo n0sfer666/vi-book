@@ -1,22 +1,13 @@
 use crate::app::App;
-use crate::view::View;
+use crate::read_state::ReadState;
 use v_ide_editor::document::Document;
-use v_ide_engine::editor::Editor;
-use v_ide_markdown::rendered::Rendered;
-use v_ide_markdown::wrap_mode::WrapMode;
+use v_ide_editor::workspace::Buffer;
 
 const MAX_PANES: usize = 3;
 
 pub struct Pane {
-    pub editor: Editor,
-    pub file: Option<std::path::PathBuf>,
-    pub path: String,
-    pub saved_text: String,
-    pub top: usize,
-    pub view: View,
-    pub read_cursor: (usize, usize),
-    pub read_pending_g: bool,
-    pub read_cache: Option<(String, usize, WrapMode, Rendered)>,
+    pub buf: Buffer,
+    pub state: ReadState,
 }
 
 impl App {
@@ -73,81 +64,48 @@ impl App {
         self.active = idx.min(self.others.len());
     }
 
-    fn make_pane(&self, target: Option<&str>) -> Pane {
+    fn make_pane(&mut self, target: Option<&str>) -> Pane {
         if let Some(name) = target {
             let rel = normalize(name);
-            if let Ok(Document {
-                mut editor,
-                path: file,
-            }) = Document::open(self.session.absolute(&rel))
-            {
-                editor.set_insert_escape(self.insert_escape.clone());
-                let saved_text = editor.text();
-                return Pane {
-                    editor,
-                    file,
-                    path: rel,
-                    saved_text,
-                    top: 0,
-                    view: View::Read,
-                    read_cursor: (0, 0),
-                    read_pending_g: false,
-                    read_cache: None,
-                };
+            if let Ok(mut doc) = Document::open(self.session.absolute(&rel)) {
+                doc.name = rel;
+                return self.fresh_pane(doc);
             }
         }
         self.duplicate_active()
     }
 
-    fn duplicate_active(&self) -> Pane {
-        let Document {
-            mut editor,
-            path: file,
-        } = if self.path.is_empty() {
-            Document::new(&self.editor.text())
+    fn duplicate_active(&mut self) -> Pane {
+        let current = self.workspace.current();
+        let text = current.editor.text();
+        let name = current.name.clone();
+        let mut doc = if name.is_empty() {
+            Document::new(&text)
         } else {
-            Document::open(self.session.absolute(&self.path))
-                .unwrap_or_else(|_| Document::new(&self.editor.text()))
+            Document::open(self.session.absolute(&name)).unwrap_or_else(|_| Document::new(&text))
         };
-        editor.set_insert_escape(self.insert_escape.clone());
-        let saved_text = editor.text();
+        doc.name = name;
+        self.fresh_pane(doc)
+    }
+
+    fn fresh_pane(&mut self, mut doc: Document) -> Pane {
+        doc.editor.set_insert_escape(self.insert_escape.clone());
         Pane {
-            editor,
-            file,
-            path: self.path.clone(),
-            saved_text,
-            top: 0,
-            view: View::Read,
-            read_cursor: (0, 0),
-            read_pending_g: false,
-            read_cache: None,
+            buf: self.workspace.detach(doc),
+            state: ReadState::new(),
         }
     }
 
     pub(crate) fn take_active(&mut self) -> Pane {
         Pane {
-            editor: std::mem::replace(&mut self.editor, Editor::new("")),
-            file: self.file.take(),
-            path: std::mem::take(&mut self.path),
-            saved_text: std::mem::take(&mut self.saved_text),
-            top: self.top,
-            view: self.view,
-            read_cursor: self.read_cursor,
-            read_pending_g: self.read_pending_g,
-            read_cache: self.read_cache.take(),
+            buf: self.workspace.replace(Document::new("")),
+            state: self.take_read_state(),
         }
     }
 
     pub(crate) fn put_active(&mut self, pane: Pane) {
-        self.editor = pane.editor;
-        self.file = pane.file;
-        self.path = pane.path;
-        self.saved_text = pane.saved_text;
-        self.top = pane.top;
-        self.view = pane.view;
-        self.read_cursor = pane.read_cursor;
-        self.read_pending_g = pane.read_pending_g;
-        self.read_cache = pane.read_cache;
+        let _ = self.workspace.put_current(pane.buf);
+        self.put_read_state(pane.state);
     }
 }
 

@@ -2,27 +2,18 @@ use crate::app::App;
 use crate::buffer_list::{BufferEntry, BufferList};
 use crate::plugin;
 use crate::view::View;
-use v_ide_editor::Error;
 use v_ide_editor::document::Document;
-use v_ide_editor::io::file;
-use v_ide_engine::editor::Editor;
 
 impl App {
     pub fn load(&mut self, rel: &str) {
         match Document::open(self.session.absolute(rel)) {
-            Ok(Document {
-                mut editor,
-                path: file,
-            }) => {
-                editor.set_insert_escape(self.insert_escape.clone());
-                let old = self.take_active();
-                if !old.path.is_empty() {
-                    self.buffers.insert(0, old);
+            Ok(mut doc) => {
+                doc.editor.set_insert_escape(self.insert_escape.clone());
+                doc.name = rel.to_string();
+                if let Some(id) = self.workspace.open(doc) {
+                    let state = self.take_read_state();
+                    self.read_states.insert(id, state);
                 }
-                self.saved_text = editor.text();
-                self.editor = editor;
-                self.file = file;
-                self.path = rel.to_string();
                 self.top = 0;
                 self.left = 0;
                 self.view = View::Read;
@@ -36,38 +27,39 @@ impl App {
     }
 
     pub fn open_rel(&mut self, rel: &str) {
-        if self.path == rel {
+        if self.workspace.current().name == rel {
             return;
         }
-        if let Some(idx) = self.buffers.iter().position(|p| p.path == rel) {
+        if let Some(idx) = self.workspace.pool().iter().position(|b| b.doc.name == rel) {
             self.switch_to_buffer(idx);
             plugin::fire(self, "note_open");
             return;
         }
         self.load(rel);
-        if self.path == rel {
+        if self.workspace.current().name == rel {
             self.history.visit(rel);
             plugin::fire(self, "note_open");
-            self.saved_text = self.editor.text();
+            self.workspace.current_mut().mark_saved();
         }
     }
 
     pub fn named_buffers(&self) -> Vec<BufferEntry> {
+        let current = self.workspace.current();
         let mut out = Vec::new();
-        if !self.path.is_empty() {
+        if !current.name.is_empty() {
             out.push(BufferEntry {
                 idx: 0,
-                path: self.path.clone(),
-                dirty: self.editor.text() != self.saved_text,
+                path: current.name.clone(),
+                dirty: current.is_dirty(),
                 current: true,
             });
         }
-        for (i, pane) in self.buffers.iter().enumerate() {
-            if !pane.path.is_empty() {
+        for (i, buf) in self.workspace.pool().iter().enumerate() {
+            if !buf.doc.name.is_empty() {
                 out.push(BufferEntry {
                     idx: i + 1,
-                    path: pane.path.clone(),
-                    dirty: pane.editor.text() != pane.saved_text,
+                    path: buf.doc.name.clone(),
+                    dirty: buf.doc.is_dirty(),
                     current: false,
                 });
             }
@@ -80,15 +72,18 @@ impl App {
     }
 
     pub fn switch_to_buffer(&mut self, idx: usize) {
-        if idx >= self.buffers.len() {
+        let Some(id) = self.workspace.switch(idx) else {
             return;
-        }
-        let old = self.take_active();
-        self.buffers.insert(0, old);
-        let target = self.buffers.remove(idx + 1);
-        let path = target.path.clone();
-        self.put_active(target);
+        };
+        let state = self.take_read_state();
+        self.read_states.insert(id, state);
+        let state = self
+            .read_states
+            .remove(&self.workspace.current_id())
+            .unwrap_or_default();
+        self.put_read_state(state);
         self.left = 0;
+        let path = self.workspace.current().name.clone();
         self.history.visit(&path);
     }
 
@@ -98,43 +93,42 @@ impl App {
             return;
         }
         if idx == 0 {
-            if self.buffers.is_empty() {
+            if self.workspace.pool().is_empty() {
                 self.blank_active();
                 self.open_picker();
             } else {
                 self.switch_to_buffer(0);
-                self.buffers.remove(0);
+                self.drop_buffer(0);
             }
-        } else if idx - 1 < self.buffers.len() {
-            self.buffers.remove(idx - 1);
+        } else {
+            self.drop_buffer(idx - 1);
         }
     }
 
-    pub(crate) fn write_file(&self) -> Result<(), Error> {
-        let path = self.file.as_ref().ok_or(Error::NoPath)?;
-        file::write(path, &self.editor.text())
-    }
-
     pub fn any_dirty(&self) -> bool {
-        self.editor.text() != self.saved_text
-            || self.buffers.iter().any(|p| p.editor.text() != p.saved_text)
+        self.workspace.current().is_dirty()
+            || self.workspace.pool().iter().any(|b| b.doc.is_dirty())
     }
 
     fn is_buffer_dirty(&self, idx: usize) -> bool {
         if idx == 0 {
-            self.editor.text() != self.saved_text
+            self.workspace.current().is_dirty()
         } else {
-            self.buffers
+            self.workspace
+                .pool()
                 .get(idx - 1)
-                .is_some_and(|p| p.editor.text() != p.saved_text)
+                .is_some_and(|b| b.doc.is_dirty())
+        }
+    }
+
+    fn drop_buffer(&mut self, idx: usize) {
+        if let Some(buf) = self.workspace.remove(idx) {
+            self.read_states.remove(&buf.id);
         }
     }
 
     fn blank_active(&mut self) {
-        self.editor = Editor::new("");
-        self.file = None;
-        self.path = String::new();
-        self.saved_text = String::new();
+        let _ = self.workspace.replace(Document::new(""));
         self.top = 0;
         self.left = 0;
         self.read_cursor = (0, 0);

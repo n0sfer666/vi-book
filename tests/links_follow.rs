@@ -1,7 +1,8 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide_engine::Editor;
 use v_ide_lua::defaults::LINKS;
 use v_ide_lua::host::PluginHost;
 use v_ide_tui::app::App;
@@ -17,7 +18,7 @@ fn temp_vault(name: &str) -> PathBuf {
 
 fn app_for(root: &std::path::Path) -> App {
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     let host = PluginHost::new().unwrap();
     host.load(LINKS).unwrap();
@@ -33,7 +34,7 @@ fn following_a_code_link_requests_the_external_editor() {
     fs::write(root.join("a.md"), "see [[script.rs]]\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(6);
+    app.workspace.current_mut().editor.set_cursor_index(6);
     follow_at_cursor(&mut app);
     let request = app.external_request.clone();
     let _ = fs::remove_dir_all(&root);
@@ -47,9 +48,9 @@ fn following_a_markdown_link_opens_in_vi_book() {
     fs::write(root.join("a.md"), "see [[target.md]]\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(6);
+    app.workspace.current_mut().editor.set_cursor_index(6);
     follow_at_cursor(&mut app);
-    let path = app.path.clone();
+    let path = app.workspace.current().name.clone();
     let external = app.external_request.clone();
     let _ = fs::remove_dir_all(&root);
     assert_eq!(path, "target.md");
@@ -63,9 +64,9 @@ fn following_a_markdown_link_to_a_note_opens_in_vi_book() {
     fs::write(root.join("a.md"), "see [Target](target.md)\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(6);
+    app.workspace.current_mut().editor.set_cursor_index(6);
     follow_at_cursor(&mut app);
-    let path = app.path.clone();
+    let path = app.workspace.current().name.clone();
     let external = app.external_request.clone();
     let _ = fs::remove_dir_all(&root);
     assert_eq!(path, "target.md");
@@ -79,7 +80,7 @@ fn following_a_markdown_link_to_code_requests_the_external_editor() {
     fs::write(root.join("a.md"), "see [s](script.rs)\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(5);
+    app.workspace.current_mut().editor.set_cursor_index(5);
     follow_at_cursor(&mut app);
     let request = app.external_request.clone();
     let _ = fs::remove_dir_all(&root);
@@ -92,10 +93,10 @@ fn following_a_markdown_link_to_a_url_requests_the_browser() {
     fs::write(root.join("a.md"), "see [site](https://example.com)\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(6);
+    app.workspace.current_mut().editor.set_cursor_index(6);
     follow_at_cursor(&mut app);
     let url = app.url_request.clone();
-    let path = app.path.clone();
+    let path = app.workspace.current().name.clone();
     let _ = fs::remove_dir_all(&root);
     assert_eq!(url, Some("https://example.com".to_string()));
     assert_eq!(path, "a.md");
@@ -107,7 +108,7 @@ fn following_a_bare_url_requests_the_browser() {
     fs::write(root.join("a.md"), "visit https://example.com today\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(8);
+    app.workspace.current_mut().editor.set_cursor_index(8);
     follow_at_cursor(&mut app);
     let url = app.url_request.clone();
     let _ = fs::remove_dir_all(&root);
@@ -121,9 +122,9 @@ fn following_a_backtick_filename_opens_when_it_resolves() {
     fs::write(root.join("a.md"), "see `target.md` here\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(7);
+    app.workspace.current_mut().editor.set_cursor_index(7);
     follow_at_cursor(&mut app);
-    let path = app.path.clone();
+    let path = app.workspace.current().name.clone();
     let _ = fs::remove_dir_all(&root);
     assert_eq!(path, "target.md");
 }
@@ -134,9 +135,9 @@ fn following_a_backtick_non_file_does_nothing() {
     fs::write(root.join("a.md"), "run `cargo build` now\n").unwrap();
     let mut app = app_for(&root);
     app.open_rel("a.md");
-    app.editor.set_cursor_index(7);
+    app.workspace.current_mut().editor.set_cursor_index(7);
     follow_at_cursor(&mut app);
-    let path = app.path.clone();
+    let path = app.workspace.current().name.clone();
     let external = app.external_request.clone();
     let url = app.url_request.clone();
     let _ = fs::remove_dir_all(&root);

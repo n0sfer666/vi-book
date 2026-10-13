@@ -1,7 +1,8 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide_engine::Editor;
 use v_ide_keys::Key;
 use v_ide_tui::app::App;
 use v_ide_tui::command_line;
@@ -19,7 +20,7 @@ fn temp_vault(name: &str) -> PathBuf {
 
 fn app_for(root: &std::path::Path) -> App {
     let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app
 }
@@ -60,7 +61,7 @@ fn enter_on_backlink_opens_file_and_closes_panel() {
     app.open_rel("a.md");
     command_line::run(&mut app, "backlinks");
     input::panel_key(&mut app, Some(Key::Enter));
-    let path = app.path.clone();
+    let path = app.workspace.current().name.clone();
     let panel = app.panel.is_some();
     let focus = app.panel_focus;
     let _ = fs::remove_dir_all(&root);

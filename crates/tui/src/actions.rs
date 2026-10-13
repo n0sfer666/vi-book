@@ -4,7 +4,7 @@ use crate::app::App;
 use crate::menu::Menu;
 use crate::view::View;
 use crate::{command_line, help, layout, read_view};
-use v_ide_engine::editor::Editor;
+use v_ide_editor::document::Document;
 use v_ide_keys::key::Key;
 
 pub fn open_menu(app: &mut App) {
@@ -84,14 +84,13 @@ pub fn toggle_view(app: &mut App) {
 }
 
 pub fn open_doc(app: &mut App, label: &str, content: &str) {
-    if app.editor.text() != app.saved_text {
+    if app.workspace.current().is_dirty() {
         app.message = String::from("unsaved changes (write with :w or discard)");
         return;
     }
-    app.editor = Editor::new(content);
-    app.file = None;
-    app.path = label.to_string();
-    app.saved_text = content.to_string();
+    let mut doc = Document::new(content);
+    doc.name = label.to_string();
+    let _ = app.workspace.replace(doc);
     app.view = View::Read;
     app.read_cursor = (0, 0);
     app.read_cache = None;

@@ -8,7 +8,10 @@ use v_ide_vault::link::Link;
 use v_ide_vault::target::{Target, target_at};
 
 pub fn follow_at_cursor(app: &mut App) {
-    let Some(target) = target_at(&app.editor.text(), app.editor.text_index()) else {
+    let Some(target) = target_at(
+        &app.workspace.current().editor.text(),
+        app.workspace.current().editor.text_index(),
+    ) else {
         return;
     };
     match target {
@@ -47,7 +50,7 @@ fn follow_path(app: &mut App, target: &str) {
 }
 
 fn open_bundled(app: &mut App, target: &str) -> bool {
-    if help::bundled_doc(&app.path).is_none() {
+    if help::bundled_doc(&app.workspace.current().name).is_none() {
         return false;
     }
     match help::bundled_doc(target) {
@@ -70,7 +73,7 @@ fn resolve(app: &App, target: &str) -> Option<String> {
 }
 
 fn resolve_relative(app: &App, target: &str) -> Option<String> {
-    let parent = std::path::Path::new(&app.path).parent()?;
+    let parent = std::path::Path::new(&app.workspace.current().name).parent()?;
     let rel = parent.join(target);
     let candidate = rel.to_str()?.to_string();
     app.session

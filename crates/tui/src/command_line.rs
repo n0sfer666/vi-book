@@ -157,7 +157,7 @@ fn toggle_panel(app: &mut App, kind: PanelKind) {
             let items: Vec<String> = app
                 .session
                 .index
-                .backlinks(&app.path)
+                .backlinks(&app.workspace.current().name)
                 .iter()
                 .map(|n| n.path.clone())
                 .collect();
@@ -173,9 +173,8 @@ fn toggle_panel(app: &mut App, kind: PanelKind) {
 }
 
 fn save(app: &mut App) -> bool {
-    match app.write_file() {
+    match app.workspace.current_mut().save() {
         Ok(()) => {
-            app.saved_text = app.editor.text();
             app.message = String::from("written");
             plugin::fire(app, "note_save");
             true

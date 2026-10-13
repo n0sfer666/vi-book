@@ -1,8 +1,9 @@
+mod common;
+
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
 use ratatui::style::Color;
 
-use v_ide_engine::Editor;
 use v_ide_markdown::style::{CodeToken, Style};
 use v_ide_tui::app::App;
 use v_ide_tui::theme::{Face, Theme, style_for_name};
@@ -44,10 +45,10 @@ fn code_palette_is_overridable() {
 
 #[test]
 fn rendered_code_block_paints_keyword_color() {
-    let mut app = App::new(
-        Editor::new("```python\ndef f():\n    pass\n```"),
-        "a.md".into(),
-    );
+    let mut app = App::new(common::named_doc(
+        "```python\ndef f():\n    pass\n```",
+        "a.md",
+    ));
     app.view = View::Read;
     let backend = TestBackend::new(60, 24);
     let mut terminal = Terminal::new(backend).unwrap();

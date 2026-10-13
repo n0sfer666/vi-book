@@ -1,7 +1,8 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
-use v_ide_engine::editor::Editor;
 use v_ide_lua::host::PluginHost;
 use v_ide_lua::runtime::Runtime;
 use v_ide_tui::app::App;
@@ -31,17 +32,14 @@ fn note_open_hook_does_not_leave_buffer_dirty() {
     host.load("vibook.on('note_open', function() vibook.buf.set_text('[open] ' .. vibook.buf.get_text()) end)")
         .unwrap();
 
-    let mut app = App::new(Editor::new(""), String::new());
+    let mut app = App::new(common::named_doc("", ""));
     app.session = session;
     app.host = Some(host);
     app.open_rel("a.md");
 
-    let text = app.editor.text();
-    let saved = app.saved_text.clone();
+    let text = app.workspace.current().editor.text();
+    let dirty = app.workspace.current().is_dirty();
     let _ = fs::remove_dir_all(&root);
     assert_eq!(text, "[open] BODY", "note_open transform applied");
-    assert_eq!(
-        text, saved,
-        "freshly opened note must not be reported dirty"
-    );
+    assert!(!dirty, "freshly opened note must not be reported dirty");
 }

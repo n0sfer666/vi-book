@@ -17,7 +17,7 @@ pub fn open_next(app: &mut App) {
 }
 
 fn base_date(app: &App) -> Date {
-    parse_daily_path(&app.path).unwrap_or(app.today)
+    parse_daily_path(&app.workspace.current().name).unwrap_or(app.today)
 }
 
 fn open_daily(app: &mut App, date: Date) {
