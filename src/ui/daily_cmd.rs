@@ -1,8 +1,8 @@
 use std::fs;
 
-use crate::notebook::daily::{DEFAULT_TEMPLATE, daily_path, expand_template, parse_daily_path};
-use crate::notebook::date::Date;
 use crate::ui::app::App;
+use v_ide_notebook::daily::{DEFAULT_TEMPLATE, daily_path, expand_template, parse_daily_path};
+use v_ide_notebook::date::Date;
 
 pub fn open_today(app: &mut App) {
     open_daily(app, app.today);

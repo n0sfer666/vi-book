@@ -1398,6 +1398,7 @@ dependencies = [
  "v-ide-engine",
  "v-ide-keys",
  "v-ide-markdown",
+ "v-ide-notebook",
  "v-ide-text",
  "v-ide-vault",
 ]
@@ -1435,6 +1436,10 @@ dependencies = [
  "tree-sitter-yaml",
  "unicode-width 0.2.0",
 ]
+
+[[package]]
+name = "v-ide-notebook"
+version = "0.1.0"
 
 [[package]]
 name = "v-ide-text"

@@ -1,4 +1,4 @@
-use v_ide::notebook::tree::{Row, Tree};
+use v_ide_notebook::tree::{Row, Tree};
 
 fn row(path: &str, label: &str, depth: usize, is_dir: bool) -> Row {
     Row {

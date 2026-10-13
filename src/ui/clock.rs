@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::notebook::date::Date;
+use v_ide_notebook::date::Date;
 
 pub fn today() -> Date {
     let secs = SystemTime::now()

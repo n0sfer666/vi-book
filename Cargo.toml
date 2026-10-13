@@ -29,6 +29,7 @@ v-ide-keys = { path = "crates/keys" }
 v-ide-engine = { path = "crates/engine" }
 v-ide-markdown = { path = "crates/markdown" }
 v-ide-vault = { path = "crates/vault" }
+v-ide-notebook = { path = "crates/notebook" }
 thiserror = "2"
 ratatui = "0.29"
 crossterm = "0.28"

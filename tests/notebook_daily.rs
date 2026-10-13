@@ -1,5 +1,5 @@
-use v_ide::notebook::daily::{DEFAULT_TEMPLATE, daily_path, expand_template, parse_daily_path};
-use v_ide::notebook::date::Date;
+use v_ide_notebook::daily::{DEFAULT_TEMPLATE, daily_path, expand_template, parse_daily_path};
+use v_ide_notebook::date::Date;
 
 #[test]
 fn known_weekdays() {

@@ -1,4 +1,4 @@
-use crate::notebook::date::Date;
+use crate::date::Date;
 
 pub const DEFAULT_TEMPLATE: &str = "# {{date}}\n\n";
 

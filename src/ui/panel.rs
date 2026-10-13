@@ -1,5 +1,5 @@
-use crate::notebook::tree::{Row, Tree};
 use crate::ui::list_nav;
+use v_ide_notebook::tree::{Row, Tree};
 
 pub enum Panel {
     Tree { tree: Tree, selected: usize },
