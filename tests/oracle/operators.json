@@ -1,0 +1,53 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "dw deletes word",
+      "before": "one two",
+      "cursor": [0, 0],
+      "keys": "dw",
+      "expect": {
+        "text": "two",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "one "
+      }
+    },
+    {
+      "name": "cw mid-word",
+      "before": "hello world",
+      "cursor": [0, 2],
+      "keys": "cwX<Esc>",
+      "expect": {
+        "text": "heX world",
+        "cursor": [0, 2],
+        "mode": "normal",
+        "unnamed": "llo"
+      }
+    },
+    {
+      "name": "dd middle line",
+      "before": "a\nb\nc",
+      "cursor": [1, 0],
+      "keys": "dd",
+      "expect": {
+        "text": "a\nc",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": "b\n"
+      }
+    },
+    {
+      "name": "x at line end",
+      "before": "abc",
+      "cursor": [0, 2],
+      "keys": "x",
+      "expect": {
+        "text": "ab",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": "c"
+      }
+    }
+  ]
+}

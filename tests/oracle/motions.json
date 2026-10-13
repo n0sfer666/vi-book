@@ -1,0 +1,65 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "w to next word",
+      "before": "hello world",
+      "cursor": [0, 0],
+      "keys": "w",
+      "expect": {
+        "text": "hello world",
+        "cursor": [0, 6],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "e to word end",
+      "before": "hello world",
+      "cursor": [0, 0],
+      "keys": "e",
+      "expect": {
+        "text": "hello world",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "dollar to line end",
+      "before": "hello",
+      "cursor": [0, 1],
+      "keys": "$",
+      "expect": {
+        "text": "hello",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "j keeps column",
+      "before": "abcd\nabcd",
+      "cursor": [0, 2],
+      "keys": "j",
+      "expect": {
+        "text": "abcd\nabcd",
+        "cursor": [1, 2],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "gg from last line",
+      "before": "a\nb\nc",
+      "cursor": [2, 0],
+      "keys": "gg",
+      "expect": {
+        "text": "a\nb\nc",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    }
+  ]
+}

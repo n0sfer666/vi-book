@@ -1,0 +1,41 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "u undoes dd",
+      "before": "a\nb",
+      "cursor": [0, 0],
+      "keys": "ddu",
+      "expect": {
+        "text": "a\nb",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\n"
+      }
+    },
+    {
+      "name": "insert session is one undo step",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "iXY<Esc>u",
+      "expect": {
+        "text": "ab",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "ctrl-r redoes x",
+      "before": "abc",
+      "cursor": [0, 0],
+      "keys": "xu<C-r>",
+      "expect": {
+        "text": "bc",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    }
+  ]
+}

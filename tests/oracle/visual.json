@@ -1,0 +1,41 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "ve d deletes word",
+      "before": "hello world",
+      "cursor": [0, 0],
+      "keys": "ved",
+      "expect": {
+        "text": " world",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "hello"
+      }
+    },
+    {
+      "name": "V y yanks line",
+      "before": "a\nb",
+      "cursor": [0, 0],
+      "keys": "Vy",
+      "expect": {
+        "text": "a\nb",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\n"
+      }
+    },
+    {
+      "name": "vl stays visual",
+      "before": "abc",
+      "cursor": [0, 0],
+      "keys": "vl",
+      "expect": {
+        "text": "abc",
+        "cursor": [0, 1],
+        "mode": "visual",
+        "unnamed": ""
+      }
+    }
+  ]
+}

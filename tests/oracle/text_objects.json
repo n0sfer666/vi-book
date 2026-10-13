@@ -1,0 +1,41 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "diw inner word",
+      "before": "one two three",
+      "cursor": [0, 5],
+      "keys": "diw",
+      "expect": {
+        "text": "one  three",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": "two"
+      }
+    },
+    {
+      "name": "daw a word",
+      "before": "one two three",
+      "cursor": [0, 5],
+      "keys": "daw",
+      "expect": {
+        "text": "one three",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": "two "
+      }
+    },
+    {
+      "name": "ci quote",
+      "before": "say \"hi\" now",
+      "cursor": [0, 6],
+      "keys": "ci\"X<Esc>",
+      "expect": {
+        "text": "say \"X\" now",
+        "cursor": [0, 5],
+        "mode": "normal",
+        "unnamed": "hi"
+      }
+    }
+  ]
+}

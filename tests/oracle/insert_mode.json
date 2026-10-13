@@ -1,0 +1,41 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "a appends after cursor",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "aX<Esc>",
+      "expect": {
+        "text": "aXb",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "o opens line below",
+      "before": "ab\ncd",
+      "cursor": [0, 0],
+      "keys": "oX<Esc>",
+      "expect": {
+        "text": "ab\nX\ncd",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "insert without esc stays in insert",
+      "before": "ab",
+      "cursor": [0, 1],
+      "keys": "iX",
+      "expect": {
+        "text": "aXb",
+        "cursor": [0, 2],
+        "mode": "insert",
+        "unnamed": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "yw then P",
+      "before": "one two",
+      "cursor": [0, 4],
+      "keys": "yw0P",
+      "expect": {
+        "text": "twoone two",
+        "cursor": [0, 2],
+        "mode": "normal",
+        "unnamed": "two"
+      }
+    },
+    {
+      "name": "dd fills unnamed linewise",
+      "before": "a\nb",
+      "cursor": [0, 0],
+      "keys": "dd",
+      "expect": {
+        "text": "b",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\n"
+      }
+    },
+    {
+      "name": "xp swaps chars",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "xp",
+      "expect": {
+        "text": "ba",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "3x deletes three",
+      "before": "abcdef",
+      "cursor": [0, 0],
+      "keys": "3x",
+      "expect": {
+        "text": "def",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "abc"
+      }
+    },
+    {
+      "name": "2dd deletes two lines",
+      "before": "a\nb\nc",
+      "cursor": [0, 0],
+      "keys": "2dd",
+      "expect": {
+        "text": "c",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\nb\n"
+      }
+    }
+  ]
+}
