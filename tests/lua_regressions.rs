@@ -63,3 +63,24 @@ fn new_note_is_visible_to_lua_vault() {
     let _ = fs::remove_dir_all(&root);
     assert_eq!(count, "1", "lua vault must see the note created by :new");
 }
+
+#[test]
+fn daily_note_is_visible_to_lua_vault() {
+    let root = temp_vault("dailysync");
+    let host = PluginHost::new().unwrap();
+    host.load(
+        "vibook.command('count', function()\n\
+           vibook.buf.set_text(tostring(#vibook.vault.notes()))\n\
+         end)",
+    )
+    .unwrap();
+    let mut app = App::new(common::named_doc("", ""));
+    common::open_vault(&mut app, &root);
+    app.host = Some(host);
+    command_line::run(&mut app, "today");
+    let host = app.host.as_ref().unwrap();
+    host.run_command("count").unwrap();
+    let count = host.buffer_text();
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(count, "1", "lua vault must see the daily created by :today");
+}

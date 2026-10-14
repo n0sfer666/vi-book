@@ -9,10 +9,4 @@ impl App {
     pub(crate) fn vault_items(&self) -> Vec<String> {
         self.vault().map(VaultModule::items).unwrap_or_default()
     }
-
-    pub(crate) fn reindex_vault(&mut self) {
-        if let Some(vault) = self.modules.get_mut::<VaultModule>() {
-            let _ = vault.reindex();
-        }
-    }
 }

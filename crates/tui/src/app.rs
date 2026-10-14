@@ -17,8 +17,8 @@ use v_ide_editor::workspace::{DocId, WindowId, Workspace};
 use v_ide_keys::key::Key;
 use v_ide_lua::host::PluginHost;
 use v_ide_markdown::wrap_mode::WrapMode;
-use v_ide_notebook::date::Date;
 use v_ide_notebook::history::History;
+use v_ide_notebook::module::NotebookModule;
 use v_ide_vault::module::VaultModule;
 
 pub struct App {
@@ -29,7 +29,6 @@ pub struct App {
     pub quit: bool,
     pub theme: Theme,
     pub history: History,
-    pub today: Date,
     pub host: Option<PluginHost>,
     pub firing: bool,
     pub normal_maps: HashMap<Key, String>,
@@ -50,7 +49,6 @@ pub fn run() -> Result<(), Error> {
     let (cwd, open) = launch::target(arg.as_deref())?;
     let mut app = App::new(Document::new(""));
     app.workspace.set_cwd(cwd);
-    app.today = crate::clock::today();
     requests::startup(&mut app);
     app.load_config();
     app.install_keymaps();
@@ -71,13 +69,15 @@ impl App {
     pub fn new(doc: Document) -> Self {
         Self {
             workspace: Workspace::new(doc),
-            modules: Modules::new(vec![VaultModule::registration()]),
+            modules: Modules::new(vec![
+                VaultModule::registration(),
+                NotebookModule::registration(),
+            ]),
             ui: UiState::new(),
             read_states: HashMap::new(),
             quit: false,
             theme: Theme::default(),
             history: History::new(),
-            today: Date::new(1970, 1, 1),
             host: None,
             firing: false,
             normal_maps: HashMap::new(),

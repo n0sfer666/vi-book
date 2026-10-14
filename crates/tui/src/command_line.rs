@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
 use crate::panel::Panel;
-use crate::{actions, daily_cmd, plugin, requests};
+use crate::{actions, plugin, requests};
 use v_ide_editor::module::Event;
 use v_ide_markdown::wrap_mode::WrapMode;
 
@@ -36,9 +36,6 @@ pub fn run(app: &mut App, command: &str) {
                 app.quit = true;
             }
         }
-        "today" => daily_cmd::open_today(app),
-        "daily-prev" => daily_cmd::open_prev(app),
-        "daily-next" => daily_cmd::open_next(app),
         "tree" => toggle_tree(app),
         "help" => app.ui.help = true,
         "buffers" => app.open_buffer_list(),
