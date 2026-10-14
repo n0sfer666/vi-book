@@ -1429,6 +1429,7 @@ version = "0.1.0"
 dependencies = [
  "mlua",
  "thiserror",
+ "v-ide-editor",
 ]
 
 [[package]]

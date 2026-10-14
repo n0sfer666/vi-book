@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use mlua::{Function, Table};
@@ -49,6 +50,10 @@ impl PluginHost {
             .borrow_mut()
             .backlinks
             .insert(path.to_string(), sources);
+    }
+
+    pub fn replace_backlinks(&self, backlinks: HashMap<String, Vec<String>>) {
+        self.bridge.borrow_mut().backlinks = backlinks;
     }
 
     pub fn creates(&self) -> Vec<String> {
