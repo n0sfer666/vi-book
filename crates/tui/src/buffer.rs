@@ -1,8 +1,9 @@
 use crate::app::App;
 use crate::buffer_list::{BufferEntry, BufferList};
-use crate::plugin;
 use crate::view::View;
+use crate::{plugin, requests};
 use v_ide_editor::document::Document;
+use v_ide_editor::module::Event;
 
 impl App {
     pub fn load(&mut self, rel: &str) {
@@ -32,14 +33,21 @@ impl App {
         }
         if let Some(idx) = self.workspace.pool().iter().position(|b| b.doc.name == rel) {
             self.switch_to_buffer(idx);
-            plugin::fire(self, "note_open");
+            self.note_opened();
             return;
         }
         self.load(rel);
         if self.workspace.current().name == rel {
             self.history.visit(rel);
-            plugin::fire(self, "note_open");
+            self.note_opened();
             self.workspace.current_mut().mark_saved();
+        }
+    }
+
+    fn note_opened(&mut self) {
+        plugin::fire(self, "note_open");
+        if let Some(path) = self.workspace.current().path.clone() {
+            requests::emit(self, Event::NoteOpen(path));
         }
     }
 

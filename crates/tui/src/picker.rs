@@ -3,17 +3,23 @@ use v_ide_vault::fuzzy;
 
 pub struct Picker {
     items: Vec<String>,
+    command: String,
     query: String,
     selected: usize,
 }
 
 impl Picker {
-    pub fn new(items: Vec<String>) -> Self {
+    pub fn new(items: Vec<String>, command: &str) -> Self {
         Self {
             items,
+            command: command.to_string(),
             query: String::new(),
             selected: 0,
         }
+    }
+
+    pub fn command(&self) -> &str {
+        &self.command
     }
 
     pub fn query(&self) -> &str {

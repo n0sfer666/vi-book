@@ -10,7 +10,7 @@ use crate::read_state::ReadState;
 use crate::session::Session;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{plugin, render, router};
+use crate::{plugin, render, requests, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
@@ -54,6 +54,7 @@ pub fn run() -> Result<(), Error> {
     app.today = crate::clock::today();
     app.load_config();
     app.install_keymaps();
+    requests::startup(&mut app);
     if let Some(rel) = open {
         app.open_rel(&rel);
     } else if app.session.is_empty() {
@@ -104,7 +105,7 @@ impl App {
     }
 
     pub fn open_picker(&mut self) {
-        self.ui.picker = Some(Picker::new(self.session.items()));
+        self.ui.picker = Some(Picker::new(self.session.items(), "e"));
     }
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<(), Error> {

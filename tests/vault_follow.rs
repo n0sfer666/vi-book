@@ -76,11 +76,14 @@ fn follow_offers_create_for_broken_link() {
 
 #[test]
 fn picker_filters_and_selects() {
-    let mut picker = Picker::new(vec![
-        "daily-note".to_string(),
-        "documentation".to_string(),
-        "random".to_string(),
-    ]);
+    let mut picker = Picker::new(
+        vec![
+            "daily-note".to_string(),
+            "documentation".to_string(),
+            "random".to_string(),
+        ],
+        "e",
+    );
     picker.push('d');
     picker.push('n');
     assert_eq!(picker.current().as_deref(), Some("daily-note"));
@@ -88,7 +91,7 @@ fn picker_filters_and_selects() {
 
 #[test]
 fn picker_selection_clamps_on_filter_change() {
-    let mut picker = Picker::new(vec!["alpha".to_string(), "beta".to_string()]);
+    let mut picker = Picker::new(vec!["alpha".to_string(), "beta".to_string()], "e");
     picker.move_down();
     assert_eq!(picker.selected(), 1);
     picker.push('a');
@@ -99,7 +102,7 @@ fn picker_selection_clamps_on_filter_change() {
 
 #[test]
 fn picker_window_keeps_selection_visible() {
-    let mut picker = Picker::new((0..5).map(|i| format!("item{i}")).collect());
+    let mut picker = Picker::new((0..5).map(|i| format!("item{i}")).collect(), "e");
     for _ in 0..4 {
         picker.move_down();
     }
@@ -111,7 +114,7 @@ fn picker_window_keeps_selection_visible() {
 
 #[test]
 fn picker_window_starts_at_top_when_selection_fits() {
-    let picker = Picker::new((0..5).map(|i| format!("item{i}")).collect());
+    let picker = Picker::new((0..5).map(|i| format!("item{i}")).collect(), "e");
     let (offset, visible) = picker.window(3);
     assert_eq!(offset, 0);
     assert_eq!(visible, vec!["item0", "item1", "item2"]);
@@ -119,7 +122,7 @@ fn picker_window_starts_at_top_when_selection_fits() {
 
 #[test]
 fn picker_navigation_stays_in_bounds() {
-    let mut picker = Picker::new(vec!["a".to_string(), "b".to_string()]);
+    let mut picker = Picker::new(vec!["a".to_string(), "b".to_string()], "e");
     picker.move_up();
     assert_eq!(picker.selected(), 0);
     picker.move_down();

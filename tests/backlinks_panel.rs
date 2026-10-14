@@ -47,7 +47,8 @@ fn non_empty_backlinks_opens_panel() {
     let mut app = app_for(&root);
     app.open_rel("a.md");
     command_line::run(&mut app, "backlinks");
-    let is_backlinks = matches!(app.ui.panel, Some(Panel::Backlinks { .. }));
+    let is_backlinks =
+        matches!(&app.ui.panel, Some(Panel::List(list)) if list.title() == "backlinks");
     let _ = fs::remove_dir_all(&root);
     assert!(is_backlinks, "backlinks with results must open the panel");
 }

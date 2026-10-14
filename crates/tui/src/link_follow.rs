@@ -28,7 +28,7 @@ fn follow_wiki(app: &mut App, link: &Link) {
     match follow(&app.session.index, link) {
         Follow::Open(path) => app.open_rel(&path),
         Follow::Disambiguate(paths) => {
-            app.ui.picker = Some(crate::picker::Picker::new(paths));
+            app.ui.picker = Some(crate::picker::Picker::new(paths, "e"));
         }
         Follow::Create(name) => {
             app.ui.message = format!("note '{name}' does not exist (press : to create)");

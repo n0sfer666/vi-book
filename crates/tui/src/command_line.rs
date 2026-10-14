@@ -4,7 +4,8 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
 use crate::panel::Panel;
-use crate::{actions, daily_cmd, plugin};
+use crate::{actions, daily_cmd, plugin, requests};
+use v_ide_editor::module::Event;
 use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn handle(app: &mut App, event: KeyEvent) {
@@ -29,9 +30,7 @@ pub fn handle(app: &mut App, event: KeyEvent) {
 
 pub fn run(app: &mut App, command: &str) {
     match command {
-        "w" => {
-            save(app);
-        }
+        "w" => _ = save(app),
         "q" => quit(app, false),
         "q!" => quit(app, true),
         "wq" => {
@@ -58,13 +57,15 @@ pub fn run(app: &mut App, command: &str) {
                 .or_else(|| other.strip_prefix("split "))
             {
                 app.vsplit(Some(name.trim()));
+            } else if let Some(rel) = other.strip_prefix("e ") {
+                app.open_rel(rel.trim());
             } else if let Some(name) = other.strip_prefix("new ") {
                 create_note(app, name);
             } else if let Some(mode) = other.strip_prefix("wrap ") {
                 set_wrap(app, mode.trim());
             } else if let Some(arg) = other.strip_prefix("scan-hidden ") {
                 set_scan_hidden(app, arg.trim());
-            } else if !plugin::run_command(app, other) {
+            } else if !requests::command(app, other) && !plugin::run_command(app, other) {
                 app.ui.message = format!("not an editor command: {other}");
             }
         }
@@ -141,11 +142,11 @@ enum PanelKind {
 }
 
 fn toggle_panel(app: &mut App, kind: PanelKind) {
-    let same = matches!(
-        (&app.ui.panel, &kind),
-        (Some(Panel::Tree { .. }), PanelKind::Tree)
-            | (Some(Panel::Backlinks { .. }), PanelKind::Backlinks)
-    );
+    let same = match (&app.ui.panel, &kind) {
+        (Some(Panel::Tree { .. }), PanelKind::Tree) => true,
+        (Some(Panel::List(list)), PanelKind::Backlinks) => list.title() == "backlinks",
+        _ => false,
+    };
     if same {
         app.ui.panel = None;
         app.ui.panel_focus = false;
@@ -177,6 +178,9 @@ fn save(app: &mut App) -> bool {
         Ok(()) => {
             app.ui.message = String::from("written");
             plugin::fire(app, "note_save");
+            if let Some(path) = app.workspace.current().path.clone() {
+                requests::emit(app, Event::NoteSave(path));
+            }
             true
         }
         Err(err) => {

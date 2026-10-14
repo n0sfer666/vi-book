@@ -1,13 +1,15 @@
 use crate::list_nav;
+use crate::list_panel::ListPanel;
 use v_ide_notebook::tree::{Row, Tree};
 
 pub enum Panel {
     Tree { tree: Tree, selected: usize },
-    Backlinks { items: Vec<String>, selected: usize },
+    List(ListPanel),
 }
 
 pub enum Activation {
     Open(String),
+    Run { command: String, item: String },
     Toggled,
     None,
 }
@@ -21,26 +23,27 @@ impl Panel {
     }
 
     pub fn backlinks(items: Vec<String>) -> Self {
-        Panel::Backlinks { items, selected: 0 }
+        Panel::List(ListPanel::new("backlinks", items, "e"))
     }
 
-    pub fn title(&self) -> &'static str {
+    pub fn title(&self) -> String {
         match self {
-            Panel::Tree { .. } => " tree ",
-            Panel::Backlinks { .. } => " backlinks ",
+            Panel::Tree { .. } => String::from(" tree "),
+            Panel::List(list) => format!(" {} ", list.title()),
         }
     }
 
     pub fn selected(&self) -> usize {
         match self {
-            Panel::Tree { selected, .. } | Panel::Backlinks { selected, .. } => *selected,
+            Panel::Tree { selected, .. } => *selected,
+            Panel::List(list) => list.selected(),
         }
     }
 
     pub fn len(&self) -> usize {
         match self {
             Panel::Tree { tree, .. } => tree.flatten().len(),
-            Panel::Backlinks { items, .. } => items.len(),
+            Panel::List(list) => list.rows().len(),
         }
     }
 
@@ -51,24 +54,22 @@ impl Panel {
     pub fn rows(&self) -> Vec<String> {
         match self {
             Panel::Tree { tree, .. } => tree.flatten().iter().map(row_label).collect(),
-            Panel::Backlinks { items, .. } => items.clone(),
+            Panel::List(list) => list.rows().to_vec(),
         }
     }
 
     pub fn move_down(&mut self) {
         let len = self.len();
         match self {
-            Panel::Tree { selected, .. } | Panel::Backlinks { selected, .. } => {
-                *selected = list_nav::next(*selected, len);
-            }
+            Panel::Tree { selected, .. } => *selected = list_nav::next(*selected, len),
+            Panel::List(list) => list.move_down(),
         }
     }
 
     pub fn move_up(&mut self) {
         match self {
-            Panel::Tree { selected, .. } | Panel::Backlinks { selected, .. } => {
-                *selected = list_nav::prev(*selected);
-            }
+            Panel::Tree { selected, .. } => *selected = list_nav::prev(*selected),
+            Panel::List(list) => list.move_up(),
         }
     }
 
@@ -85,8 +86,11 @@ impl Panel {
                     None => Activation::None,
                 }
             }
-            Panel::Backlinks { items, selected } => match items.get(*selected) {
-                Some(path) => Activation::Open(path.clone()),
+            Panel::List(list) => match list.current() {
+                Some(item) => Activation::Run {
+                    command: list.command().to_string(),
+                    item: item.to_string(),
+                },
                 None => Activation::None,
             },
         }

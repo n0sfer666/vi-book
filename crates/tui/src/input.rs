@@ -1,8 +1,8 @@
 use crossterm::event::KeyEvent;
 
 use crate::app::App;
-use crate::panel::{Activation, Panel};
-use crate::{event_map, link_follow};
+use crate::panel::Activation;
+use crate::{event_map, link_follow, requests};
 use v_ide_keys::key::Key;
 
 pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
@@ -45,19 +45,15 @@ pub fn panel_key(app: &mut App, key: Option<Key>) {
         }
         Some(Key::Char('k') | Key::Char('b') | Key::Char('B')) | Some(Key::Up) => panel.move_up(),
         Some(Key::Esc) | Some(Key::Ctrl('w')) => app.ui.panel_focus = false,
-        Some(Key::Enter) => {
-            let close_after = matches!(panel, Panel::Backlinks { .. });
-            match panel.activate() {
-                Activation::Open(path) => {
-                    app.open_rel(&path);
-                    if close_after {
-                        app.ui.panel = None;
-                        app.ui.panel_focus = false;
-                    }
-                }
-                Activation::Toggled | Activation::None => {}
+        Some(Key::Enter) => match panel.activate() {
+            Activation::Open(path) => app.open_rel(&path),
+            Activation::Run { command, item } => {
+                app.ui.panel = None;
+                app.ui.panel_focus = false;
+                requests::dispatch(app, &command, &item);
             }
-        }
+            Activation::Toggled | Activation::None => {}
+        },
         _ => {}
     }
 }
@@ -103,10 +99,12 @@ pub fn picker_key(app: &mut App, event: KeyEvent) {
     match event_map::to_key(event) {
         Some(Key::Esc) => app.ui.picker = None,
         Some(Key::Enter) => {
-            if let Some(rel) = picker.current() {
-                app.open_rel(&rel);
-            } else {
-                app.ui.picker = None;
+            let chosen = picker
+                .current()
+                .map(|item| (picker.command().to_string(), item));
+            app.ui.picker = None;
+            if let Some((command, item)) = chosen {
+                requests::dispatch(app, &command, &item);
             }
         }
         Some(Key::Backspace) => picker.pop(),

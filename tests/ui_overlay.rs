@@ -72,7 +72,7 @@ fn help_modal_is_opaque() {
 #[test]
 fn picker_modal_is_opaque() {
     let mut app = App::new(background());
-    app.ui.picker = Some(Picker::new(vec!["one".into(), "two".into()]));
+    app.ui.picker = Some(Picker::new(vec!["one".into(), "two".into()], "e"));
     let grid = render_app(&mut app);
     assert_modal_is_opaque(&grid);
 }
