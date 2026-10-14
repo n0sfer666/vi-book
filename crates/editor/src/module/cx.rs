@@ -32,6 +32,22 @@ impl<'a> Cx<'a> {
         self.ws.current().editor.text()
     }
 
+    pub fn cursor(&self) -> usize {
+        self.ws.current().editor.text_index()
+    }
+
+    pub fn set_text(&mut self, text: String) {
+        self.requests.push(Request::SetText(text));
+    }
+
+    pub fn open_external(&mut self, rel: String) {
+        self.requests.push(Request::OpenExternal(rel));
+    }
+
+    pub fn command(&mut self, line: String) {
+        self.requests.push(Request::Command(line));
+    }
+
     pub fn open(&mut self, path: PathBuf) {
         self.requests.push(Request::Open(path));
     }

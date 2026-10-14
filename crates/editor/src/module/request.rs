@@ -16,4 +16,7 @@ pub enum Request {
         command: String,
     },
     Emit(Event),
+    SetText(String),
+    OpenExternal(String),
+    Command(String),
 }

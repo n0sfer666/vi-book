@@ -88,10 +88,7 @@ pub fn follow_link(app: &mut App, target: &str) -> bool {
         None => return false,
     };
     if let Some(rel) = external.into_iter().next_back() {
-        match crate::external::resolve(app.workspace.cwd(), &rel) {
-            Some(path) => app.external_request = Some(path),
-            None => app.ui.message = format!("file not found: {rel}"),
-        }
+        crate::requests::open_external(app, &rel);
         return true;
     }
     if let Some(rel) = opens.into_iter().next_back() {

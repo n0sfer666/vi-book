@@ -13,8 +13,14 @@ impl Entry {
         }
     }
 
-    pub fn handles(&self, command: &str) -> bool {
+    pub fn declares(&self, command: &str) -> bool {
         self.registration.manifest.commands.contains(&command)
+    }
+
+    pub fn provides(&self, command: &str) -> bool {
+        self.state
+            .as_ref()
+            .is_some_and(|module| module.commands().iter().any(|c| c == command))
     }
 
     pub fn listens(&self, event: &str) -> bool {

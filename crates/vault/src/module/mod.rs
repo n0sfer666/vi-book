@@ -1,3 +1,4 @@
+mod changed;
 mod create;
 
 use std::io;
@@ -8,6 +9,7 @@ use v_ide_editor::path::rel_path;
 
 use crate::index::Index;
 use crate::scan::scan_with;
+use changed::changed;
 use create::create;
 
 static MANIFEST: Manifest = Manifest {
@@ -88,7 +90,10 @@ impl VaultModule {
         };
         let state = if value { "on" } else { "off" };
         match self.set_scan_hidden(value) {
-            Ok(()) => cx.message(format!("scan hidden folders: {state}")),
+            Ok(()) => {
+                cx.emit(changed(&self.index));
+                cx.message(format!("scan hidden folders: {state}"));
+            }
             Err(err) => cx.message(format!("reindex failed: {err}")),
         }
     }
@@ -115,7 +120,9 @@ impl VaultModule {
 impl Module for VaultModule {
     fn activate(&mut self, cx: &mut Cx<'_>) -> Result<(), String> {
         self.root = cx.cwd().to_path_buf();
-        self.reindex().map_err(|err| format!("vault: {err}"))
+        self.reindex().map_err(|err| format!("vault: {err}"))?;
+        cx.emit(changed(&self.index));
+        Ok(())
     }
 
     fn command(&mut self, cx: &mut Cx<'_>, name: &str, args: &str) -> Result<(), String> {
@@ -129,9 +136,11 @@ impl Module for VaultModule {
         Ok(())
     }
 
-    fn event(&mut self, _cx: &mut Cx<'_>, ev: &Event) {
-        if let Event::NoteCreate(_) = ev {
-            let _ = self.reindex();
+    fn event(&mut self, cx: &mut Cx<'_>, ev: &Event) {
+        if let Event::NoteCreate(_) = ev
+            && self.reindex().is_ok()
+        {
+            cx.emit(changed(&self.index));
         }
     }
 }

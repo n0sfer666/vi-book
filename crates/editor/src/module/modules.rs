@@ -38,7 +38,12 @@ impl Modules {
     }
 
     pub fn command(&mut self, ws: &Workspace, name: &str, args: &str) -> Option<Vec<Request>> {
-        let entry = self.entries.iter_mut().find(|e| e.handles(name))?;
+        let index = self
+            .entries
+            .iter()
+            .position(|e| e.declares(name))
+            .or_else(|| self.entries.iter().position(|e| e.provides(name)))?;
+        let entry = &mut self.entries[index];
         let mut cx = Cx::new(ws);
         if let Some(module) = entry.active(&mut cx)
             && let Err(err) = module.command(&mut cx, name, args)

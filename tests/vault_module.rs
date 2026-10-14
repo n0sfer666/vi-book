@@ -29,8 +29,12 @@ fn ws_at(root: &Path, current: Option<&str>) -> Workspace {
 
 fn started(ws: &Workspace) -> Modules {
     let mut modules = Modules::new(vec![VaultModule::registration()]);
-    assert_eq!(modules.startup(ws), Vec::new());
+    assert!(matches!(modules.startup(ws).as_slice(), [changed] if is_changed(changed)));
     modules
+}
+
+fn is_changed(request: &Request) -> bool {
+    matches!(request, Request::Emit(Event::VaultChanged { .. }))
 }
 
 fn items(modules: &Modules) -> Vec<String> {
@@ -118,7 +122,8 @@ fn new_creates_note_reindexes_and_opens() {
     );
     assert_eq!(fs::read_to_string(&abs).unwrap(), "# x\n\n");
     assert_eq!(items(&modules), Vec::<String>::new());
-    assert_eq!(modules.event(&ws, &Event::NoteCreate(abs)), Vec::new());
+    let requests = modules.event(&ws, &Event::NoteCreate(abs));
+    assert!(matches!(requests.as_slice(), [changed] if is_changed(changed)));
     assert_eq!(items(&modules), strings(&["ideas/x.md"]));
     let _ = fs::remove_dir_all(&root);
 }
@@ -142,18 +147,18 @@ fn scan_hidden_command_toggles_and_reindexes() {
     seed(&root);
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
-    assert_eq!(
-        modules.command(&ws, "scan-hidden", "on"),
-        Some(vec![msg("scan hidden folders: on")])
+    let on = modules.command(&ws, "scan-hidden", "on").unwrap();
+    assert!(
+        matches!(on.as_slice(), [c, m] if is_changed(c) && *m == msg("scan hidden folders: on")),
+        "{on:?}"
     );
     assert_eq!(
         items(&modules),
         strings(&[".hidden/c.md", "a.md", "sub/b.md"])
     );
-    assert_eq!(
-        modules.command(&ws, "scan-hidden", "toggle"),
-        Some(vec![msg("scan hidden folders: off")])
-    );
+    let off = modules.command(&ws, "scan-hidden", "toggle").unwrap();
+    assert!(is_changed(&off[0]));
+    assert_eq!(off[1..], [msg("scan hidden folders: off")]);
     assert_eq!(items(&modules), strings(&["a.md", "sub/b.md"]));
     assert_eq!(
         modules.command(&ws, "scan-hidden", "maybe"),
@@ -205,7 +210,8 @@ fn note_create_event_reindexes() {
     let mut modules = started(&ws);
     let abs = root.join("fresh.md");
     fs::write(&abs, "# F\n").unwrap();
-    assert_eq!(modules.event(&ws, &Event::NoteCreate(abs)), Vec::new());
+    let requests = modules.event(&ws, &Event::NoteCreate(abs));
+    assert!(matches!(requests.as_slice(), [changed] if is_changed(changed)));
     assert_eq!(items(&modules), strings(&["a.md", "fresh.md", "sub/b.md"]));
     let _ = fs::remove_dir_all(&root);
 }

@@ -198,15 +198,20 @@ fn vault_sees_daily_after_note_create_event() {
         VaultModule::registration(),
         NotebookModule::registration(),
     ]);
-    assert_eq!(modules.startup(&ws), Vec::new());
+    assert!(matches!(
+        modules.startup(&ws).as_slice(),
+        [Request::Emit(Event::VaultChanged { .. })]
+    ));
     let today = on_today(
         || run(&mut modules, &ws, "today"),
         |date| created(root.join(daily_path(date))),
     );
-    assert_eq!(
-        modules.event(&ws, &Event::NoteCreate(root.join(daily_path(today)))),
-        Vec::new()
-    );
+    assert!(matches!(
+        modules
+            .event(&ws, &Event::NoteCreate(root.join(daily_path(today))))
+            .as_slice(),
+        [Request::Emit(Event::VaultChanged { .. })]
+    ));
     let items = modules
         .get::<VaultModule>()
         .map(VaultModule::items)
