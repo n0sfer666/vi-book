@@ -5,8 +5,8 @@ use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
 
 use crate::layout::{column_width, text_column};
+use crate::read_draw::read_lines;
 use crate::read_state::ReadState;
-use crate::read_view::read_lines;
 use crate::render::styled_line;
 use crate::theme::Theme;
 use crate::view::View;

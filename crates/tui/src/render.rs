@@ -9,7 +9,7 @@ use crate::layout::{column_width, text_column};
 use crate::read_state::ReadState;
 use crate::theme::Theme;
 use crate::view::View;
-use crate::{cursor, hscroll, overlay, read_view, split, status};
+use crate::{cursor, hscroll, overlay, read_draw, split, status};
 use v_ide_engine::mode::Mode;
 use v_ide_markdown::highlight::highlight;
 use v_ide_markdown::style::SourceSpan;
@@ -46,7 +46,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
     app.ui.text_area = active_rect;
     let text = app.workspace.current().editor.text();
     if app.ui.read.view == View::Read {
-        read_view::draw(frame, app, active_rect);
+        read_draw::draw(frame, app, active_rect);
     } else {
         scroll_into_view(app, active_rect);
         let col = app.workspace.current().editor.cursor().col;

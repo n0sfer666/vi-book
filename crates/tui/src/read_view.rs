@@ -1,26 +1,13 @@
-use std::ops::Range;
-
 use crossterm::event::KeyEvent;
-use ratatui::Frame;
-use ratatui::layout::{Position as ScreenPosition, Rect};
-use ratatui::style::{Modifier, Style as TuiStyle};
-use ratatui::text::{Line, Span as TuiSpan};
-use ratatui::widgets::Paragraph;
 
 use crate::app::App;
-use crate::layout::{column_width, text_column};
-use crate::theme::Theme;
+use crate::read_select::{code_block_at, toggle_select, yank_line, yank_selection};
 use crate::view::View;
-use crate::{clip_sync, event_map, hscroll, read_motion};
+use crate::{clip_sync, event_map, read_motion};
 use v_ide_engine::mode::Mode;
-use v_ide_engine::visual;
 use v_ide_keys::key::Key;
-use v_ide_markdown::blocks::{self, BlockKind};
 use v_ide_markdown::render::render_with;
-use v_ide_markdown::rendered::{Rendered, RenderedLine};
-use v_ide_text::position::Position;
-
-type Select = (Mode, (usize, usize), (usize, usize));
+use v_ide_markdown::rendered::Rendered;
 
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
     let text = app.workspace.current().editor.text();
@@ -131,145 +118,11 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     app.ui.read.read_pending_g = false;
 }
 
-pub(crate) fn read_lines(
-    rendered: &Rendered,
-    top: usize,
-    height: usize,
-    theme: &Theme,
-    select: Option<Select>,
-) -> Vec<Line<'static>> {
-    rendered
-        .lines
-        .iter()
-        .enumerate()
-        .skip(top)
-        .take(height)
-        .map(|(idx, line)| {
-            let range = select.and_then(|(mode, anchor, cursor)| {
-                visual::selection_cols(
-                    mode,
-                    Position::new(anchor.0, anchor.1),
-                    Position::new(cursor.0, cursor.1),
-                    idx,
-                    line.text().chars().count(),
-                )
-            });
-            rendered_line(line, theme, range.as_ref())
-        })
-        .collect()
-}
-
-fn rendered_line(line: &RenderedLine, theme: &Theme, sel: Option<&Range<usize>>) -> Line<'static> {
-    let mut parts: Vec<TuiSpan<'static>> = Vec::new();
-    let mut run = String::new();
-    let mut run_style = TuiStyle::default();
-    let mut col = 0;
-    let mut started = false;
-    for span in &line.spans {
-        let base = theme.tui(span.style);
-        for ch in span.text.chars() {
-            let mut style = base;
-            if sel.is_some_and(|range| range.contains(&col)) {
-                style = style.add_modifier(Modifier::REVERSED);
-            }
-            if started && style != run_style && !run.is_empty() {
-                parts.push(TuiSpan::styled(std::mem::take(&mut run), run_style));
-            }
-            run_style = style;
-            started = true;
-            run.push(ch);
-            col += 1;
-        }
-    }
-    if !run.is_empty() {
-        parts.push(TuiSpan::styled(run, run_style));
-    }
-    Line::from(parts)
-}
-
 fn delegates_to_edit(key: Key) -> bool {
     matches!(key, Key::Char(c) if "pPdcxoOaAIsrR".contains(c))
 }
 
-fn toggle_select(app: &mut App, mode: Mode) {
-    app.ui.read_select = match app.ui.read_select {
-        Some((current, _)) if current == mode => None,
-        Some((_, anchor)) => Some((mode, anchor)),
-        None => Some((mode, app.ui.read.read_cursor)),
-    };
-}
-
-fn yank_selection(app: &mut App, width: usize) {
-    let rendered = cached_render(app, width);
-    if let Some((mode, anchor)) = app.ui.read_select {
-        let text = selected_text(&rendered, mode, anchor, app.ui.read.read_cursor);
-        app.workspace
-            .current_mut()
-            .editor
-            .yank(text, mode == Mode::VisualLine);
-        clip_sync::sync_out(app);
-        app.ui.read_select = None;
-        app.ui.message = String::from("copied to clipboard");
-    }
-}
-
-fn yank_line(app: &mut App, width: usize) {
-    let rendered = cached_render(app, width);
-    if let Some(line) = rendered.lines.get(app.ui.read.read_cursor.0) {
-        let text = line.text();
-        app.workspace
-            .current_mut()
-            .editor
-            .yank(format!("{text}\n"), true);
-        clip_sync::sync_out(app);
-        app.ui.message = String::from("copied line to clipboard");
-    }
-}
-
-fn code_block_at(text: &str, src_line: usize) -> Option<String> {
-    blocks::analyze(text).into_iter().find_map(|block| {
-        if let BlockKind::Code { lines, .. } = block.kind
-            && src_line >= block.start_line
-            && src_line <= block.end_line
-        {
-            let code = lines
-                .iter()
-                .map(|line| line.iter().map(|atom| atom.ch).collect::<String>())
-                .collect::<Vec<_>>()
-                .join("\n");
-            return Some(code);
-        }
-        None
-    })
-}
-
-fn selected_text(
-    rendered: &Rendered,
-    mode: Mode,
-    anchor: (usize, usize),
-    cursor: (usize, usize),
-) -> String {
-    let top = anchor.0.min(cursor.0);
-    let bottom = anchor.0.max(cursor.0);
-    (top..=bottom)
-        .filter_map(|line| {
-            let chars: Vec<char> = rendered.lines.get(line)?.text().chars().collect();
-            let range = visual::selection_cols(
-                mode,
-                Position::new(anchor.0, anchor.1),
-                Position::new(cursor.0, cursor.1),
-                line,
-                chars.len(),
-            )?;
-            let from = range.start.min(chars.len());
-            let to = range.end.min(chars.len());
-            Some(chars[from..to].iter().collect::<String>())
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-fn clamp(rendered: &Rendered, line: usize, col: usize) -> (usize, usize) {
+pub(crate) fn clamp(rendered: &Rendered, line: usize, col: usize) -> (usize, usize) {
     let last = rendered.lines.len().saturating_sub(1);
     let line = line.min(last);
     let len = rendered
@@ -285,40 +138,4 @@ fn source_at(rendered: &Rendered, line: usize, col: usize) -> Option<usize> {
         .chain((0..col).rev())
         .find_map(|c| rendered.to_source(line, c))
         .or(Some(0))
-}
-
-pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
-    let width = column_width(area);
-    let rendered = cached_render(app, width);
-    app.ui.read.read_cursor = clamp(
-        &rendered,
-        app.ui.read.read_cursor.0,
-        app.ui.read.read_cursor.1,
-    );
-    let height = area.height.max(1) as usize;
-    if app.ui.read.read_cursor.0 < app.ui.read.top {
-        app.ui.read.top = app.ui.read.read_cursor.0;
-    }
-    if app.ui.read.read_cursor.0 >= app.ui.read.top + height {
-        app.ui.read.top = app.ui.read.read_cursor.0 + 1 - height;
-    }
-    app.ui.left = hscroll::scroll(app.ui.left, app.ui.read.read_cursor.1, width);
-    let inner = text_column(area);
-    let select = app
-        .ui
-        .read_select
-        .map(|(mode, anchor)| (mode, anchor, app.ui.read.read_cursor));
-    let lines = read_lines(&rendered, app.ui.read.top, height, &app.theme, select);
-    frame.render_widget(Paragraph::new(lines).scroll((0, app.ui.left as u16)), inner);
-    hscroll::markers(frame, inner, app.ui.left, height, |row| {
-        rendered
-            .lines
-            .get(app.ui.read.top + row)
-            .map(|line| line.text().chars().count())
-    });
-    let row = area.y + (app.ui.read.read_cursor.0 - app.ui.read.top) as u16;
-    let col = inner.x
-        + (app.ui.read.read_cursor.1.saturating_sub(app.ui.left) as u16)
-            .min(inner.width.saturating_sub(1));
-    frame.set_cursor_position(ScreenPosition::new(col, row));
 }
