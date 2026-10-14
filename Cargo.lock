@@ -1455,6 +1455,9 @@ dependencies = [
 [[package]]
 name = "v-ide-notebook"
 version = "0.1.0"
+dependencies = [
+ "v-ide-editor",
+]
 
 [[package]]
 name = "v-ide-text"

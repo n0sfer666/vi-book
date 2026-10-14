@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Date {
     pub year: i32,
@@ -18,6 +20,15 @@ const WEEKDAYS: [&str; 7] = [
 impl Date {
     pub fn new(year: i32, month: u32, day: u32) -> Self {
         Self { year, month, day }
+    }
+
+    pub fn today() -> Self {
+        let secs = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .ok()
+            .and_then(|d| i64::try_from(d.as_secs()).ok())
+            .unwrap_or(0);
+        Self::from_days(secs.div_euclid(86_400))
     }
 
     pub fn to_days(self) -> i64 {

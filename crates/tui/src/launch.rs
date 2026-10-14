@@ -1,7 +1,7 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-use v_ide_vault::scan::rel_path;
+use v_ide_editor::path::rel_path;
 
 pub fn target(arg: Option<&str>) -> io::Result<(PathBuf, Option<String>)> {
     match arg {

@@ -6,7 +6,7 @@ use crate::panel::Panel;
 use crate::picker::Picker;
 use crate::{command_line, plugin};
 use v_ide_editor::module::{Event, Request};
-use v_ide_vault::scan::rel_path;
+use v_ide_editor::path::rel_path;
 
 const MAX_DEPTH: usize = 16;
 

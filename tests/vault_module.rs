@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use v_ide_editor::document::Document;
-use v_ide_editor::module::{Modules, Request};
+use v_ide_editor::module::{Event, Modules, Request};
 use v_ide_editor::workspace::Workspace;
 use v_ide_vault::module::VaultModule;
 
@@ -107,12 +107,18 @@ fn new_creates_note_reindexes_and_opens() {
     let root = temp_vault("new");
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
+    let abs = root.join("ideas/x.md");
     let requests = modules.command(&ws, "new", " ideas/x ");
-    assert_eq!(requests, Some(vec![Request::Open(root.join("ideas/x.md"))]));
     assert_eq!(
-        fs::read_to_string(root.join("ideas/x.md")).unwrap(),
-        "# x\n\n"
+        requests,
+        Some(vec![
+            Request::Emit(Event::NoteCreate(abs.clone())),
+            Request::Open(abs.clone()),
+        ])
     );
+    assert_eq!(fs::read_to_string(&abs).unwrap(), "# x\n\n");
+    assert_eq!(items(&modules), Vec::<String>::new());
+    assert_eq!(modules.event(&ws, &Event::NoteCreate(abs)), Vec::new());
     assert_eq!(items(&modules), strings(&["ideas/x.md"]));
     let _ = fs::remove_dir_all(&root);
 }
@@ -188,5 +194,18 @@ fn backlinks_lists_linking_notes() {
         modules.command(&lonely, "backlinks", ""),
         Some(vec![msg("no notes link here")])
     );
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn note_create_event_reindexes() {
+    let root = temp_vault("note-create");
+    seed(&root);
+    let ws = ws_at(&root, None);
+    let mut modules = started(&ws);
+    let abs = root.join("fresh.md");
+    fs::write(&abs, "# F\n").unwrap();
+    assert_eq!(modules.event(&ws, &Event::NoteCreate(abs)), Vec::new());
+    assert_eq!(items(&modules), strings(&["a.md", "fresh.md", "sub/b.md"]));
     let _ = fs::remove_dir_all(&root);
 }

@@ -4,6 +4,7 @@ use std::path::PathBuf;
 pub enum Event {
     NoteOpen(PathBuf),
     NoteSave(PathBuf),
+    NoteCreate(PathBuf),
 }
 
 impl Event {
@@ -11,6 +12,7 @@ impl Event {
         match self {
             Self::NoteOpen(_) => "note_open",
             Self::NoteSave(_) => "note_save",
+            Self::NoteCreate(_) => "note_create",
         }
     }
 }

@@ -5,9 +5,9 @@ use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
 use serde::{Deserialize, Serialize};
+use v_ide_editor::path::rel_path;
 
 use crate::note::Note;
-use crate::scan;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Entry {
@@ -86,7 +86,7 @@ fn collect_md(root: &Path, dir: &Path, files: &mut Vec<(String, PathBuf)>) -> io
         if entry.file_type()?.is_dir() {
             collect_md(root, &path, files)?;
         } else if path.extension().is_some_and(|ext| ext == "md") {
-            files.push((scan::rel_path(root, &path), path));
+            files.push((rel_path(root, &path), path));
         }
     }
     Ok(())

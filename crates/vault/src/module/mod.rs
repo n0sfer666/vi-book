@@ -4,15 +4,16 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use v_ide_editor::module::{Cx, Event, Manifest, Module, Registration, Trigger};
+use v_ide_editor::path::rel_path;
 
 use crate::index::Index;
-use crate::scan::{rel_path, scan_with};
+use crate::scan::scan_with;
 use create::create;
 
 static MANIFEST: Manifest = Manifest {
     name: "vault",
     commands: &["pick", "new", "scan-hidden", "backlinks"],
-    triggers: &[Trigger::Startup],
+    triggers: &[Trigger::Startup, Trigger::Event("note_create")],
 };
 
 pub struct VaultModule {
@@ -67,11 +68,13 @@ impl VaultModule {
         Ok(())
     }
 
-    fn create_note(&mut self, cx: &mut Cx<'_>, name: &str) -> Result<(), String> {
+    fn create_note(&self, cx: &mut Cx<'_>, name: &str) -> Result<(), String> {
         let created = create(&self.root, name).map_err(|err| format!("create failed: {err}"))?;
-        if let Some(path) = created {
-            let _ = self.reindex();
-            cx.open(path);
+        if let Some(note) = created {
+            if note.fresh {
+                cx.emit(Event::NoteCreate(note.path.clone()));
+            }
+            cx.open(note.path);
         }
         Ok(())
     }
@@ -126,5 +129,9 @@ impl Module for VaultModule {
         Ok(())
     }
 
-    fn event(&mut self, _cx: &mut Cx<'_>, _ev: &Event) {}
+    fn event(&mut self, _cx: &mut Cx<'_>, ev: &Event) {
+        if let Event::NoteCreate(_) = ev {
+            let _ = self.reindex();
+        }
+    }
 }

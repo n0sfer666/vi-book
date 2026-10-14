@@ -2,6 +2,8 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+use v_ide_editor::path::rel_path;
+
 use crate::note::Note;
 
 pub fn scan(root: &Path) -> io::Result<Vec<Note>> {
@@ -13,15 +15,6 @@ pub fn scan_with(root: &Path, include_hidden: bool) -> io::Result<Vec<Note>> {
     walk(root, root, include_hidden, &mut notes)?;
     notes.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(notes)
-}
-
-pub fn rel_path(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .components()
-        .map(|c| c.as_os_str().to_string_lossy())
-        .collect::<Vec<_>>()
-        .join("/")
 }
 
 fn walk(root: &Path, dir: &Path, include_hidden: bool, notes: &mut Vec<Note>) -> io::Result<()> {
