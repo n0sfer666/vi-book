@@ -8,6 +8,8 @@ pub use doc_id::DocId;
 pub use window::Window;
 pub use window_id::WindowId;
 
+use std::path::{Path, PathBuf};
+
 use crate::document::Document;
 
 pub struct Workspace {
@@ -16,6 +18,7 @@ pub struct Workspace {
     pool: Vec<Buffer>,
     next: u64,
     next_window: u64,
+    cwd: PathBuf,
 }
 
 impl Workspace {
@@ -29,7 +32,20 @@ impl Workspace {
             pool: Vec::new(),
             next: 1,
             next_window: 1,
+            cwd: PathBuf::from("."),
         }
+    }
+
+    pub fn cwd(&self) -> &Path {
+        &self.cwd
+    }
+
+    pub fn set_cwd(&mut self, cwd: PathBuf) {
+        self.cwd = cwd;
+    }
+
+    pub fn absolute(&self, rel: &str) -> PathBuf {
+        self.cwd.join(rel)
     }
 
     pub fn current(&self) -> &Document {

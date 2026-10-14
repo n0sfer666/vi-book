@@ -1,3 +1,5 @@
+use std::any::Any;
+
 mod cx;
 mod entry;
 mod event;
@@ -15,7 +17,7 @@ pub use registration::Registration;
 pub use request::Request;
 pub use trigger::Trigger;
 
-pub trait Module {
+pub trait Module: Any {
     fn activate(&mut self, cx: &mut Cx<'_>) -> Result<(), String>;
     fn command(&mut self, cx: &mut Cx<'_>, name: &str, args: &str) -> Result<(), String>;
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event);

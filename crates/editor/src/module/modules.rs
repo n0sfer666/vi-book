@@ -1,5 +1,7 @@
+use std::any::Any;
+
 use crate::module::entry::Entry;
-use crate::module::{Cx, Event, Registration, Request};
+use crate::module::{Cx, Event, Module, Registration, Request};
 use crate::workspace::Workspace;
 
 pub struct Modules {
@@ -11,6 +13,20 @@ impl Modules {
         Self {
             entries: registrations.into_iter().map(Entry::new).collect(),
         }
+    }
+
+    pub fn get<T: Module>(&self) -> Option<&T> {
+        self.entries.iter().find_map(|entry| {
+            let any: &dyn Any = entry.module()?;
+            any.downcast_ref::<T>()
+        })
+    }
+
+    pub fn get_mut<T: Module>(&mut self) -> Option<&mut T> {
+        self.entries.iter_mut().find_map(|entry| {
+            let any: &mut dyn Any = entry.module_mut()?;
+            any.downcast_mut::<T>()
+        })
     }
 
     pub fn startup(&mut self, ws: &Workspace) -> Vec<Request> {

@@ -1,9 +1,9 @@
 #[path = "module_host/fakes.rs"]
 mod fakes;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use fakes::all;
+use fakes::{Tally, all};
 use v_ide_editor::document::Document;
 use v_ide_editor::module::{Event, Request};
 use v_ide_editor::workspace::Workspace;
@@ -97,4 +97,35 @@ fn requests_keep_call_order() {
         msg("Some(\"n.md\") hello"),
     ];
     assert_eq!(modules.command(&ws, "effects", ""), Some(expected));
+}
+
+#[test]
+fn get_is_none_until_module_is_active() {
+    let (mut modules, ws) = (all(), ws());
+    assert!(modules.get::<Tally>().is_none());
+    modules.command(&ws, "echo", "");
+    assert!(modules.get::<Tally>().is_none());
+    modules.command(&ws, "tally", "");
+    assert_eq!(modules.get::<Tally>().map(|t| t.count), Some(1));
+}
+
+#[test]
+fn get_mut_reaches_module_state() {
+    let (mut modules, ws) = (all(), ws());
+    assert!(modules.get_mut::<Tally>().is_none());
+    modules.command(&ws, "tally", "");
+    if let Some(tally) = modules.get_mut::<Tally>() {
+        tally.count = 10;
+    }
+    assert_eq!(modules.command(&ws, "tally", ""), Some(vec![msg("11")]));
+}
+
+#[test]
+fn cx_sees_workspace_cwd() {
+    let (mut modules, mut ws) = (all(), ws());
+    assert_eq!(ws.cwd(), Path::new("."));
+    ws.set_cwd(PathBuf::from("/vault"));
+    assert_eq!(ws.cwd(), Path::new("/vault"));
+    assert_eq!(ws.absolute("a/b.md"), PathBuf::from("/vault/a/b.md"));
+    assert_eq!(modules.command(&ws, "where", ""), Some(vec![msg("/vault")]));
 }

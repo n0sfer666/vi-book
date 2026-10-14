@@ -1487,6 +1487,7 @@ dependencies = [
  "notify",
  "serde",
  "serde_json",
+ "v-ide-editor",
  "v-ide-markdown",
 ]
 

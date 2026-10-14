@@ -3,6 +3,7 @@ pub mod follow;
 pub mod fuzzy;
 pub mod index;
 pub mod link;
+pub mod module;
 pub mod note;
 pub mod rename;
 pub mod scan;

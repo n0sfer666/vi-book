@@ -101,6 +101,40 @@ impl Module for Effects {
     fn event(&mut self, _cx: &mut Cx, _ev: &Event) {}
 }
 
+pub struct Tally {
+    pub count: usize,
+}
+
+impl Module for Tally {
+    fn activate(&mut self, _cx: &mut Cx) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn command(&mut self, cx: &mut Cx, _name: &str, _args: &str) -> Result<(), String> {
+        self.count += 1;
+        cx.message(self.count.to_string());
+        Ok(())
+    }
+
+    fn event(&mut self, _cx: &mut Cx, _ev: &Event) {}
+}
+
+struct Where;
+
+impl Module for Where {
+    fn activate(&mut self, _cx: &mut Cx) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn command(&mut self, cx: &mut Cx, _name: &str, _args: &str) -> Result<(), String> {
+        let cwd = cx.cwd().display().to_string();
+        cx.message(cwd);
+        Ok(())
+    }
+
+    fn event(&mut self, _cx: &mut Cx, _ev: &Event) {}
+}
+
 static ECHO: Manifest = Manifest {
     name: "echo",
     commands: &["echo"],
@@ -131,6 +165,16 @@ static EFFECTS: Manifest = Manifest {
     commands: &["effects"],
     triggers: &[],
 };
+static TALLY: Manifest = Manifest {
+    name: "tally",
+    commands: &["tally"],
+    triggers: &[],
+};
+static WHERE: Manifest = Manifest {
+    name: "where",
+    commands: &["where"],
+    triggers: &[],
+};
 
 fn reg(manifest: &'static Manifest, make: fn() -> Box<dyn Module>) -> Registration {
     Registration { manifest, make }
@@ -144,5 +188,7 @@ pub fn all() -> Modules {
         reg(&LISTENER, || Box::new(Listener)),
         reg(&BOOT, || Box::new(Boot)),
         reg(&EFFECTS, || Box::new(Effects)),
+        reg(&TALLY, || Box::new(Tally { count: 0 })),
+        reg(&WHERE, || Box::new(Where)),
     ])
 }

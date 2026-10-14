@@ -39,6 +39,14 @@ impl Entry {
         self.state.as_mut()
     }
 
+    pub fn module(&self) -> Option<&dyn Module> {
+        self.state.as_deref()
+    }
+
+    pub fn module_mut(&mut self) -> Option<&mut dyn Module> {
+        self.state.as_deref_mut()
+    }
+
     fn triggers(&self) -> &'static [Trigger] {
         self.registration.manifest.triggers
     }

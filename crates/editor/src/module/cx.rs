@@ -20,6 +20,10 @@ impl<'a> Cx<'a> {
         self.requests
     }
 
+    pub fn cwd(&self) -> &Path {
+        self.ws.cwd()
+    }
+
     pub fn path(&self) -> Option<&Path> {
         self.ws.current().path.as_deref()
     }
