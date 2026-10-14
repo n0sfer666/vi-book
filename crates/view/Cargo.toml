@@ -1,0 +1,11 @@
+[package]
+name = "v-ide-view"
+description = "Cell grid, styles and frame diff for v-ide"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+unicode-segmentation = "1.13.3"
+unicode-width = "=0.2.0"

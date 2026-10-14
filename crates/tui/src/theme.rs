@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use ratatui::style::{Color, Modifier, Style as TuiStyle};
+use ratatui::style::Style as TuiStyle;
 
 use v_ide_markdown::style::{CodeToken, Style};
+use v_ide_view::{Ansi, Color, Mods, Style as CellStyle};
+
+use crate::tui_style;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Face {
@@ -14,9 +17,9 @@ pub struct Face {
 }
 
 impl Face {
-    fn color(color: Color) -> Self {
+    fn color(ansi: Ansi) -> Self {
         Self {
-            color: Some(color),
+            color: Some(Color::Ansi(ansi)),
             ..Self::default()
         }
     }
@@ -35,24 +38,22 @@ impl Face {
         }
     }
 
+    pub fn style(self) -> CellStyle {
+        CellStyle {
+            fg: self.color.unwrap_or_default(),
+            mods: Mods {
+                bold: self.bold,
+                italic: self.italic,
+                underline: self.underline,
+                dim: self.dim,
+                ..Mods::default()
+            },
+            ..CellStyle::default()
+        }
+    }
+
     pub fn tui(self) -> TuiStyle {
-        let mut style = TuiStyle::default();
-        if let Some(color) = self.color {
-            style = style.fg(color);
-        }
-        if self.bold {
-            style = style.add_modifier(Modifier::BOLD);
-        }
-        if self.italic {
-            style = style.add_modifier(Modifier::ITALIC);
-        }
-        if self.underline {
-            style = style.add_modifier(Modifier::UNDERLINED);
-        }
-        if self.dim {
-            style = style.add_modifier(Modifier::DIM);
-        }
-        style
+        tui_style::from_cell(self.style())
     }
 }
 
@@ -98,13 +99,13 @@ fn default_face(style: Style) -> Face {
             italic: true,
             ..Face::default()
         },
-        Style::CodeSpan | Style::CodeBlock => Face::color(Color::Cyan),
+        Style::CodeSpan | Style::CodeBlock => Face::color(Ansi::Cyan),
         Style::Link => Face {
-            color: Some(Color::Blue),
+            color: Some(Color::Ansi(Ansi::Blue)),
             underline: true,
             ..Face::default()
         },
-        Style::Tag => Face::color(Color::Magenta),
+        Style::Tag => Face::color(Ansi::Magenta),
         Style::Quote
         | Style::QuoteBar
         | Style::Frame
@@ -116,22 +117,20 @@ fn default_face(style: Style) -> Face {
 
 fn code_face(token: CodeToken) -> Face {
     match token {
-        CodeToken::Keyword => Face::color(Color::Magenta),
-        CodeToken::String => Face::color(Color::Green),
-        CodeToken::Number | CodeToken::Constant | CodeToken::Attribute => {
-            Face::color(Color::Yellow)
-        }
+        CodeToken::Keyword => Face::color(Ansi::Magenta),
+        CodeToken::String => Face::color(Ansi::Green),
+        CodeToken::Number | CodeToken::Constant | CodeToken::Attribute => Face::color(Ansi::Yellow),
         CodeToken::Comment => Face {
-            color: Some(Color::DarkGray),
+            color: Some(Color::Ansi(Ansi::DarkGray)),
             dim: true,
             ..Face::default()
         },
-        CodeToken::Function => Face::color(Color::Blue),
-        CodeToken::Type | CodeToken::Property => Face::color(Color::Cyan),
-        CodeToken::Variable => Face::color(Color::White),
-        CodeToken::Operator => Face::color(Color::Red),
-        CodeToken::Punctuation => Face::color(Color::Gray),
-        CodeToken::Tag => Face::color(Color::Blue),
+        CodeToken::Function => Face::color(Ansi::Blue),
+        CodeToken::Type | CodeToken::Property => Face::color(Ansi::Cyan),
+        CodeToken::Variable => Face::color(Ansi::White),
+        CodeToken::Operator => Face::color(Ansi::Red),
+        CodeToken::Punctuation => Face::color(Ansi::Gray),
+        CodeToken::Tag => Face::color(Ansi::Blue),
     }
 }
 

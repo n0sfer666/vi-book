@@ -2,7 +2,7 @@ use std::env;
 use std::mem;
 use std::path::PathBuf;
 
-use ratatui::style::Color;
+use v_ide_view::Color;
 
 use crate::app::App;
 use crate::command_line;

@@ -2,12 +2,13 @@ mod common;
 
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
-use ratatui::style::Color;
+use ratatui::style::Color as TuiColor;
 
 use v_ide_markdown::style::{CodeToken, Style};
 use v_ide_tui::app::App;
 use v_ide_tui::theme::{Face, Theme, style_for_name};
 use v_ide_tui::view::View;
+use v_ide_view::{Ansi, Color};
 
 #[test]
 fn code_tokens_have_default_colors() {
@@ -33,13 +34,13 @@ fn code_palette_is_overridable() {
     theme.set(
         Style::Code(CodeToken::Keyword),
         Face {
-            color: Some(Color::Red),
+            color: Some(Color::Ansi(Ansi::Red)),
             ..Face::default()
         },
     );
     assert_eq!(
         theme.face(Style::Code(CodeToken::Keyword)).color,
-        Some(Color::Red)
+        Some(Color::Ansi(Ansi::Red))
     );
 }
 
@@ -57,7 +58,7 @@ fn rendered_code_block_paints_keyword_color() {
         .unwrap();
     let buf = terminal.backend().buffer().clone();
     let magenta = (0..buf.area.width)
-        .any(|x| (0..buf.area.height).any(|y| buf[(x, y)].style().fg == Some(Color::Magenta)));
+        .any(|x| (0..buf.area.height).any(|y| buf[(x, y)].style().fg == Some(TuiColor::Magenta)));
     assert!(magenta, "keyword should be painted with its palette color");
 }
 

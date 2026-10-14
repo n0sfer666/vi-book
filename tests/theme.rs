@@ -1,6 +1,6 @@
-use ratatui::style::{Color, Modifier};
 use v_ide_markdown::style::Style;
 use v_ide_tui::theme::{Face, Theme};
+use v_ide_view::{Ansi, Color};
 
 #[test]
 fn default_theme_covers_every_style() {
@@ -15,7 +15,7 @@ fn default_theme_covers_every_style() {
 fn links_are_underlined_and_colored() {
     let face = Theme::default().face(Style::Link);
     assert!(face.underline);
-    assert_eq!(face.color, Some(Color::Blue));
+    assert_eq!(face.color, Some(Color::Ansi(Ansi::Blue)));
 }
 
 #[test]
@@ -52,26 +52,29 @@ fn plain_text_has_no_decoration() {
 }
 
 #[test]
-fn face_converts_to_tui_modifiers() {
+fn face_converts_to_view_style() {
     let face = Face {
-        color: Some(Color::Red),
+        color: Some(Color::Ansi(Ansi::Red)),
         bold: true,
         underline: true,
         ..Face::default()
     };
-    let tui = face.tui();
-    assert_eq!(tui.fg, Some(Color::Red));
-    assert!(tui.add_modifier.contains(Modifier::BOLD));
-    assert!(tui.add_modifier.contains(Modifier::UNDERLINED));
+    let style = face.style();
+    assert_eq!(style.fg, Color::Ansi(Ansi::Red));
+    assert_eq!(style.bg, Color::Reset);
+    assert!(style.mods.bold);
+    assert!(style.mods.underline);
+    assert!(!style.mods.italic);
+    assert_eq!(Face::default().style().fg, Color::Reset);
 }
 
 #[test]
 fn theme_set_overrides_a_style() {
     let mut theme = Theme::default();
     let custom = Face {
-        color: Some(Color::Green),
+        color: Some(Color::Ansi(Ansi::Green)),
         ..Face::default()
     };
     theme.set(Style::Tag, custom);
-    assert_eq!(theme.face(Style::Tag).color, Some(Color::Green));
+    assert_eq!(theme.face(Style::Tag).color, Some(Color::Ansi(Ansi::Green)));
 }

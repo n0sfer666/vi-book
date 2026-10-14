@@ -34,6 +34,7 @@ pub mod router;
 pub mod split;
 pub mod status;
 pub mod theme;
+mod tui_style;
 pub mod ui_state;
 pub mod vault_bridge;
 pub mod view;

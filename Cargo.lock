@@ -1401,6 +1401,7 @@ dependencies = [
  "v-ide-text",
  "v-ide-tui",
  "v-ide-vault",
+ "v-ide-view",
 ]
 
 [[package]]
@@ -1482,6 +1483,7 @@ dependencies = [
  "v-ide-notebook",
  "v-ide-text",
  "v-ide-vault",
+ "v-ide-view",
 ]
 
 [[package]]
@@ -1493,6 +1495,14 @@ dependencies = [
  "serde_json",
  "v-ide-editor",
  "v-ide-markdown",
+]
+
+[[package]]
+name = "v-ide-view"
+version = "0.1.0"
+dependencies = [
+ "unicode-segmentation",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]
