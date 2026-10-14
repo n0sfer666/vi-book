@@ -1,21 +1,18 @@
 mod common;
 
-use std::path::PathBuf;
-
 use v_ide_tui::app::App;
-use v_ide_tui::plugin;
+use v_ide_tui::lua_bridge;
 
-fn config_file(label: &str, script: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("v-ide-config-msg-{}-{label}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let path = dir.join("init.lua");
-    std::fs::write(&path, script).unwrap();
-    path
+fn started(label: &str) -> App {
+    let mut app = App::new(common::named_doc("x", "a.md"));
+    common::open_vault(&mut app, &common::temp_root(label));
+    app
 }
 
 fn load(label: &str, script: &str, warning: Option<&'static str>) -> App {
-    let mut app = App::new(common::named_doc("x", "a.md"));
-    plugin::load_config_from(&mut app, Some((config_file(label, script), warning)));
+    let mut app = started(label);
+    let path = common::config_file(label, script);
+    lua_bridge::load_config_from(&mut app, Some((path, warning)));
     app
 }
 
@@ -43,7 +40,46 @@ fn no_warning_leaves_status_line_empty() {
 
 #[test]
 fn no_config_leaves_status_line_empty() {
-    let mut app = App::new(common::named_doc("x", "a.md"));
-    plugin::load_config_from(&mut app, None);
+    let mut app = started("none");
+    lua_bridge::load_config_from(&mut app, None);
     assert_eq!(app.ui.message, "");
+}
+
+#[test]
+fn without_startup_config_is_ignored() {
+    let mut app = App::new(common::named_doc("x", "a.md"));
+    let path = common::config_file("nostart", "vibook.opt.leader = ','");
+    lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
+    assert_eq!(app.leader, ' ');
+    assert_eq!(app.ui.message, "");
+}
+
+#[test]
+fn warning_keeps_startup_message() {
+    let mut app = App::new(common::named_doc("x", "a.md"));
+    common::open_vault(
+        &mut app,
+        &std::env::temp_dir().join("vi-book-no-such-vault"),
+    );
+    let startup = app.ui.message.clone();
+    let path = common::config_file("startup-warn", "vibook.opt.leader = ','");
+    lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
+    assert!(startup.starts_with("vault:"), "{startup}");
+    assert_eq!(app.ui.message, startup);
+}
+
+#[test]
+fn config_error_overrides_startup_message() {
+    let mut app = App::new(common::named_doc("x", "a.md"));
+    common::open_vault(
+        &mut app,
+        &std::env::temp_dir().join("vi-book-no-such-vault"),
+    );
+    let path = common::config_file("startup-error", "error(\"boom\")");
+    lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
+    assert!(
+        app.ui.message.starts_with("config error:"),
+        "{}",
+        app.ui.message
+    );
 }

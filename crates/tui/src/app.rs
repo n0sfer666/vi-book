@@ -9,13 +9,13 @@ use crate::picker::Picker;
 use crate::read_state::ReadState;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{launch, plugin, render, requests, router};
+use crate::{launch, lua_bridge, render, requests, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
 use v_ide_keys::key::Key;
-use v_ide_lua::host::PluginHost;
+use v_ide_lua::module::LuaModule;
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_notebook::history::History;
 use v_ide_notebook::module::NotebookModule;
@@ -29,8 +29,6 @@ pub struct App {
     pub quit: bool,
     pub theme: Theme,
     pub history: History,
-    pub host: Option<PluginHost>,
-    pub firing: bool,
     pub nesting: usize,
     pub normal_maps: HashMap<Key, String>,
     pub wrap: WrapMode,
@@ -52,7 +50,6 @@ pub fn run() -> Result<(), Error> {
     app.workspace.set_cwd(cwd);
     requests::startup(&mut app);
     app.load_config();
-    app.install_keymaps();
     if let Some(rel) = open {
         app.open_rel(&rel);
     } else if app.vault().is_none_or(VaultModule::is_empty) {
@@ -73,14 +70,13 @@ impl App {
             modules: Modules::new(vec![
                 VaultModule::registration(),
                 NotebookModule::registration(),
+                LuaModule::registration(),
             ]),
             ui: UiState::new(),
             read_states: HashMap::new(),
             quit: false,
             theme: Theme::default(),
             history: History::new(),
-            host: None,
-            firing: false,
             nesting: 0,
             normal_maps: HashMap::new(),
             wrap: WrapMode::All,
@@ -97,11 +93,7 @@ impl App {
     }
 
     pub fn load_config(&mut self) {
-        plugin::load_config(self);
-    }
-
-    pub fn install_keymaps(&mut self) {
-        plugin::install_keymaps(self);
+        lua_bridge::load_config(self);
     }
 
     pub fn open_picker(&mut self) {

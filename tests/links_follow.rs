@@ -1,13 +1,12 @@
 mod common;
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use v_ide_lua::defaults::LINKS;
-use v_ide_lua::host::PluginHost;
+use v_ide_editor::path::rel_path;
+
 use v_ide_tui::app::App;
 use v_ide_tui::link_follow::follow_at_cursor;
-use v_ide_vault::module::VaultModule;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-links-{}-{name}", std::process::id()));
@@ -19,11 +18,6 @@ fn temp_vault(name: &str) -> PathBuf {
 fn app_for(root: &std::path::Path) -> App {
     let mut app = App::new(common::named_doc("", ""));
     common::open_vault(&mut app, root);
-    let host = PluginHost::new().unwrap();
-    host.load(LINKS).unwrap();
-    let vault = app.modules.get::<VaultModule>().unwrap();
-    host.set_vault(vault.items(), vault.index().tags());
-    app.host = Some(host);
     app
 }
 
@@ -144,4 +138,54 @@ fn following_a_backtick_non_file_does_nothing() {
     assert_eq!(path, "a.md");
     assert!(external.is_none());
     assert!(url.is_none());
+}
+
+#[test]
+fn lua_follow_error_falls_back_to_core_follow() {
+    let root = temp_vault("luaerr");
+    fs::write(root.join("target.md"), "# Target\n").unwrap();
+    fs::write(root.join("a.md"), "see [[target]]\n").unwrap();
+    let mut app = app_for(&root);
+    common::load_lua(
+        &mut app,
+        "links-luaerr",
+        "vibook.on('follow_link', function() error('boom') end)",
+    );
+    app.open_rel("a.md");
+    app.workspace.current_mut().editor.set_cursor_index(6);
+    follow_at_cursor(&mut app);
+    let path = app.workspace.current().name.clone();
+    let message = app.ui.message.clone();
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(path, "target.md");
+    assert!(message.starts_with("plugin error:"), "{message}");
+}
+
+#[test]
+fn following_an_absolute_note_outside_vault_keeps_its_path() {
+    let root = temp_vault("abs");
+    let outside = temp_vault("abs-outside");
+    let target = outside.join("x.md");
+    fs::write(&target, "# X\n").unwrap();
+    fs::write(root.join("a.md"), format!("see [[{}]]\n", target.display())).unwrap();
+    let mut app = app_for(&root);
+    app.open_rel("a.md");
+    app.workspace.current_mut().editor.set_cursor_index(6);
+    follow_at_cursor(&mut app);
+    let path = app.workspace.current().name.clone();
+    let _ = fs::remove_dir_all(&root);
+    let _ = fs::remove_dir_all(&outside);
+    assert_eq!(path, target.to_string_lossy());
+}
+
+#[test]
+fn rel_path_outside_root_is_returned_as_is() {
+    assert_eq!(
+        rel_path(Path::new("/vault"), Path::new("/abs/x.md")),
+        "/abs/x.md"
+    );
+    assert_eq!(
+        rel_path(Path::new("/vault"), Path::new("/vault/d/x.md")),
+        "d/x.md"
+    );
 }

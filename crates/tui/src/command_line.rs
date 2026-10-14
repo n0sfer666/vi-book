@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
 use crate::panel::Panel;
-use crate::{actions, plugin, requests};
+use crate::{actions, requests};
 use v_ide_editor::module::Event;
 use v_ide_markdown::wrap_mode::WrapMode;
 
@@ -54,7 +54,7 @@ pub fn run(app: &mut App, command: &str) {
                 app.open_rel(rel.trim());
             } else if let Some(mode) = other.strip_prefix("wrap ") {
                 set_wrap(app, mode.trim());
-            } else if !requests::command(app, other) && !plugin::run_command(app, other) {
+            } else if !requests::command(app, other) {
                 app.ui.message = format!("not an editor command: {other}");
             }
         }
@@ -86,7 +86,6 @@ fn save(app: &mut App) -> bool {
     match app.workspace.current_mut().save() {
         Ok(()) => {
             app.ui.message = String::from("written");
-            plugin::fire(app, "note_save");
             if let Some(path) = app.workspace.current().path.clone() {
                 requests::emit(app, Event::NoteSave(path));
             }

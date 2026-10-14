@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
 use crate::view::View;
-use crate::{actions, clip_sync, command_line, event_map, input, layout, plugin, read_view};
+use crate::{actions, clip_sync, command_line, event_map, input, layout, lua_bridge, read_view};
 use v_ide_keys::key::Key;
 
 pub fn handle(app: &mut App, key: KeyEvent) {
@@ -70,7 +70,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
     if app.workspace.current().editor.idle_normal()
         && let Some(rhs) = mapped.and_then(|k| app.normal_maps.get(&k).cloned())
     {
-        plugin::apply_keymap(app, &rhs);
+        lua_bridge::apply_keymap(app, &rhs);
         return;
     }
     if app.workspace.current().editor.idle_normal() && mapped == Some(Key::Ctrl('t')) {

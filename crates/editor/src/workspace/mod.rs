@@ -60,6 +60,15 @@ impl Workspace {
         self.windows[self.active].buf.id
     }
 
+    pub fn doc_mut(&mut self, id: DocId) -> Option<&mut Document> {
+        self.windows
+            .iter_mut()
+            .map(|w| &mut w.buf)
+            .chain(self.pool.iter_mut())
+            .find(|b| b.id == id)
+            .map(|b| &mut b.doc)
+    }
+
     pub fn pool(&self) -> &[Buffer] {
         &self.pool
     }

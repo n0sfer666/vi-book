@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use v_ide_editor::document::Document;
+use v_ide_editor::workspace::Workspace;
 use v_ide_tui::app::App;
 use v_ide_tui::view::View;
 
@@ -465,4 +466,24 @@ fn switch_to_buffer_preserves_active_state_and_mru() {
     );
 
     let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn doc_mut_reaches_current_and_pooled_documents() {
+    let mut first = Document::new("a");
+    first.name = String::from("a.md");
+    let mut ws = Workspace::new(first);
+    let pooled = ws.current_id();
+    let mut second = Document::new("b");
+    second.name = String::from("b.md");
+    ws.open(second);
+    let current = ws.current_id();
+    assert_eq!(
+        ws.doc_mut(pooled).map(|d| d.name.clone()).as_deref(),
+        Some("a.md")
+    );
+    assert_eq!(
+        ws.doc_mut(current).map(|d| d.name.clone()).as_deref(),
+        Some("b.md")
+    );
 }

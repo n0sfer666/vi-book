@@ -2,7 +2,8 @@ use crate::actions;
 use crate::app::App;
 use crate::external;
 use crate::help;
-use crate::plugin;
+use crate::requests;
+use v_ide_editor::module::Event;
 use v_ide_vault::follow::{Follow, follow};
 use v_ide_vault::link::Link;
 use v_ide_vault::target::{Target, target_at};
@@ -22,7 +23,7 @@ pub fn follow_at_cursor(app: &mut App) {
 }
 
 fn follow_wiki(app: &mut App, link: &Link) {
-    if plugin::follow_link(app, &link.target) {
+    if requests::intercepts(app, Event::FollowLink(link.target.clone())) {
         return;
     }
     let Some(found) = app.vault().map(|vault| follow(vault.index(), link)) else {
@@ -46,7 +47,7 @@ fn follow_path(app: &mut App, target: &str) {
     let Some(rel) = resolve(app, target) else {
         return;
     };
-    if plugin::follow_link(app, &rel) {
+    if requests::intercepts(app, Event::FollowLink(rel.clone())) {
         return;
     }
     app.open_rel(&rel);

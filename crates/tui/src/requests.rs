@@ -4,7 +4,7 @@ use crate::app::App;
 use crate::list_panel::ListPanel;
 use crate::panel::Panel;
 use crate::picker::Picker;
-use crate::{command_line, external, plugin};
+use crate::{command_line, external};
 use v_ide_editor::module::{Event, Request};
 use v_ide_editor::path::rel_path;
 
@@ -20,7 +20,6 @@ pub fn command(app: &mut App, line: &str) -> bool {
     match app.modules.command(&app.workspace, name, args) {
         Some(requests) => {
             apply(app, requests);
-            plugin::sync_vault_host(app);
             true
         }
         None => false,
@@ -29,19 +28,25 @@ pub fn command(app: &mut App, line: &str) -> bool {
 
 pub fn dispatch(app: &mut App, command: &str, item: &str) {
     match app.modules.command(&app.workspace, command, item) {
-        Some(requests) => {
-            apply(app, requests);
-            plugin::sync_vault_host(app);
-        }
+        Some(requests) => apply(app, requests),
         None => command_line::run(app, &format!("{command} {item}")),
     }
 }
 
 pub fn emit(app: &mut App, ev: Event) {
+    intercepts(app, ev);
+}
+
+pub(crate) fn intercepts(app: &mut App, ev: Event) -> bool {
+    let mut opened = false;
     nested(app, "event", ev.name(), |app| {
         let requests = app.modules.event(&app.workspace, &ev);
+        opened = requests
+            .iter()
+            .any(|r| matches!(r, Request::Open(_) | Request::OpenExternal(_)));
         apply(app, requests);
     });
+    opened
 }
 
 pub fn apply(app: &mut App, requests: Vec<Request>) {

@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 
+use v_ide_editor::document::Document;
 use v_ide_engine::Editor;
 use v_ide_text::Position;
 use v_ide_tui::app::App;
@@ -70,8 +72,8 @@ pub fn check(cases: &[Case]) {
     );
 }
 
-pub fn named_doc(text: &str, name: &str) -> v_ide_editor::document::Document {
-    let mut doc = v_ide_editor::document::Document::new(text);
+pub fn named_doc(text: &str, name: &str) -> Document {
+    let mut doc = Document::new(text);
     doc.name = name.to_string();
     doc
 }
@@ -79,4 +81,30 @@ pub fn named_doc(text: &str, name: &str) -> v_ide_editor::document::Document {
 pub fn open_vault(app: &mut App, root: &Path) {
     app.workspace.set_cwd(root.to_path_buf());
     requests::startup(app);
+}
+
+pub fn temp_root(label: &str) -> PathBuf {
+    let root = std::env::temp_dir().join(format!("vi-book-lua-{}-{label}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(&root).unwrap();
+    root
+}
+
+pub fn config_file(label: &str, script: &str) -> PathBuf {
+    let path =
+        std::env::temp_dir().join(format!("vi-book-init-{}-{label}.lua", std::process::id()));
+    fs::write(&path, script).unwrap();
+    path
+}
+
+pub fn load_lua(app: &mut App, label: &str, script: &str) {
+    let path = config_file(label, script);
+    v_ide_tui::lua_bridge::load_config_from(app, Some((path, None)));
+}
+
+pub fn lua_app(doc: Document, label: &str, script: &str) -> App {
+    let mut app = App::new(doc);
+    open_vault(&mut app, &temp_root(label));
+    load_lua(&mut app, label, script);
+    app
 }
