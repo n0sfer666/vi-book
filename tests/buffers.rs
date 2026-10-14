@@ -7,7 +7,6 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use v_ide_editor::document::Document;
 use v_ide_tui::app::App;
-use v_ide_tui::session::Session;
 use v_ide_tui::view::View;
 
 fn temp_vault(name: &str) -> PathBuf {
@@ -28,10 +27,9 @@ fn open_rel_dedups_to_existing_buffer_without_reload() {
     let root = temp_vault("dedup");
     fs::write(root.join("a.md"), "A body").unwrap();
     fs::write(root.join("b.md"), "B body").unwrap();
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, &root);
     app.open_rel("a.md");
     app.open_rel("b.md");
     assert_eq!(app.workspace.current().name, "b.md");
@@ -76,10 +74,9 @@ fn open_rel_dedups_to_existing_buffer_without_reload() {
 fn open_rel_of_active_file_is_a_noop() {
     let root = temp_vault("noop");
     fs::write(root.join("a.md"), "A body line\nsecond").unwrap();
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, &root);
     app.open_rel("a.md");
     app.workspace
         .current_mut()
@@ -317,9 +314,8 @@ fn quit_is_blocked_when_a_pooled_buffer_is_dirty() {
 }
 
 fn three_buffer_app(root: &std::path::Path) -> App {
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, root);
     app
 }
 
@@ -410,12 +406,11 @@ fn switch_to_buffer_preserves_active_state_and_mru() {
     let root = temp_vault("switch");
     fs::write(root.join("a.md"), "hello").unwrap();
     fs::write(root.join("b.md"), "target body").unwrap();
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
     let mut doc = Document::open(root.join("a.md")).unwrap();
     doc.name = "a.md".into();
     let mut app = App::new(doc);
-    app.session = session;
+    common::open_vault(&mut app, &root);
     app.ui.read.view = View::Edit;
     app.workspace.current_mut().editor.handle_keys("ix<Esc>");
     app.ui.read.top = 7;

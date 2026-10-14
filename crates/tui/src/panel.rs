@@ -22,10 +22,6 @@ impl Panel {
         }
     }
 
-    pub fn backlinks(items: Vec<String>) -> Self {
-        Panel::List(ListPanel::new("backlinks", items, "e"))
-    }
-
     pub fn title(&self) -> String {
         match self {
             Panel::Tree { .. } => String::from(" tree "),

@@ -11,6 +11,7 @@ use crate::theme::{self, Face};
 use v_ide_keys::key::parse_keys;
 use v_ide_lua::host::PluginHost;
 use v_ide_markdown::wrap_mode::WrapMode;
+use v_ide_vault::module::VaultModule;
 
 pub fn install_keymaps(app: &mut App) {
     let Some(host) = &app.host else {
@@ -65,8 +66,8 @@ pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'stati
     {
         app.ui.message = format!("config error: {err}");
     }
-    host.set_vault(app.session.items(), app.session.index.tags());
     app.host = Some(host);
+    sync_vault_host(app);
     apply_opts(app);
 }
 
@@ -87,7 +88,7 @@ pub fn follow_link(app: &mut App, target: &str) -> bool {
         None => return false,
     };
     if let Some(rel) = external.into_iter().next_back() {
-        match crate::external::resolve(&app.session.root, &rel) {
+        match crate::external::resolve(app.workspace.cwd(), &rel) {
             Some(path) => app.external_request = Some(path),
             None => app.ui.message = format!("file not found: {rel}"),
         }
@@ -108,11 +109,11 @@ pub fn apply_opts(app: &mut App) {
         app.wrap = wrap;
     }
     if let Some(hidden) = host.opt_bool("scan_hidden")
-        && hidden != app.session.scan_hidden
+        && let Some(vault) = app.modules.get_mut::<VaultModule>()
+        && hidden != vault.scan_hidden()
     {
-        app.session.scan_hidden = hidden;
-        let _ = app.session.reindex();
-        host.set_vault(app.session.items(), app.session.index.tags());
+        let _ = vault.set_scan_hidden(hidden);
+        host.set_vault(vault.items(), vault.index().tags());
     }
     if let Some(leader) = host.opt_string("leader").and_then(|s| s.chars().next()) {
         app.leader = leader;
@@ -135,8 +136,8 @@ pub fn apply_opts(app: &mut App) {
 }
 
 pub fn sync_vault_host(app: &App) {
-    if let Some(host) = &app.host {
-        host.set_vault(app.session.items(), app.session.index.tags());
+    if let (Some(host), Some(vault)) = (&app.host, app.vault()) {
+        host.set_vault(vault.items(), vault.index().tags());
     }
 }
 

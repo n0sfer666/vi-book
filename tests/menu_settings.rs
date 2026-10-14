@@ -4,9 +4,16 @@ use v_ide_keys::key::Key;
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_tui::actions;
 use v_ide_tui::app::App;
+use v_ide_vault::module::VaultModule;
 
 fn app() -> App {
     App::new(common::named_doc("x", "a.md"))
+}
+
+fn scan_hidden(app: &App) -> bool {
+    app.modules
+        .get::<VaultModule>()
+        .is_some_and(VaultModule::scan_hidden)
 }
 
 fn press(app: &mut App, c: char) {
@@ -42,21 +49,23 @@ fn empty_root() -> std::path::PathBuf {
 }
 
 #[test]
-fn settings_scan_hidden_toggles_session_flag() {
+fn settings_scan_hidden_toggles_vault_flag() {
     let mut a = app();
-    a.session.root = empty_root();
-    assert!(!a.session.scan_hidden);
+    common::open_vault(&mut a, &empty_root());
+    assert!(!scan_hidden(&a));
     actions::open_menu(&mut a);
     press(&mut a, 's');
     press(&mut a, 'h');
-    assert!(a.session.scan_hidden, "menu toggles scan-hidden on");
+    assert!(scan_hidden(&a), "menu toggles scan-hidden on");
     assert!(a.ui.menu.is_none(), "menu closes after the toggle");
 }
 
 #[test]
 fn scan_hidden_state_is_marked_in_menu() {
     let mut a = app();
-    a.session.scan_hidden = true;
+    common::open_vault(&mut a, &empty_root());
+    let vault = a.modules.get_mut::<VaultModule>().unwrap();
+    vault.set_scan_hidden(true).unwrap();
     actions::open_menu(&mut a);
     press(&mut a, 's');
     let menu = a.ui.menu.as_ref().unwrap();

@@ -71,7 +71,7 @@ impl App {
     fn make_buffer(&mut self, target: Option<&str>) -> Buffer {
         if let Some(name) = target {
             let rel = normalize(name);
-            if let Ok(mut doc) = Document::open(self.session.absolute(&rel)) {
+            if let Ok(mut doc) = Document::open(self.workspace.absolute(&rel)) {
                 doc.name = rel;
                 return self.fresh_buffer(doc);
             }
@@ -86,7 +86,7 @@ impl App {
         let mut doc = if name.is_empty() {
             Document::new(&text)
         } else {
-            Document::open(self.session.absolute(&name)).unwrap_or_else(|_| Document::new(&text))
+            Document::open(self.workspace.absolute(&name)).unwrap_or_else(|_| Document::new(&text))
         };
         doc.name = name;
         self.fresh_buffer(doc)

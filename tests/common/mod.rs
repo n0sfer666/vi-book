@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 
+use std::path::Path;
+
 use v_ide_engine::Editor;
 use v_ide_text::Position;
+use v_ide_tui::app::App;
+use v_ide_tui::requests;
 
 pub struct Case {
     pub name: &'static str,
@@ -70,4 +74,9 @@ pub fn named_doc(text: &str, name: &str) -> v_ide_editor::document::Document {
     let mut doc = v_ide_editor::document::Document::new(text);
     doc.name = name.to_string();
     doc
+}
+
+pub fn open_vault(app: &mut App, root: &Path) {
+    app.workspace.set_cwd(root.to_path_buf());
+    requests::startup(app);
 }

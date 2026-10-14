@@ -8,7 +8,6 @@ use v_ide_tui::app::App;
 use v_ide_tui::command_line;
 use v_ide_tui::input;
 use v_ide_tui::panel::Panel;
-use v_ide_tui::session::Session;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root =
@@ -19,9 +18,8 @@ fn temp_vault(name: &str) -> PathBuf {
 }
 
 fn app_for(root: &std::path::Path) -> App {
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, root);
     app
 }
 
@@ -69,4 +67,19 @@ fn enter_on_backlink_opens_file_and_closes_panel() {
     assert_eq!(path, "b.md", "Enter must open the backlinked file");
     assert!(!panel, "Enter on a backlink must close the panel");
     assert!(!focus, "panel focus must be released after opening");
+}
+
+#[test]
+fn backlinks_twice_closes_panel() {
+    let root = temp_vault("twice");
+    fs::write(root.join("a.md"), "# A\n").unwrap();
+    fs::write(root.join("b.md"), "see [[a]]\n").unwrap();
+    let mut app = app_for(&root);
+    app.open_rel("a.md");
+    command_line::run(&mut app, "backlinks");
+    let opened = app.ui.panel.is_some();
+    command_line::run(&mut app, "backlinks");
+    let closed = app.ui.panel.is_none();
+    let _ = fs::remove_dir_all(&root);
+    assert!(opened && closed, "second :backlinks must close the panel");
 }

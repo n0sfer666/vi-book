@@ -1,5 +1,3 @@
-use std::fs;
-
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
@@ -41,10 +39,8 @@ pub fn run(app: &mut App, command: &str) {
         "today" => daily_cmd::open_today(app),
         "daily-prev" => daily_cmd::open_prev(app),
         "daily-next" => daily_cmd::open_next(app),
-        "tree" => toggle_panel(app, PanelKind::Tree),
-        "backlinks" => toggle_panel(app, PanelKind::Backlinks),
+        "tree" => toggle_tree(app),
         "help" => app.ui.help = true,
-        "pick" => app.open_picker(),
         "buffers" => app.open_buffer_list(),
         "toggle-view" => actions::toggle_view(app),
         "vsplit" | "vsp" | "split" | "sp" => app.vsplit(None),
@@ -59,12 +55,8 @@ pub fn run(app: &mut App, command: &str) {
                 app.vsplit(Some(name.trim()));
             } else if let Some(rel) = other.strip_prefix("e ") {
                 app.open_rel(rel.trim());
-            } else if let Some(name) = other.strip_prefix("new ") {
-                create_note(app, name);
             } else if let Some(mode) = other.strip_prefix("wrap ") {
                 set_wrap(app, mode.trim());
-            } else if let Some(arg) = other.strip_prefix("scan-hidden ") {
-                set_scan_hidden(app, arg.trim());
             } else if !requests::command(app, other) && !plugin::run_command(app, other) {
                 app.ui.message = format!("not an editor command: {other}");
             }
@@ -83,93 +75,13 @@ fn set_wrap(app: &mut App, mode: &str) {
     }
 }
 
-fn set_scan_hidden(app: &mut App, arg: &str) {
-    let value = match arg {
-        "on" => true,
-        "off" => false,
-        "toggle" => !app.session.scan_hidden,
-        _ => {
-            app.ui.message = String::from("scan-hidden: on|off|toggle");
-            return;
-        }
-    };
-    app.session.scan_hidden = value;
-    let state = if value { "on" } else { "off" };
-    match app.session.reindex() {
-        Ok(()) => {
-            plugin::sync_vault_host(app);
-            app.ui.message = format!("scan hidden folders: {state}");
-        }
-        Err(err) => app.ui.message = format!("reindex failed: {err}"),
-    }
-}
-
-fn create_note(app: &mut App, name: &str) {
-    let name = name.trim();
-    if name.is_empty() {
-        return;
-    }
-    let rel = if name.ends_with(".md") {
-        name.to_string()
-    } else {
-        format!("{name}.md")
-    };
-    let abs = app.session.absolute(&rel);
-    if !abs.exists() {
-        if let Some(parent) = abs.parent()
-            && let Err(err) = fs::create_dir_all(parent)
-        {
-            app.ui.message = format!("create failed: {err}");
-            return;
-        }
-        let stem = rel
-            .trim_end_matches(".md")
-            .rsplit('/')
-            .next()
-            .unwrap_or(&rel);
-        if let Err(err) = fs::write(&abs, format!("# {stem}\n\n")) {
-            app.ui.message = format!("create failed: {err}");
-            return;
-        }
-        let _ = app.session.reindex();
-    }
-    app.open_rel(&rel);
-}
-
-enum PanelKind {
-    Tree,
-    Backlinks,
-}
-
-fn toggle_panel(app: &mut App, kind: PanelKind) {
-    let same = match (&app.ui.panel, &kind) {
-        (Some(Panel::Tree { .. }), PanelKind::Tree) => true,
-        (Some(Panel::List(list)), PanelKind::Backlinks) => list.title() == "backlinks",
-        _ => false,
-    };
-    if same {
+fn toggle_tree(app: &mut App) {
+    if matches!(app.ui.panel, Some(Panel::Tree { .. })) {
         app.ui.panel = None;
         app.ui.panel_focus = false;
         return;
     }
-    let panel = match kind {
-        PanelKind::Tree => Panel::tree(&app.session.items()),
-        PanelKind::Backlinks => {
-            let items: Vec<String> = app
-                .session
-                .index
-                .backlinks(&app.workspace.current().name)
-                .iter()
-                .map(|n| n.path.clone())
-                .collect();
-            if items.is_empty() {
-                app.ui.message = String::from("no notes link here");
-                return;
-            }
-            Panel::backlinks(items)
-        }
-    };
-    app.ui.panel = Some(panel);
+    app.ui.panel = Some(Panel::tree(&app.vault_items()));
     app.ui.panel_focus = true;
 }
 

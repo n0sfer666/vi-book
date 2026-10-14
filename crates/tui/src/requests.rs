@@ -1,11 +1,12 @@
 use std::path::Path;
 
 use crate::app::App;
-use crate::command_line;
 use crate::list_panel::ListPanel;
 use crate::panel::Panel;
 use crate::picker::Picker;
+use crate::{command_line, plugin};
 use v_ide_editor::module::{Event, Request};
+use v_ide_vault::scan::rel_path;
 
 const MAX_DEPTH: usize = 16;
 
@@ -19,6 +20,7 @@ pub fn command(app: &mut App, line: &str) -> bool {
     match app.modules.command(&app.workspace, name, args) {
         Some(requests) => {
             apply(app, requests);
+            plugin::sync_vault_host(app);
             true
         }
         None => false,
@@ -27,7 +29,10 @@ pub fn command(app: &mut App, line: &str) -> bool {
 
 pub fn dispatch(app: &mut App, command: &str, item: &str) {
     match app.modules.command(&app.workspace, command, item) {
-        Some(requests) => apply(app, requests),
+        Some(requests) => {
+            apply(app, requests);
+            plugin::sync_vault_host(app);
+        }
         None => command_line::run(app, &format!("{command} {item}")),
     }
 }
@@ -61,20 +66,23 @@ fn apply_at(app: &mut App, requests: Vec<Request>, depth: usize) {
                 title,
                 rows,
                 command,
-            } => {
-                app.ui.panel = Some(Panel::List(ListPanel::new(&title, rows, &command)));
-                app.ui.panel_focus = true;
-            }
+            } => list(app, &title, rows, &command),
             Request::Emit(ev) => emit_at(app, ev, depth),
         }
     }
 }
 
+fn list(app: &mut App, title: &str, rows: Vec<String>, command: &str) {
+    if matches!(&app.ui.panel, Some(Panel::List(open)) if open.title() == title) {
+        app.ui.panel = None;
+        app.ui.panel_focus = false;
+        return;
+    }
+    app.ui.panel = Some(Panel::List(ListPanel::new(title, rows, command)));
+    app.ui.panel_focus = true;
+}
+
 fn open(app: &mut App, path: &Path) {
-    let rel = path
-        .strip_prefix(&app.session.root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/");
+    let rel = rel_path(app.workspace.cwd(), path);
     app.open_rel(&rel);
 }

@@ -10,8 +10,8 @@ use v_ide_tui::actions;
 use v_ide_tui::app::App;
 use v_ide_tui::help;
 use v_ide_tui::read_motion;
-use v_ide_tui::session::Session;
 use v_ide_tui::view::View;
+use v_ide_vault::module::VaultModule;
 
 fn key(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::NONE)
@@ -28,9 +28,8 @@ fn temp_vault(name: &str) -> PathBuf {
 fn note_opens_in_read_mode_by_default() {
     let root = temp_vault("read");
     fs::write(root.join("a.md"), "# Title\n\nbody").unwrap();
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, &root);
     app.load("a.md");
     let view = app.ui.read.view;
     let _ = fs::remove_dir_all(&root);
@@ -67,8 +66,9 @@ fn f1_opens_help_and_enter_reveals_the_manual() {
 #[test]
 fn empty_vault_is_detected() {
     let root = temp_vault("empty");
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
-    let empty = session.is_empty();
+    let mut app = App::new(common::named_doc("", ""));
+    common::open_vault(&mut app, &root);
+    let empty = app.modules.get::<VaultModule>().unwrap().is_empty();
     let _ = fs::remove_dir_all(&root);
     assert!(empty);
 }

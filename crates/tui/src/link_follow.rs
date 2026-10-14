@@ -25,7 +25,10 @@ fn follow_wiki(app: &mut App, link: &Link) {
     if plugin::follow_link(app, &link.target) {
         return;
     }
-    match follow(&app.session.index, link) {
+    let Some(found) = app.vault().map(|vault| follow(vault.index(), link)) else {
+        return;
+    };
+    match found {
         Follow::Open(path) => app.open_rel(&path),
         Follow::Disambiguate(paths) => {
             app.ui.picker = Some(crate::picker::Picker::new(paths, "e"));
@@ -66,8 +69,8 @@ fn resolve(app: &App, target: &str) -> Option<String> {
     if let Some(rel) = resolve_relative(app, target) {
         return Some(rel);
     }
-    let abs = external::resolve(&app.session.root, target)?;
-    abs.strip_prefix(&app.session.root)
+    let abs = external::resolve(app.workspace.cwd(), target)?;
+    abs.strip_prefix(app.workspace.cwd())
         .ok()
         .map(|p| p.to_string_lossy().replace('\\', "/"))
 }
@@ -76,7 +79,7 @@ fn resolve_relative(app: &App, target: &str) -> Option<String> {
     let parent = std::path::Path::new(&app.workspace.current().name).parent()?;
     let rel = parent.join(target);
     let candidate = rel.to_str()?.to_string();
-    app.session
+    app.workspace
         .absolute(&candidate)
         .is_file()
         .then(|| candidate.replace('\\', "/"))

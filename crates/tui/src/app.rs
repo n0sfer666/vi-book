@@ -7,10 +7,9 @@ use ratatui::DefaultTerminal;
 use crate::menu::{Menu, MenuItem};
 use crate::picker::Picker;
 use crate::read_state::ReadState;
-use crate::session::Session;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{plugin, render, requests, router};
+use crate::{launch, plugin, render, requests, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
@@ -20,6 +19,7 @@ use v_ide_lua::host::PluginHost;
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_notebook::date::Date;
 use v_ide_notebook::history::History;
+use v_ide_vault::module::VaultModule;
 
 pub struct App {
     pub workspace: Workspace,
@@ -27,7 +27,6 @@ pub struct App {
     pub ui: UiState,
     pub read_states: HashMap<DocId, ReadState>,
     pub quit: bool,
-    pub session: Session,
     pub theme: Theme,
     pub history: History,
     pub today: Date,
@@ -48,16 +47,16 @@ pub struct App {
 
 pub fn run() -> Result<(), Error> {
     let arg = env::args().nth(1);
-    let (session, open) = Session::open(arg.as_deref())?;
+    let (cwd, open) = launch::target(arg.as_deref())?;
     let mut app = App::new(Document::new(""));
-    app.session = session;
+    app.workspace.set_cwd(cwd);
     app.today = crate::clock::today();
+    requests::startup(&mut app);
     app.load_config();
     app.install_keymaps();
-    requests::startup(&mut app);
     if let Some(rel) = open {
         app.open_rel(&rel);
-    } else if app.session.is_empty() {
+    } else if app.vault().is_none_or(VaultModule::is_empty) {
         app.ui.menu = Some(Menu::empty_vault());
     } else {
         app.open_picker();
@@ -72,11 +71,10 @@ impl App {
     pub fn new(doc: Document) -> Self {
         Self {
             workspace: Workspace::new(doc),
-            modules: Modules::new(Vec::new()),
+            modules: Modules::new(vec![VaultModule::registration()]),
             ui: UiState::new(),
             read_states: HashMap::new(),
             quit: false,
-            session: Session::in_memory(),
             theme: Theme::default(),
             history: History::new(),
             today: Date::new(1970, 1, 1),
@@ -105,7 +103,7 @@ impl App {
     }
 
     pub fn open_picker(&mut self) {
-        self.ui.picker = Some(Picker::new(self.session.items(), "e"));
+        self.ui.picker = Some(Picker::new(self.vault_items(), "e"));
     }
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<(), Error> {

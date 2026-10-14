@@ -22,7 +22,7 @@ fn base_date(app: &App) -> Date {
 
 fn open_daily(app: &mut App, date: Date) {
     let rel = daily_path(date);
-    let abs = app.session.absolute(&rel);
+    let abs = app.workspace.absolute(&rel);
     if !abs.exists() {
         if let Some(parent) = abs.parent()
             && let Err(err) = fs::create_dir_all(parent)
@@ -34,7 +34,7 @@ fn open_daily(app: &mut App, date: Date) {
             app.ui.message = format!("daily failed: {err}");
             return;
         }
-        let _ = app.session.reindex();
+        app.reindex_vault();
     }
     app.open_rel(&rel);
 }

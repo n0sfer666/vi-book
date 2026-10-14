@@ -4,7 +4,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use v_ide_tui::app::App;
-use v_ide_tui::session::Session;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-app-{}-{name}", std::process::id()));
@@ -17,10 +16,9 @@ fn temp_vault(name: &str) -> PathBuf {
 fn switching_files_with_unsaved_changes_stashes_the_dirty_buffer() {
     let root = temp_vault("dirty");
     fs::write(root.join("b.md"), "target body").unwrap();
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
     let mut app = App::new(common::named_doc("hello", "a.md"));
-    app.session = session;
+    common::open_vault(&mut app, &root);
     app.workspace.current_mut().editor.handle_keys("ix<Esc>");
     let dirty_text = app.workspace.current().editor.text();
     assert!(app.workspace.current().is_dirty());
@@ -49,10 +47,9 @@ fn switching_files_with_unsaved_changes_stashes_the_dirty_buffer() {
 fn switching_files_when_clean_loads_target() {
     let root = temp_vault("clean");
     fs::write(root.join("b.md"), "target body").unwrap();
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
 
     let mut app = App::new(common::named_doc("hello", "a.md"));
-    app.session = session;
+    common::open_vault(&mut app, &root);
     app.load("b.md");
 
     let text = app.workspace.current().editor.text();

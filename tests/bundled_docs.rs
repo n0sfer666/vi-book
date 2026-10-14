@@ -6,7 +6,6 @@ use std::path::PathBuf;
 use v_ide_tui::app::App;
 use v_ide_tui::help;
 use v_ide_tui::link_follow::follow_at_cursor;
-use v_ide_tui::session::Session;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-bundled-{}-{name}", std::process::id()));
@@ -16,9 +15,8 @@ fn temp_vault(name: &str) -> PathBuf {
 }
 
 fn app_for(root: &std::path::Path) -> App {
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, root);
     app
 }
 

@@ -6,13 +6,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use v_ide_editor::module::{Cx, Event, Manifest, Module, Modules, Registration, Trigger};
+use v_ide_editor::module::{Cx, Event, Manifest, Module, Modules, Registration, Request, Trigger};
 use v_ide_keys::Key;
 use v_ide_tui::app::App;
 use v_ide_tui::list_panel::ListPanel;
 use v_ide_tui::panel::Panel;
 use v_ide_tui::picker::Picker;
-use v_ide_tui::session::Session;
 use v_ide_tui::{command_line, input, requests};
 
 struct Looper;
@@ -47,9 +46,8 @@ fn temp_vault(name: &str) -> PathBuf {
 }
 
 fn app_in(root: &Path, modules: Modules) -> App {
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    app.workspace.set_cwd(root.to_path_buf());
     app.modules = modules;
     app
 }
@@ -185,4 +183,18 @@ fn startup_activates_startup_modules() {
     let mut app = app_with(fakes::all());
     requests::startup(&mut app);
     assert_eq!(app.ui.message, "up");
+}
+
+#[test]
+fn list_request_with_open_title_toggles_panel() {
+    let mut app = app_with(fakes::all());
+    let list = |title: &str| Request::List {
+        title: title.to_string(),
+        rows: vec![String::from("r")],
+        command: String::from("go"),
+    };
+    requests::apply(&mut app, vec![list("One"), list("Two")]);
+    assert!(matches!(&app.ui.panel, Some(Panel::List(l)) if l.title() == "Two"));
+    requests::apply(&mut app, vec![list("Two")]);
+    assert!(app.ui.panel.is_none() && !app.ui.panel_focus);
 }

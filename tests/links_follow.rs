@@ -7,7 +7,7 @@ use v_ide_lua::defaults::LINKS;
 use v_ide_lua::host::PluginHost;
 use v_ide_tui::app::App;
 use v_ide_tui::link_follow::follow_at_cursor;
-use v_ide_tui::session::Session;
+use v_ide_vault::module::VaultModule;
 
 fn temp_vault(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("vi-book-links-{}-{name}", std::process::id()));
@@ -17,12 +17,12 @@ fn temp_vault(name: &str) -> PathBuf {
 }
 
 fn app_for(root: &std::path::Path) -> App {
-    let (session, _) = Session::open(Some(root.to_str().unwrap())).unwrap();
     let mut app = App::new(common::named_doc("", ""));
-    app.session = session;
+    common::open_vault(&mut app, root);
     let host = PluginHost::new().unwrap();
     host.load(LINKS).unwrap();
-    host.set_vault(app.session.items(), app.session.index.tags());
+    let vault = app.modules.get::<VaultModule>().unwrap();
+    host.set_vault(vault.items(), vault.index().tags());
     app.host = Some(host);
     app
 }
