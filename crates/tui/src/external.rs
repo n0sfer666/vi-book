@@ -2,7 +2,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use ratatui::DefaultTerminal;
+use crate::term::Term;
 
 pub fn resolve(root: &Path, target: &str) -> Option<PathBuf> {
     let direct = root.join(target);
@@ -45,15 +45,14 @@ pub fn open_url(url: &str) {
     let _ = Command::new(opener).arg(url).spawn();
 }
 
-pub fn run(terminal: &mut DefaultTerminal, editor: &str, path: &Path) -> io::Result<()> {
+pub fn run(term: &mut Term, editor: &str, path: &Path) -> io::Result<()> {
     let mut parts = editor.split_whitespace();
     let Some(program) = parts.next() else {
         return Ok(());
     };
     let args: Vec<&str> = parts.collect();
-    ratatui::restore();
+    term.leave()?;
     let result = Command::new(program).args(&args).arg(path).status();
-    *terminal = ratatui::init();
-    let _ = terminal.clear();
+    term.enter()?;
     result.map(|_| ())
 }

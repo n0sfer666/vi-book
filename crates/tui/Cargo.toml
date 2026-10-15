@@ -16,6 +16,5 @@ v-ide-vault = { path = "../vault" }
 v-ide-notebook = { path = "../notebook" }
 v-ide-lua = { path = "../lua" }
 v-ide-view = { path = "../view" }
-ratatui = "0.29"
 crossterm = "0.28"
 arboard = "3.4.1"

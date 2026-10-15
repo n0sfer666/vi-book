@@ -2,15 +2,15 @@ use std::collections::HashMap;
 use std::env;
 
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
-use ratatui::DefaultTerminal;
 
 use crate::frame::Frame;
 use crate::menu::{Menu, MenuItem};
 use crate::picker::Picker;
 use crate::read_state::ReadState;
+use crate::term::Term;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{launch, lua_bridge, render, requests, router, tui_blit};
+use crate::{launch, lua_bridge, render, requests, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
@@ -21,6 +21,7 @@ use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_notebook::history::History;
 use v_ide_notebook::module::NotebookModule;
 use v_ide_vault::module::VaultModule;
+use v_ide_view::Depth;
 
 pub struct App {
     pub workspace: Workspace,
@@ -42,6 +43,7 @@ pub struct App {
     pub external_request: Option<std::path::PathBuf>,
     pub url_request: Option<String>,
     pub last_clip: String,
+    pub color_depth: Option<Depth>,
 }
 
 pub fn run() -> Result<(), Error> {
@@ -58,10 +60,9 @@ pub fn run() -> Result<(), Error> {
     } else {
         app.open_picker();
     }
-    let mut terminal = ratatui::init();
-    let result = app.event_loop(&mut terminal);
-    ratatui::restore();
-    result
+    let mut term = Term::new(app.color_depth);
+    term.enter()?;
+    app.event_loop(&mut term)
 }
 
 impl App {
@@ -90,6 +91,7 @@ impl App {
             external_request: None,
             url_request: None,
             last_clip: String::new(),
+            color_depth: None,
         }
     }
 
@@ -101,14 +103,12 @@ impl App {
         self.ui.picker = Some(Picker::new(self.vault_items(), "e"));
     }
 
-    fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<(), Error> {
+    fn event_loop(&mut self, term: &mut Term) -> Result<(), Error> {
         loop {
-            terminal.draw(|out| {
-                let area = out.area();
-                let mut frame = Frame::new(area.width, area.height);
-                render::draw(&mut frame, self);
-                tui_blit::blit(&frame, out);
-            })?;
+            let (w, h) = term.size()?;
+            let mut frame = Frame::new(w, h);
+            render::draw(&mut frame, self);
+            term.draw(&frame)?;
             if let Event::Key(key) = event::read()?
                 && key.kind == KeyEventKind::Press
             {
@@ -116,7 +116,7 @@ impl App {
             }
             if let Some(path) = self.external_request.take() {
                 if let Some(editor) = self.external_editor() {
-                    let _ = crate::external::run(terminal, &editor, &path);
+                    let _ = crate::external::run(term, &editor, &path);
                 } else {
                     self.ui.message =
                         String::from("no editor set (vibook.opt.code_editor or $EDITOR)");

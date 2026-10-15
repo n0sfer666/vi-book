@@ -2,7 +2,7 @@ use std::env;
 use std::mem;
 use std::path::PathBuf;
 
-use v_ide_view::Color;
+use v_ide_view::{Color, Depth};
 
 use crate::app::App;
 use crate::command_line;
@@ -84,6 +84,9 @@ fn apply_opts(app: &mut App) {
         app.menu_center = pos == "center";
     }
     app.code_editor = host.opt_string("code_editor");
+    if let Some(value) = host.opt_string("color_depth") {
+        app.color_depth = color_depth(&value, app.color_depth);
+    }
     app.menu_extra = host
         .menu_items()
         .into_iter()
@@ -94,6 +97,16 @@ fn apply_opts(app: &mut App) {
     apply_colors(&mut app.theme, host);
     let hidden = host.opt_bool("scan_hidden");
     scan_hidden(app, hidden);
+}
+
+fn color_depth(value: &str, current: Option<Depth>) -> Option<Depth> {
+    match value {
+        "auto" => None,
+        "16" => Some(Depth::Ansi16),
+        "256" => Some(Depth::Ansi256),
+        "truecolor" => Some(Depth::TrueColor),
+        _ => current,
+    }
 }
 
 fn scan_hidden(app: &mut App, hidden: Option<bool>) {
