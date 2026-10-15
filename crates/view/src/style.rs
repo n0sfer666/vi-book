@@ -8,3 +8,20 @@ pub struct Style {
     pub underline_color: Color,
     pub mods: Mods,
 }
+
+impl Style {
+    pub fn reverse(mut self) -> Self {
+        self.mods.reverse = true;
+        self
+    }
+
+    pub fn dim(mut self) -> Self {
+        self.mods.dim = true;
+        self
+    }
+
+    pub fn bold(mut self) -> Self {
+        self.mods.bold = true;
+        self
+    }
+}
