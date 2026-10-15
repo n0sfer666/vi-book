@@ -1,13 +1,10 @@
-use ratatui::Frame;
-use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style as TuiStyle};
-use ratatui::widgets::Paragraph;
+use v_ide_view::{Grid, Rect, Style};
 
 use crate::app::App;
 use crate::view::View;
 use v_ide_engine::mode::Mode;
 
-pub(crate) fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
+pub(crate) fn draw_status(grid: &mut Grid, app: &App, area: Rect) {
     let doc = app.workspace.current();
     let mode = if app.ui.read.view == View::Read {
         "READ"
@@ -28,11 +25,12 @@ pub(crate) fn draw_status(frame: &mut Frame, app: &App, area: Rect) {
         cursor.line + 1,
         cursor.col + 1
     );
-    let style = TuiStyle::default().add_modifier(Modifier::REVERSED);
-    frame.render_widget(Paragraph::new(status).style(style), area);
+    let style = Style::default().reverse();
+    grid.fill(area, style);
+    grid.put_str(area.x, area.y, &status, style, area.w);
 }
 
-pub(crate) fn draw_message(frame: &mut Frame, app: &App, area: Rect) {
+pub(crate) fn draw_message(grid: &mut Grid, app: &App, area: Rect) {
     let content = if let Some(command) = &app.ui.command {
         format!(":{command}")
     } else if let Some(input) = app.workspace.current().editor.search_input() {
@@ -40,5 +38,5 @@ pub(crate) fn draw_message(frame: &mut Frame, app: &App, area: Rect) {
     } else {
         app.ui.message.clone()
     };
-    frame.render_widget(Paragraph::new(content), area);
+    grid.put_str(area.x, area.y, &content, Style::default(), area.w);
 }

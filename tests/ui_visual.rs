@@ -1,9 +1,6 @@
 mod common;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::Terminal;
-use ratatui::backend::TestBackend;
-use ratatui::style::Modifier;
 
 use v_ide_engine::mode::Mode;
 use v_ide_tui::app::App;
@@ -18,16 +15,12 @@ fn plain(c: char) -> KeyEvent {
 }
 
 fn reversed_at(app: &mut App, x: u16, y: u16) -> bool {
-    let backend = TestBackend::new(100, 24);
-    let mut terminal = Terminal::new(backend).unwrap();
-    terminal
-        .draw(|frame| v_ide_tui::render::draw(frame, app))
-        .unwrap();
-    let buf = terminal.backend().buffer().clone();
-    buf[(x, y)]
-        .style()
-        .add_modifier
-        .contains(Modifier::REVERSED)
+    common::draw(app, 100, 24)
+        .grid
+        .cell(x, y)
+        .style
+        .mods
+        .reverse
 }
 
 #[test]

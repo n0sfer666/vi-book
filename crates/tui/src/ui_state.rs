@@ -1,4 +1,4 @@
-use ratatui::layout::Rect;
+use v_ide_view::Rect;
 
 use crate::buffer_list::BufferList;
 use crate::menu::Menu;
@@ -34,7 +34,12 @@ impl UiState {
             left: 0,
             command: None,
             message: String::new(),
-            text_area: Rect::new(0, 0, 80, 24),
+            text_area: Rect {
+                x: 0,
+                y: 0,
+                w: 80,
+                h: 24,
+            },
             picker: None,
             panel: None,
             panel_focus: false,

@@ -1,7 +1,7 @@
-use ratatui::Frame;
-use ratatui::layout::{Position as ScreenPosition, Rect};
+use v_ide_view::Rect;
 
 use crate::app::App;
+use crate::frame::Frame;
 use crate::layout::text_column;
 
 pub(crate) fn place_bottom_cursor(frame: &mut Frame, app: &App, message_area: Rect) {
@@ -12,7 +12,7 @@ pub(crate) fn place_bottom_cursor(frame: &mut Frame, app: &App, message_area: Re
         .or(app.workspace.current().editor.search_input())
         .map_or(0, |s| s.chars().count());
     let col = message_area.x + 1 + len as u16;
-    frame.set_cursor_position(ScreenPosition::new(col, message_area.y));
+    frame.cursor = Some((col, message_area.y));
 }
 
 pub(crate) fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, message_area: Rect) {
@@ -24,7 +24,7 @@ pub(crate) fn place_cursor(frame: &mut Frame, app: &App, text_area: Rect, messag
     let inner = text_column(text_area);
     let cursor = editor.cursor();
     let row = inner.y + (cursor.line - app.ui.read.top) as u16;
-    let col = inner.x
-        + (cursor.col.saturating_sub(app.ui.left) as u16).min(inner.width.saturating_sub(1));
-    frame.set_cursor_position(ScreenPosition::new(col, row));
+    let col =
+        inner.x + (cursor.col.saturating_sub(app.ui.left) as u16).min(inner.w.saturating_sub(1));
+    frame.cursor = Some((col, row));
 }

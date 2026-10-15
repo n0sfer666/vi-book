@@ -7,6 +7,7 @@ use v_ide_editor::document::Document;
 use v_ide_engine::Editor;
 use v_ide_text::Position;
 use v_ide_tui::app::App;
+use v_ide_tui::frame::Frame;
 use v_ide_tui::requests;
 
 pub struct Case {
@@ -107,4 +108,10 @@ pub fn lua_app(doc: Document, label: &str, script: &str) -> App {
     open_vault(&mut app, &temp_root(label));
     load_lua(&mut app, label, script);
     app
+}
+
+pub fn draw(app: &mut App, w: u16, h: u16) -> Frame {
+    let mut frame = Frame::new(w, h);
+    v_ide_tui::render::draw(&mut frame, app);
+    frame
 }

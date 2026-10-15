@@ -1,9 +1,5 @@
 mod common;
 
-use ratatui::Terminal;
-use ratatui::backend::TestBackend;
-use ratatui::style::Color as TuiColor;
-
 use v_ide_markdown::style::{CodeToken, Style};
 use v_ide_tui::app::App;
 use v_ide_tui::theme::{Face, Theme, style_for_name};
@@ -51,14 +47,9 @@ fn rendered_code_block_paints_keyword_color() {
         "a.md",
     ));
     app.ui.read.view = View::Read;
-    let backend = TestBackend::new(60, 24);
-    let mut terminal = Terminal::new(backend).unwrap();
-    terminal
-        .draw(|frame| v_ide_tui::render::draw(frame, &mut app))
-        .unwrap();
-    let buf = terminal.backend().buffer().clone();
-    let magenta = (0..buf.area.width)
-        .any(|x| (0..buf.area.height).any(|y| buf[(x, y)].style().fg == Some(TuiColor::Magenta)));
+    let grid = common::draw(&mut app, 60, 24).grid;
+    let magenta = (0..grid.w)
+        .any(|x| (0..grid.h).any(|y| grid.cell(x, y).style.fg == Color::Ansi(Ansi::Magenta)));
     assert!(magenta, "keyword should be painted with its palette color");
 }
 

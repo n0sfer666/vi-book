@@ -1,39 +1,40 @@
 mod common;
 
-use ratatui::Terminal;
-use ratatui::backend::TestBackend;
-use ratatui::layout::Rect;
-
 use v_ide_tui::app::App;
 use v_ide_tui::split::split_rects;
 use v_ide_tui::view::View;
+use v_ide_view::Rect;
+
+fn rect(w: u16, h: u16) -> Rect {
+    Rect { x: 0, y: 0, w, h }
+}
 
 #[test]
 fn one_pane_fills_the_area() {
-    let area = Rect::new(0, 0, 80, 24);
+    let area = rect(80, 24);
     let rects = split_rects(area, 1);
     assert_eq!(rects, vec![area]);
 }
 
 #[test]
 fn two_panes_share_width_with_a_gap() {
-    let rects = split_rects(Rect::new(0, 0, 81, 24), 2);
+    let rects = split_rects(rect(81, 24), 2);
     assert_eq!(rects.len(), 2);
     assert_eq!(rects[0].x, 0);
-    assert_eq!(rects[0].width, 40);
+    assert_eq!(rects[0].w, 40);
     assert_eq!(rects[1].x, 41);
-    assert_eq!(rects[1].width, 40);
+    assert_eq!(rects[1].w, 40);
 }
 
 #[test]
 fn three_panes_fit_within_the_area() {
-    let area = Rect::new(0, 0, 80, 24);
+    let area = rect(80, 24);
     let rects = split_rects(area, 3);
     assert_eq!(rects.len(), 3);
     let last = rects.last().unwrap();
-    assert!(last.x + last.width <= area.x + area.width);
+    assert!(last.x + last.w <= area.x + area.w);
     for pair in rects.windows(2) {
-        assert!(pair[1].x > pair[0].x + pair[0].width);
+        assert!(pair[1].x > pair[0].x + pair[0].w);
     }
 }
 
@@ -84,13 +85,10 @@ fn two_panes_render_side_by_side_with_a_divider() {
     app.ui.read.view = View::Edit;
     app.vsplit(None);
     app.ui.read.view = View::Edit;
-    let backend = TestBackend::new(80, 24);
-    let mut terminal = Terminal::new(backend).unwrap();
-    terminal
-        .draw(|frame| v_ide_tui::render::draw(frame, &mut app))
-        .unwrap();
-    let buf = terminal.backend().buffer().clone();
-    let row0: Vec<String> = (0..80).map(|x| buf[(x, 0)].symbol().to_string()).collect();
+    let frame = common::draw(&mut app, 80, 24);
+    let row0: Vec<String> = (0..80)
+        .map(|x| frame.grid.cell(x, 0).symbol.as_str().to_string())
+        .collect();
     let left = row0[..40].iter().any(|c| c == "A");
     let right = row0[40..].iter().any(|c| c == "A");
     let divider = row0.iter().any(|c| c == "\u{2502}");

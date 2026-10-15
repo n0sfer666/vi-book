@@ -1,11 +1,7 @@
 use std::collections::HashMap;
 
-use ratatui::style::Style as TuiStyle;
-
 use v_ide_markdown::style::{CodeToken, Style};
 use v_ide_view::{Ansi, Color, Mods, Style as CellStyle};
-
-use crate::tui_style;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Face {
@@ -51,10 +47,6 @@ impl Face {
             ..CellStyle::default()
         }
     }
-
-    pub fn tui(self) -> TuiStyle {
-        tui_style::from_cell(self.style())
-    }
 }
 
 pub struct Theme {
@@ -84,10 +76,6 @@ impl Theme {
 
     pub fn set(&mut self, style: Style, face: Face) {
         self.faces.insert(style, face);
-    }
-
-    pub fn tui(&self, style: Style) -> TuiStyle {
-        self.face(style).tui()
     }
 }
 

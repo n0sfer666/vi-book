@@ -4,12 +4,13 @@ use std::env;
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 use ratatui::DefaultTerminal;
 
+use crate::frame::Frame;
 use crate::menu::{Menu, MenuItem};
 use crate::picker::Picker;
 use crate::read_state::ReadState;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{launch, lua_bridge, render, requests, router};
+use crate::{launch, lua_bridge, render, requests, router, tui_blit};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
@@ -102,7 +103,12 @@ impl App {
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<(), Error> {
         loop {
-            terminal.draw(|frame| render::draw(frame, self))?;
+            terminal.draw(|out| {
+                let area = out.area();
+                let mut frame = Frame::new(area.width, area.height);
+                render::draw(&mut frame, self);
+                tui_blit::blit(&frame, out);
+            })?;
             if let Event::Key(key) = event::read()?
                 && key.kind == KeyEventKind::Press
             {

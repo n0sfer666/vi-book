@@ -1,15 +1,11 @@
 mod common;
 
-use ratatui::Terminal;
-use ratatui::backend::TestBackend;
-
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use v_ide_editor::document::Document;
 use v_ide_tui::app::App;
 use v_ide_tui::buffer_list::{BufferEntry, BufferList};
 use v_ide_tui::picker::Picker;
-use v_ide_tui::render;
 
 fn background() -> Document {
     let line = "X".repeat(70);
@@ -18,14 +14,11 @@ fn background() -> Document {
 }
 
 fn render_app(app: &mut App) -> Vec<Vec<String>> {
-    let backend = TestBackend::new(80, 24);
-    let mut terminal = Terminal::new(backend).unwrap();
-    terminal.draw(|frame| render::draw(frame, app)).unwrap();
-    let buf = terminal.backend().buffer().clone();
-    (0..buf.area.height)
+    let grid = common::draw(app, 80, 24).grid;
+    (0..grid.h)
         .map(|y| {
-            (0..buf.area.width)
-                .map(|x| buf[(x, y)].symbol().to_string())
+            (0..grid.w)
+                .map(|x| grid.cell(x, y).symbol.as_str().to_string())
                 .collect()
         })
         .collect()

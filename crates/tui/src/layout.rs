@@ -1,7 +1,7 @@
-use ratatui::layout::Rect;
+use v_ide_view::Rect;
 
 pub fn column_width(area: Rect) -> usize {
-    (area.width as usize).max(1)
+    usize::from(area.w).max(1)
 }
 
 pub fn text_column(area: Rect) -> Rect {

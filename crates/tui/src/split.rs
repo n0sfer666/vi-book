@@ -1,13 +1,9 @@
-use ratatui::Frame;
-use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style as TuiStyle};
-use ratatui::text::Line;
-use ratatui::widgets::Paragraph;
+use v_ide_view::{Grid, Rect, Style};
 
 use crate::layout::{column_width, text_column};
 use crate::read_draw::read_lines;
 use crate::read_state::ReadState;
-use crate::render::styled_line;
+use crate::render::{Line, put_line, styled_line};
 use crate::theme::Theme;
 use crate::view::View;
 use v_ide_editor::document::Document;
@@ -21,51 +17,39 @@ pub fn split_rects(area: Rect, n: usize) -> Vec<Rect> {
         return vec![area];
     }
     let gaps = n - 1;
-    let content = area.width.saturating_sub(gaps);
+    let content = area.w.saturating_sub(gaps);
     let base = content / n;
     let extra = content % n;
     let mut rects = Vec::new();
     let mut x = area.x;
     for i in 0..n {
-        let width = base + u16::from(i < extra);
-        rects.push(Rect {
-            x,
-            y: area.y,
-            width,
-            height: area.height,
-        });
-        x += width + 1;
+        let w = base + u16::from(i < extra);
+        rects.push(Rect { x, w, ..area });
+        x += w + 1;
     }
     rects
 }
 
-pub fn draw_divider(frame: &mut Frame, area: Rect, x: u16) {
-    if x >= area.x + area.width {
+pub fn draw_divider(grid: &mut Grid, area: Rect, x: u16) {
+    if x >= area.x + area.w {
         return;
     }
-    let cell = Rect {
-        x,
-        y: area.y,
-        width: 1,
-        height: area.height,
-    };
-    let bar: Vec<Line> = (0..area.height).map(|_| Line::from("\u{2502}")).collect();
-    frame.render_widget(
-        Paragraph::new(bar).style(TuiStyle::default().add_modifier(Modifier::DIM)),
-        cell,
-    );
+    let dim = Style::default().dim();
+    for y in area.y..area.y + area.h {
+        grid.put_str(x, y, "\u{2502}", dim, 1);
+    }
 }
 
 pub fn draw_pane(
-    frame: &mut Frame,
+    grid: &mut Grid,
     theme: &Theme,
     doc: &Document,
     state: &ReadState,
     area: Rect,
     wrap: WrapMode,
 ) {
-    let height = area.height as usize;
-    let lines = match state.view {
+    let height = usize::from(area.h);
+    let lines: Vec<Line> = match state.view {
         View::Read => {
             let rendered = render_with(&doc.editor.text(), column_width(area), wrap);
             read_lines(&rendered, state.top, height, theme, None)
@@ -88,5 +72,8 @@ pub fn draw_pane(
                 .collect()
         }
     };
-    frame.render_widget(Paragraph::new(lines), text_column(area));
+    let inner = text_column(area);
+    for (row, line) in (inner.y..).zip(&lines) {
+        put_line(grid, inner.x, row, line, 0, inner.w);
+    }
 }
