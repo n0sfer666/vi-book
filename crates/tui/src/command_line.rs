@@ -4,7 +4,6 @@ use crate::app::App;
 use crate::panel::Panel;
 use crate::{actions, requests};
 use v_ide_editor::module::Event;
-use v_ide_markdown::wrap_mode::WrapMode;
 
 pub fn handle(app: &mut App, event: KeyEvent) {
     let Some(command) = app.ui.command.as_mut() else {
@@ -52,23 +51,10 @@ pub fn run(app: &mut App, command: &str) {
                 app.vsplit(Some(name.trim()));
             } else if let Some(rel) = other.strip_prefix("e ") {
                 app.open_rel(rel.trim());
-            } else if let Some(mode) = other.strip_prefix("wrap ") {
-                set_wrap(app, mode.trim());
             } else if !requests::command(app, other) {
                 app.ui.message = format!("not an editor command: {other}");
             }
         }
-    }
-}
-
-fn set_wrap(app: &mut App, mode: &str) {
-    match WrapMode::parse(mode) {
-        Some(wrap) => {
-            app.wrap = wrap;
-            app.ui.read.read_cache = None;
-            app.ui.message = format!("wrap: {mode}");
-        }
-        None => app.ui.message = format!("unknown wrap mode: {mode} (none|text|all)"),
     }
 }
 

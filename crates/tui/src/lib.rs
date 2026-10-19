@@ -19,6 +19,7 @@ pub mod link_follow;
 pub mod list_nav;
 pub mod list_panel;
 pub mod lua_bridge;
+pub mod markdown_bridge;
 pub mod menu;
 pub mod overlay;
 pub mod pane;

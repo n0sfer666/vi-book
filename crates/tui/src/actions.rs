@@ -12,7 +12,7 @@ pub fn open_menu(app: &mut App) {
     app.ui.menu = Some(Menu::leader(
         app.menu_extra.clone(),
         app.menu_center,
-        app.wrap,
+        app.wrap(),
         app.vault().is_some_and(VaultModule::scan_hidden),
     ));
 }
@@ -78,6 +78,10 @@ pub fn dispatch(app: &mut App, action: &str) {
 }
 
 pub fn toggle_view(app: &mut App) {
+    if !app.readable() {
+        app.ui.message = String::from("read view: markdown only");
+        return;
+    }
     let width = layout::column_width(app.ui.text_area);
     if app.ui.read.view == View::Read {
         read_view::leave(app, width);

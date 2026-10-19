@@ -8,25 +8,19 @@ fn app_with_opt(label: &str, script: &str) -> App {
 }
 
 #[test]
-fn opt_wrap_all_sets_app_wrap() {
-    assert_eq!(
-        app_with_opt("wrap-all", "vibook.opt.wrap = 'all'").wrap,
-        WrapMode::All
-    );
+fn opt_wrap_all_sets_module_wrap() {
+    let app = app_with_opt("wrap-all", "vibook.opt.wrap = 'all'");
+    assert_eq!(common::wrap(&app), Some(WrapMode::All));
 }
 
 #[test]
-fn opt_wrap_text_sets_app_wrap() {
-    assert_eq!(
-        app_with_opt("wrap-text", "vibook.opt.wrap = 'text'").wrap,
-        WrapMode::Text
-    );
+fn opt_wrap_text_sets_module_wrap() {
+    let app = app_with_opt("wrap-text", "vibook.opt.wrap = 'text'");
+    assert_eq!(common::wrap(&app), Some(WrapMode::Text));
 }
 
 #[test]
-fn opt_wrap_absent_keeps_default_all() {
-    assert_eq!(
-        app_with_opt("wrap-absent", "vibook.opt.leader = ','").wrap,
-        WrapMode::All
-    );
+fn opt_wrap_absent_leaves_module_idle() {
+    let app = app_with_opt("wrap-absent", "vibook.opt.leader = ','");
+    assert_eq!(common::wrap(&app), None);
 }

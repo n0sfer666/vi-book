@@ -5,10 +5,12 @@ use std::path::{Path, PathBuf};
 
 use v_ide_editor::document::Document;
 use v_ide_engine::Editor;
+use v_ide_markdown::module::MarkdownModule;
+use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_text::Position;
 use v_ide_tui::app::App;
 use v_ide_tui::frame::Frame;
-use v_ide_tui::requests;
+use v_ide_tui::{command_line, requests};
 
 pub struct Case {
     pub name: &'static str,
@@ -114,4 +116,14 @@ pub fn draw(app: &mut App, w: u16, h: u16) -> Frame {
     let mut frame = Frame::new(w, h);
     v_ide_tui::render::draw(&mut frame, app);
     frame
+}
+
+pub fn wrap(app: &App) -> Option<WrapMode> {
+    app.modules
+        .get::<MarkdownModule>()
+        .map(MarkdownModule::wrap)
+}
+
+pub fn set_wrap(app: &mut App, mode: &str) {
+    command_line::run(app, &format!("wrap {mode}"));
 }

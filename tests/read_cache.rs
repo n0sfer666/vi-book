@@ -35,7 +35,7 @@ fn cache_reflects_buffer_changes() {
 #[test]
 fn cache_reflects_width_changes() {
     let mut app = App::new(common::named_doc("aaa bbb ccc", "a.md"));
-    app.wrap = WrapMode::All;
+    common::set_wrap(&mut app, "all");
     let narrow = cached_render(&mut app, 7);
     let wide = cached_render(&mut app, 40);
     assert_eq!(narrow.text(), render("aaa bbb ccc", 7).text());
@@ -45,9 +45,9 @@ fn cache_reflects_width_changes() {
 #[test]
 fn cache_reflects_wrap_mode_changes() {
     let mut app = App::new(common::named_doc("aaa bbb ccc", "a.md"));
-    app.wrap = WrapMode::None;
+    common::set_wrap(&mut app, "none");
     let none = cached_render(&mut app, 7).text();
-    app.wrap = WrapMode::All;
+    common::set_wrap(&mut app, "all");
     let all = cached_render(&mut app, 7).text();
     assert_ne!(none, all, "changing wrap mode invalidates the cache");
 }

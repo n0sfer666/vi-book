@@ -5,6 +5,7 @@ pub mod facts;
 pub mod frontmatter_scan;
 pub mod highlight;
 pub mod inline;
+pub mod module;
 pub mod parser;
 pub mod render;
 mod render_block;

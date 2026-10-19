@@ -1,11 +1,21 @@
+use std::ops::Range;
+
 use crate::style::Span;
 
 #[derive(Debug, Clone, Default)]
 pub struct RenderedLine {
     pub spans: Vec<Span>,
+    pub continued: bool,
 }
 
 impl RenderedLine {
+    pub fn new(spans: Vec<Span>) -> Self {
+        Self {
+            spans,
+            continued: false,
+        }
+    }
+
     pub fn text(&self) -> String {
         self.spans.iter().map(|span| span.text.as_str()).collect()
     }
@@ -23,6 +33,15 @@ impl Rendered {
             .map(RenderedLine::text)
             .collect::<Vec<_>>()
             .join("\n")
+    }
+
+    pub fn logical(&self, line: usize) -> Range<usize> {
+        let continued = |l: &usize| self.lines.get(*l).is_some_and(|x| x.continued);
+        let start = (1..=line).rev().find(|l| !continued(l)).unwrap_or(0);
+        let end = (line + 1..self.lines.len())
+            .find(|l| !continued(l))
+            .unwrap_or(self.lines.len());
+        start..end.max(start + 1)
     }
 
     pub fn to_source(&self, line: usize, col: usize) -> Option<usize> {

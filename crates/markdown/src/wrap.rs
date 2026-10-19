@@ -2,10 +2,12 @@ use crate::atom::{Atom, Src, split_lines};
 use crate::style::Span;
 use crate::width::{atoms_width, split_by_width};
 
-pub fn wrap(atoms: &[Atom], width: usize) -> Vec<Vec<Atom>> {
+pub fn wrap(atoms: &[Atom], width: usize) -> Vec<(Vec<Atom>, bool)> {
     let mut lines = Vec::new();
     for logical in split_lines(atoms) {
-        wrap_logical(&logical, width.max(1), &mut lines);
+        let mut rows = Vec::new();
+        wrap_logical(&logical, width.max(1), &mut rows);
+        lines.extend(rows.into_iter().enumerate().map(|(i, row)| (row, i > 0)));
     }
     lines
 }

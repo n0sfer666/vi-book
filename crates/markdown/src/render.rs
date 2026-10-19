@@ -28,11 +28,11 @@ pub fn render_with(source: &str, width: usize, wrap: WrapMode) -> Rendered {
     Rendered { lines }
 }
 
-fn lines_of(atoms: &[Atom], width: usize, wrap_this: bool) -> Vec<Vec<Atom>> {
+fn lines_of(atoms: &[Atom], width: usize, wrap_this: bool) -> Vec<(Vec<Atom>, bool)> {
     if wrap_this {
         wrap::wrap(atoms, width)
     } else {
-        split_lines(atoms)
+        split_lines(atoms).into_iter().map(|l| (l, false)).collect()
     }
 }
 
@@ -44,36 +44,36 @@ fn render_block(block: &Block, width: usize, wrap_this: bool, lines: &mut Vec<Re
         BlockKind::List { items } => list(items, width, wrap_this, lines),
         BlockKind::Quote { lines: quote } => {
             for line in quote {
-                for wrapped in lines_of(line, width.saturating_sub(2), wrap_this) {
+                for (wrapped, continued) in lines_of(line, width.saturating_sub(2), wrap_this) {
                     let mut spans = vec![Span::decoration("\u{2502} ", Style::QuoteBar)];
                     spans.extend(wrap::spans(&wrapped));
-                    lines.push(RenderedLine { spans });
+                    lines.push(RenderedLine { spans, continued });
                 }
             }
         }
         BlockKind::Table { rows } => table(rows, lines),
         BlockKind::Verbatim { lines: raw } => {
             for line in raw {
-                lines.push(RenderedLine {
-                    spans: wrap::spans(line),
-                });
+                lines.push(RenderedLine::new(wrap::spans(line)));
             }
         }
     }
 }
 
 fn push_lines(atoms: &[Atom], width: usize, wrap_this: bool, lines: &mut Vec<RenderedLine>) {
-    for line in lines_of(atoms, width, wrap_this) {
+    for (line, continued) in lines_of(atoms, width, wrap_this) {
         lines.push(RenderedLine {
             spans: wrap::spans(&line),
+            continued,
         });
     }
 }
 
 fn rule(width: usize) -> RenderedLine {
-    RenderedLine {
-        spans: vec![Span::decoration("\u{2500}".repeat(width), Style::Frame)],
-    }
+    RenderedLine::new(vec![Span::decoration(
+        "\u{2500}".repeat(width),
+        Style::Frame,
+    )])
 }
 
 fn heading(
@@ -97,15 +97,13 @@ fn heading(
                 format!(" {}", "\u{2500}".repeat(fill - left)),
                 Style::Frame,
             ));
-            lines.push(RenderedLine { spans });
+            lines.push(RenderedLine::new(spans));
         }
         1 if wrap_this => {
             push_lines(atoms, width, true, lines);
             lines.push(rule(width));
         }
-        1 => lines.push(RenderedLine {
-            spans: wrap::spans(atoms),
-        }),
+        1 => lines.push(RenderedLine::new(wrap::spans(atoms))),
         2 => {
             push_lines(atoms, width, wrap_this, lines);
             lines.push(rule(title_len.clamp(1, width)));
@@ -123,17 +121,22 @@ fn code_block(
 ) {
     let avail = width.max(6);
     let lang_len = atoms_width(lang);
-    let chunks: Vec<&[Atom]> = code
+    let chunks: Vec<(&[Atom], bool)> = code
         .iter()
         .flat_map(|line| {
             if wrap_this {
-                split_by_width(line, avail - 4)
+                let rows = split_by_width(line, avail - 4).into_iter().enumerate();
+                rows.map(|(i, row)| (row, i > 0)).collect()
             } else {
-                vec![line.as_slice()]
+                vec![(line.as_slice(), false)]
             }
         })
         .collect();
-    let content = chunks.iter().map(|c| atoms_width(c)).max().unwrap_or(0);
+    let content = chunks
+        .iter()
+        .map(|(c, _)| atoms_width(c))
+        .max()
+        .unwrap_or(0);
     let lang_min = if lang.is_empty() { 0 } else { lang_len + 6 };
     let width = (content + 4).max(lang_min).min(avail);
     let top = if !lang.is_empty() && width >= lang_len + 6 {
@@ -147,8 +150,8 @@ fn code_block(
     } else {
         vec![frame_rule("\u{250c}", "\u{2510}", width)]
     };
-    lines.push(RenderedLine { spans: top });
-    for chunk in chunks {
+    lines.push(RenderedLine::new(top));
+    for (chunk, continued) in chunks {
         let mut spans = vec![Span::decoration("\u{2502} ", Style::Frame)];
         spans.extend(wrap::spans(chunk));
         let pad = (width - 3).saturating_sub(atoms_width(chunk));
@@ -156,11 +159,11 @@ fn code_block(
             format!("{}\u{2502}", " ".repeat(pad)),
             Style::Frame,
         ));
-        lines.push(RenderedLine { spans });
+        lines.push(RenderedLine { spans, continued });
     }
-    lines.push(RenderedLine {
-        spans: vec![frame_rule("\u{2514}", "\u{2518}", width)],
-    });
+    lines.push(RenderedLine::new(vec![frame_rule(
+        "\u{2514}", "\u{2518}", width,
+    )]));
 }
 
 fn list(items: &[ListItem], width: usize, wrap_this: bool, lines: &mut Vec<RenderedLine>) {
@@ -169,12 +172,13 @@ fn list(items: &[ListItem], width: usize, wrap_this: bool, lines: &mut Vec<Rende
         let body = width.saturating_sub(indent).max(1);
         let wrapped = lines_of(&item.atoms, body, wrap_this);
         if wrapped.is_empty() {
-            lines.push(RenderedLine {
-                spans: vec![Span::decoration(item.marker.clone(), Style::Text)],
-            });
+            lines.push(RenderedLine::new(vec![Span::decoration(
+                item.marker.clone(),
+                Style::Text,
+            )]));
             continue;
         }
-        for (i, line) in wrapped.iter().enumerate() {
+        for (i, (line, continued)) in wrapped.iter().enumerate() {
             let prefix = if i == 0 {
                 item.marker.clone()
             } else {
@@ -182,7 +186,10 @@ fn list(items: &[ListItem], width: usize, wrap_this: bool, lines: &mut Vec<Rende
             };
             let mut spans = vec![Span::decoration(prefix, Style::Text)];
             spans.extend(wrap::spans(line));
-            lines.push(RenderedLine { spans });
+            lines.push(RenderedLine {
+                spans,
+                continued: *continued,
+            });
         }
     }
 }

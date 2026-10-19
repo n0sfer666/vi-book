@@ -17,7 +17,7 @@ use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
 use v_ide_keys::key::Key;
 use v_ide_lua::module::LuaModule;
-use v_ide_markdown::wrap_mode::WrapMode;
+use v_ide_markdown::module::MarkdownModule;
 use v_ide_notebook::history::History;
 use v_ide_notebook::module::NotebookModule;
 use v_ide_vault::module::VaultModule;
@@ -33,7 +33,6 @@ pub struct App {
     pub history: History,
     pub nesting: usize,
     pub normal_maps: HashMap<Key, String>,
-    pub wrap: WrapMode,
     pub leader: char,
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,
@@ -70,6 +69,7 @@ impl App {
         Self {
             workspace: Workspace::new(doc),
             modules: Modules::new(vec![
+                MarkdownModule::registration(),
                 VaultModule::registration(),
                 NotebookModule::registration(),
                 LuaModule::registration(),
@@ -81,7 +81,6 @@ impl App {
             history: History::new(),
             nesting: 0,
             normal_maps: HashMap::new(),
-            wrap: WrapMode::All,
             leader: ' ',
             menu_center: false,
             menu_extra: Vec::new(),

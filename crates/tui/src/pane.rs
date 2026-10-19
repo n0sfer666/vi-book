@@ -20,6 +20,7 @@ impl App {
         self.stash_window();
         self.workspace.split(buf);
         self.ui.read = ReadState::new();
+        self.ui.read.view = self.initial_view();
     }
 
     pub fn focus_next(&mut self) {

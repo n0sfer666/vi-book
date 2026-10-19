@@ -27,7 +27,7 @@ fn settings_wrap_all_sets_mode_and_closes() {
     press(&mut a, 's');
     press(&mut a, 'w');
     press(&mut a, 'a');
-    assert_eq!(a.wrap, WrapMode::All);
+    assert_eq!(common::wrap(&a), Some(WrapMode::All));
     assert!(a.ui.menu.is_none(), "menu closes after a leaf choice");
 }
 
@@ -38,7 +38,7 @@ fn settings_wrap_text_and_none() {
     press(&mut a, 's');
     press(&mut a, 'w');
     press(&mut a, 't');
-    assert_eq!(a.wrap, WrapMode::Text);
+    assert_eq!(common::wrap(&a), Some(WrapMode::Text));
 }
 
 fn empty_root() -> std::path::PathBuf {
@@ -101,7 +101,7 @@ fn esc_steps_back_through_levels_then_closes() {
 #[test]
 fn current_wrap_mode_is_marked() {
     let mut a = app();
-    a.wrap = WrapMode::Text;
+    common::set_wrap(&mut a, "text");
     actions::open_menu(&mut a);
     press(&mut a, 's');
     press(&mut a, 'w');

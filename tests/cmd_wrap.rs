@@ -9,26 +9,30 @@ fn app() -> App {
 }
 
 #[test]
-fn wrap_default_is_all() {
-    assert_eq!(app().wrap, WrapMode::All);
+fn wrap_module_is_idle_until_used() {
+    assert_eq!(common::wrap(&app()), None);
 }
 
 #[test]
 fn wrap_command_sets_each_mode() {
     let mut a = app();
     command_line::run(&mut a, "wrap text");
-    assert_eq!(a.wrap, WrapMode::Text);
+    assert_eq!(common::wrap(&a), Some(WrapMode::Text));
     command_line::run(&mut a, "wrap all");
-    assert_eq!(a.wrap, WrapMode::All);
+    assert_eq!(common::wrap(&a), Some(WrapMode::All));
     command_line::run(&mut a, "wrap none");
-    assert_eq!(a.wrap, WrapMode::None);
+    assert_eq!(common::wrap(&a), Some(WrapMode::None));
 }
 
 #[test]
 fn wrap_command_rejects_invalid_mode() {
     let mut a = app();
-    a.wrap = WrapMode::All;
+    command_line::run(&mut a, "wrap text");
     command_line::run(&mut a, "wrap bogus");
-    assert_eq!(a.wrap, WrapMode::All, "invalid mode leaves wrap unchanged");
+    assert_eq!(
+        common::wrap(&a),
+        Some(WrapMode::Text),
+        "invalid mode leaves wrap unchanged"
+    );
     assert!(a.ui.message.contains("wrap"), "message mentions wrap");
 }

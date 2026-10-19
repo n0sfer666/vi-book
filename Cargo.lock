@@ -1250,6 +1250,7 @@ dependencies = [
  "tree-sitter-typescript",
  "tree-sitter-yaml",
  "unicode-width",
+ "v-ide-editor",
 ]
 
 [[package]]

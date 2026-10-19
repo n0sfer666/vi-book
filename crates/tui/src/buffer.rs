@@ -1,7 +1,6 @@
 use crate::app::App;
 use crate::buffer_list::{BufferEntry, BufferList};
 use crate::requests;
-use crate::view::View;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Event;
 
@@ -17,7 +16,7 @@ impl App {
                 }
                 self.ui.read.top = 0;
                 self.ui.left = 0;
-                self.ui.read.view = View::Read;
+                self.ui.read.view = self.initial_view();
                 self.ui.read.read_cursor = (0, 0);
                 self.ui.read.read_cache = None;
                 self.ui.picker = None;

@@ -45,6 +45,9 @@ impl Document {
     }
 
     pub fn filetype(&self) -> Option<&'static str> {
-        self.path.as_deref().and_then(filetype::detect)
+        match &self.path {
+            Some(path) => filetype::detect(path),
+            None => filetype::detect(Path::new(&self.name)),
+        }
     }
 }

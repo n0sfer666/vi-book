@@ -11,7 +11,7 @@ use v_ide_markdown::rendered::Rendered;
 
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
     let text = app.workspace.current().editor.text();
-    let wrap = app.wrap;
+    let wrap = app.wrap();
     let hit = matches!(&app.ui.read.read_cache, Some((t, w, m, _)) if t == &text && *w == width && *m == wrap);
     if !hit {
         let rendered = render_with(&text, width, wrap);
@@ -94,8 +94,15 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
             return;
         }
         Key::Char('G') => app.ui.read.read_cursor = clamp(&rendered, last_line, 0),
-        Key::Char('0') => app.ui.read.read_cursor = (line, 0),
-        Key::Char('$') => app.ui.read.read_cursor = clamp(&rendered, line, usize::MAX),
+        Key::Char('0') if app.ui.read.read_pending_g => app.ui.read.read_cursor = (line, 0),
+        Key::Char('$') if app.ui.read.read_pending_g => {
+            app.ui.read.read_cursor = clamp(&rendered, line, usize::MAX)
+        }
+        Key::Char('0') => app.ui.read.read_cursor = (rendered.logical(line).start, 0),
+        Key::Char('$') => {
+            let last = rendered.logical(line).end - 1;
+            app.ui.read.read_cursor = clamp(&rendered, last, usize::MAX)
+        }
         Key::Char('i') => leave(app, width),
         Key::Ctrl('t') => leave(app, width),
         Key::Enter => {

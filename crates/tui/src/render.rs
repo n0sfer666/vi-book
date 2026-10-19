@@ -48,7 +48,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         if window.id != active {
             let state = app.window_states.get(&window.id).unwrap_or(&fallback);
             let doc = &window.buf.doc;
-            split::draw_pane(&mut frame.grid, &app.theme, doc, state, *rect, app.wrap);
+            split::draw_pane(&mut frame.grid, &app.theme, doc, state, *rect, app.wrap());
         }
     }
     for rect in rects.iter().take(count.saturating_sub(1)) {

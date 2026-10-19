@@ -42,17 +42,15 @@ pub(crate) fn table(rows: &[TableRow], lines: &mut Vec<RenderedLine>) {
             ));
         }
         spans.push(Span::decoration("\u{2502}", Style::Frame));
-        lines.push(RenderedLine { spans });
+        lines.push(RenderedLine::new(spans));
     }
     lines.push(table_rule(&widths, "\u{2514}", "\u{2534}", "\u{2518}"));
 }
 
 fn table_rule(widths: &[usize], left: &str, mid: &str, right: &str) -> RenderedLine {
     let cols: Vec<String> = widths.iter().map(|w| "\u{2500}".repeat(w + 2)).collect();
-    RenderedLine {
-        spans: vec![Span::decoration(
-            format!("{left}{}{right}", cols.join(mid)),
-            Style::Frame,
-        )],
-    }
+    RenderedLine::new(vec![Span::decoration(
+        format!("{left}{}{right}", cols.join(mid)),
+        Style::Frame,
+    )])
 }

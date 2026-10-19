@@ -26,6 +26,8 @@ installer fetches *JetBrainsMono Nerd Font* unless `V_IDE_NO_FONT=1`; legacy `VI
 A note opens in **read** mode — markdown is rendered (headings, bold, links,
 tables, syntax-highlighted code). Press `i` to **edit** the raw text, and
 `<Esc>` (or `jj`) to go back. `<C-t>` toggles between the two at any time.
+Files that are not markdown (e.g. `:e main.rs`) open in edit mode, and `<C-t>`
+only says `read view: markdown only`.
 
 Content uses the full width of the column (no centring), like vim or a plain
 editor. One pane fills the screen; split panes each fill their share.
@@ -50,6 +52,9 @@ vibook.opt.wrap = "text"   -- "none" | "text" | "all"
 ```
 
 Tables never wrap in any mode — scroll horizontally to read wide ones.
+
+In read mode `0` and `$` jump to the start and end of the whole wrapped line,
+while `g0` and `g$` stay on the current screen row (as in vim).
 
 ## Code blocks and syntax highlighting
 

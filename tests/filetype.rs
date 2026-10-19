@@ -24,3 +24,12 @@ fn document_filetype_follows_path() {
     doc.path = Some(PathBuf::from("notes/n.md"));
     assert_eq!(doc.filetype(), Some("markdown"));
 }
+
+#[test]
+fn document_filetype_falls_back_to_name() {
+    let mut doc = Document::new("x");
+    doc.name = String::from("manual.md");
+    assert_eq!(doc.filetype(), Some("markdown"));
+    doc.path = Some(PathBuf::from("main.rs"));
+    assert_eq!(doc.filetype(), None, "path wins over name");
+}

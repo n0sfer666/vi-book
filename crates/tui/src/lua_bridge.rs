@@ -75,9 +75,7 @@ fn apply_opts(app: &mut App) {
     let Some(host) = host(&app.modules) else {
         return;
     };
-    if let Some(wrap) = host.opt_string("wrap").and_then(|s| WrapMode::parse(&s)) {
-        app.wrap = wrap;
-    }
+    let wrap = host.opt_string("wrap").and_then(|s| WrapMode::parse(&s));
     if let Some(leader) = host.opt_string("leader").and_then(|s| s.chars().next()) {
         app.leader = leader;
     }
@@ -101,6 +99,9 @@ fn apply_opts(app: &mut App) {
     apply_colors(&mut app.theme, host);
     let hidden = host.opt_bool("scan_hidden");
     scan_hidden(app, hidden);
+    if let Some(wrap) = wrap {
+        app.set_wrap(wrap);
+    }
 }
 
 fn color_depth(value: &str, current: Option<Depth>) -> Option<Depth> {
