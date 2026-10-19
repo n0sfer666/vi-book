@@ -11,11 +11,10 @@ static MANIFEST: Manifest = Manifest {
     name: "lua",
     commands: &[],
     triggers: &[
-        Trigger::Startup,
-        Trigger::Event("note_open"),
-        Trigger::Event("note_save"),
         Trigger::Event("follow_link"),
-        Trigger::Event("vault_changed"),
+        Trigger::Observe("note_open"),
+        Trigger::Observe("note_save"),
+        Trigger::Observe("vault_changed"),
     ],
 };
 

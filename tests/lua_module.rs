@@ -16,7 +16,7 @@ fn ws(text: &str) -> Workspace {
 
 fn started(label: &str, script: &str) -> Modules {
     let mut modules = Modules::new(vec![LuaModule::registration()]);
-    assert_eq!(modules.startup(&ws("")), Vec::new());
+    assert_eq!(modules.activate(&ws(""), "lua"), Vec::new());
     let path = std::env::temp_dir().join(format!(
         "vi-book-lua-module-{}-{label}.lua",
         std::process::id()
@@ -54,7 +54,7 @@ fn bundled_links_plugin_classifies_targets() {
 #[test]
 fn load_config_reports_warning_then_error() {
     let mut modules = Modules::new(vec![LuaModule::registration()]);
-    modules.startup(&ws(""));
+    modules.activate(&ws(""), "lua");
     let path =
         std::env::temp_dir().join(format!("vi-book-lua-module-{}-bad.lua", std::process::id()));
     fs::write(&path, "this is not lua").unwrap();

@@ -46,12 +46,12 @@ fn no_config_leaves_status_line_empty() {
 }
 
 #[test]
-fn without_startup_config_is_ignored() {
+fn config_without_startup_activates_lua() {
     let mut app = App::new(common::named_doc("x", "a.md"));
     let path = common::config_file("nostart", "vibook.opt.leader = ','");
     lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
-    assert_eq!(app.leader, ' ');
-    assert_eq!(app.ui.message, "");
+    assert_eq!(app.leader, ',');
+    assert_eq!(app.ui.message, "config: old");
 }
 
 #[test]

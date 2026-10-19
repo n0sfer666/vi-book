@@ -23,6 +23,10 @@ pub fn load_config(app: &mut App) {
 }
 
 pub fn load_config_from(app: &mut App, mut resolved: Option<(PathBuf, Option<&'static str>)>) {
+    if resolved.is_some() {
+        let activated = app.modules.activate(&app.workspace, "lua");
+        requests::apply(app, activated);
+    }
     let Some(lua) = app.modules.get::<LuaModule>() else {
         return;
     };

@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use crate::filetype;
 use crate::io::error::Error;
 use crate::io::file;
 use v_ide_engine::editor::Editor;
@@ -41,5 +42,9 @@ impl Document {
 
     pub fn mark_saved(&mut self) {
         self.saved_text = self.editor.text();
+    }
+
+    pub fn filetype(&self) -> Option<&'static str> {
+        self.path.as_deref().and_then(filetype::detect)
     }
 }

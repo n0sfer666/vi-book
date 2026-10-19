@@ -48,6 +48,10 @@ impl App {
     }
 
     fn note_opened(&mut self) {
+        if let Some(filetype) = self.workspace.current().filetype() {
+            let activated = self.modules.filetype(&self.workspace, filetype);
+            requests::apply(self, activated);
+        }
         if let Some(path) = self.workspace.current().path.clone() {
             requests::emit(self, Event::NoteOpen(path));
         }

@@ -37,7 +37,7 @@ fn first_command_activates_module_once() {
 }
 
 #[test]
-fn failed_activation_reports_and_retries() {
+fn failed_activation_reports_on_each_command() {
     let (mut modules, ws) = (all(), ws());
     assert_eq!(modules.command(&ws, "broken", ""), Some(vec![msg("boom")]));
     assert_eq!(modules.command(&ws, "broken", ""), Some(vec![msg("boom")]));
