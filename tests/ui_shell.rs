@@ -68,7 +68,8 @@ fn empty_vault_is_detected() {
     let root = temp_vault("empty");
     let mut app = App::new(common::named_doc("", ""));
     common::open_vault(&mut app, &root);
-    let empty = app.modules.get::<VaultModule>().unwrap().is_empty();
+    let items = app.modules.get::<VaultModule>().unwrap().items();
+    let empty = items.is_ok_and(|items| items.is_empty());
     let _ = fs::remove_dir_all(&root);
     assert!(empty);
 }

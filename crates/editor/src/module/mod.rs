@@ -8,6 +8,7 @@ mod modules;
 mod registration;
 mod request;
 mod trigger;
+mod vault_query;
 
 pub use cx::Cx;
 pub use event::Event;
@@ -16,6 +17,7 @@ pub use modules::Modules;
 pub use registration::Registration;
 pub use request::Request;
 pub use trigger::Trigger;
+pub use vault_query::VaultQuery;
 
 pub trait Module: Any {
     fn activate(&mut self, cx: &mut Cx<'_>) -> Result<(), String>;

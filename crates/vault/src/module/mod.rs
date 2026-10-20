@@ -1,16 +1,19 @@
 mod changed;
 mod create;
+mod lazy;
 
+use std::cell::Ref;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use v_ide_editor::module::{Cx, Event, Manifest, Module, Registration, Trigger};
 use v_ide_editor::path::rel_path;
 
 use crate::index::Index;
-use crate::scan::scan_with;
 use changed::changed;
 use create::create;
+use lazy::LazyIndex;
 
 static MANIFEST: Manifest = Manifest {
     name: "vault",
@@ -19,9 +22,7 @@ static MANIFEST: Manifest = Manifest {
 };
 
 pub struct VaultModule {
-    root: PathBuf,
-    index: Index,
-    scan_hidden: bool,
+    index: Rc<LazyIndex>,
 }
 
 impl VaultModule {
@@ -34,44 +35,47 @@ impl VaultModule {
 
     fn unloaded() -> Self {
         Self {
-            root: PathBuf::new(),
-            index: Index::from_notes(Vec::new()),
-            scan_hidden: false,
+            index: Rc::new(LazyIndex::new(PathBuf::new())),
         }
     }
 
     pub fn root(&self) -> &Path {
-        &self.root
+        self.index.root()
     }
 
-    pub fn index(&self) -> &Index {
-        &self.index
+    pub fn index(&self) -> Result<Ref<'_, Index>, String> {
+        self.index.get()
     }
 
-    pub fn items(&self) -> Vec<String> {
-        self.index.notes().iter().map(|n| n.path.clone()).collect()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.index.notes().is_empty()
+    pub fn items(&self) -> Result<Vec<String>, String> {
+        self.index.paths()
     }
 
     pub fn scan_hidden(&self) -> bool {
-        self.scan_hidden
+        self.index.scan_hidden()
     }
 
     pub fn set_scan_hidden(&mut self, value: bool) -> io::Result<()> {
-        self.scan_hidden = value;
-        self.reindex()
+        self.index.set_scan_hidden(value);
+        if self.index.is_built() {
+            self.reindex()
+        } else {
+            Ok(())
+        }
     }
 
     pub fn reindex(&mut self) -> io::Result<()> {
-        self.index = Index::from_notes(scan_with(&self.root, self.scan_hidden)?);
-        Ok(())
+        self.index.rebuild()
+    }
+
+    fn announce(&self, cx: &mut Cx<'_>) {
+        if let Ok(index) = self.index.get() {
+            cx.emit(changed(&index));
+        }
     }
 
     fn create_note(&self, cx: &mut Cx<'_>, name: &str) -> Result<(), String> {
-        let created = create(&self.root, name).map_err(|err| format!("create failed: {err}"))?;
+        let created = create(self.root(), name).map_err(|err| format!("create failed: {err}"))?;
         if let Some(note) = created {
             if note.fresh {
                 cx.emit(Event::NoteCreate(note.path.clone()));
@@ -85,26 +89,29 @@ impl VaultModule {
         let value = match arg {
             "on" => true,
             "off" => false,
-            "toggle" => !self.scan_hidden,
+            "toggle" => !self.scan_hidden(),
             _ => return cx.message("scan-hidden: on|off|toggle"),
         };
         let state = if value { "on" } else { "off" };
+        let built = self.index.is_built();
         match self.set_scan_hidden(value) {
             Ok(()) => {
-                cx.emit(changed(&self.index));
+                if built {
+                    self.announce(cx);
+                }
                 cx.message(format!("scan hidden folders: {state}"));
             }
             Err(err) => cx.message(format!("reindex failed: {err}")),
         }
     }
 
-    fn backlinks(&self, cx: &mut Cx<'_>) {
+    fn backlinks(&self, cx: &mut Cx<'_>) -> Result<(), String> {
         let rel = cx
             .path()
-            .map(|path| rel_path(&self.root, path))
+            .map(|path| rel_path(self.root(), path))
             .unwrap_or_default();
         let rows: Vec<String> = self
-            .index
+            .index()?
             .backlinks(&rel)
             .iter()
             .map(|n| n.path.clone())
@@ -114,23 +121,23 @@ impl VaultModule {
         } else {
             cx.list("backlinks", rows, "e");
         }
+        Ok(())
     }
 }
 
 impl Module for VaultModule {
     fn activate(&mut self, cx: &mut Cx<'_>) -> Result<(), String> {
-        self.root = cx.cwd().to_path_buf();
-        self.reindex().map_err(|err| format!("vault: {err}"))?;
-        cx.emit(changed(&self.index));
+        self.index = Rc::new(LazyIndex::new(cx.cwd().to_path_buf()));
+        cx.provide_vault(self.index.clone());
         Ok(())
     }
 
     fn command(&mut self, cx: &mut Cx<'_>, name: &str, args: &str) -> Result<(), String> {
         match name {
-            "pick" => cx.pick(self.items(), "e"),
+            "pick" => cx.pick(self.items()?, "e"),
             "new" => self.create_note(cx, args)?,
             "scan-hidden" => self.toggle_hidden(cx, args.trim()),
-            "backlinks" => self.backlinks(cx),
+            "backlinks" => self.backlinks(cx)?,
             _ => {}
         }
         Ok(())
@@ -138,9 +145,10 @@ impl Module for VaultModule {
 
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event) {
         if let Event::NoteCreate(_) = ev
+            && self.index.is_built()
             && self.reindex().is_ok()
         {
-            cx.emit(changed(&self.index));
+            self.announce(cx);
         }
     }
 }

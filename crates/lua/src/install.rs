@@ -1,4 +1,5 @@
 use mlua::Table;
+use v_ide_editor::module::VaultQuery;
 
 use crate::config::Shared;
 use crate::error::Error;
@@ -35,24 +36,17 @@ pub fn install_vault(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
     let notes = bridge.clone();
     vault.set(
         "notes",
-        lua.create_function(move |_, ()| Ok(notes.borrow().vault_notes.clone()))?,
+        lua.create_function(move |_, ()| query(&notes, |v| v.notes()))?,
     )?;
     let tags = bridge.clone();
     vault.set(
         "tags",
-        lua.create_function(move |_, ()| Ok(tags.borrow().vault_tags.clone()))?,
+        lua.create_function(move |_, ()| query(&tags, |v| v.tags()))?,
     )?;
     let back = bridge.clone();
     vault.set(
         "backlinks",
-        lua.create_function(move |_, path: String| {
-            Ok(back
-                .borrow()
-                .backlinks
-                .get(&path)
-                .cloned()
-                .unwrap_or_default())
-        })?,
+        lua.create_function(move |_, path: String| query(&back, |v| v.backlinks(&path)))?,
     )?;
     let create = bridge.clone();
     vault.set(
@@ -94,4 +88,14 @@ pub fn install_open(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
         })?,
     )?;
     Ok(())
+}
+
+fn query(
+    bridge: &Shared,
+    run: impl Fn(&dyn VaultQuery) -> Result<Vec<String>, String>,
+) -> mlua::Result<Vec<String>> {
+    let vault = bridge.borrow().vault.clone();
+    vault
+        .map_or(Ok(Vec::new()), |vault| run(vault.as_ref()))
+        .map_err(mlua::Error::RuntimeError)
 }

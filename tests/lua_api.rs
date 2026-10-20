@@ -1,3 +1,6 @@
+use std::rc::Rc;
+
+use v_ide_editor::module::VaultQuery;
 use v_ide_lua::host::PluginHost;
 
 #[test]
@@ -63,23 +66,50 @@ fn keymaps_are_collected() {
     assert_eq!(maps[0].rhs, ":w");
 }
 
+struct FakeVault;
+
+impl VaultQuery for FakeVault {
+    fn notes(&self) -> Result<Vec<String>, String> {
+        Ok(vec!["a.md".into(), "b.md".into()])
+    }
+
+    fn tags(&self) -> Result<Vec<String>, String> {
+        Ok(vec!["tag1".into()])
+    }
+
+    fn backlinks(&self, path: &str) -> Result<Vec<String>, String> {
+        if path == "b.md" {
+            Ok(vec!["a.md".into()])
+        } else {
+            Ok(Vec::new())
+        }
+    }
+}
+
+const REPORT: &str = "vibook.command('report', function()\n\
+       local n = vibook.vault.notes()\n\
+       local b = vibook.vault.backlinks('b.md')\n\
+       local t = vibook.vault.tags()\n\
+       vibook.buf.set_text(#n .. ',' .. #b .. ',' .. (t[1] or '-'))\n\
+     end)";
+
 #[test]
-fn vault_queries_see_injected_data() {
+fn vault_queries_read_injected_source() {
     let host = PluginHost::new().unwrap();
-    host.set_vault(vec!["a.md".into(), "b.md".into()], vec!["tag1".into()]);
-    host.set_backlinks("b.md", vec!["a.md".into()]);
+    host.set_vault(Rc::new(FakeVault));
     host.set_buffer("", 0);
-    host.load(
-        "vibook.command('report', function()\n\
-           local n = vibook.vault.notes()\n\
-           local b = vibook.vault.backlinks('b.md')\n\
-           local t = vibook.vault.tags()\n\
-           vibook.buf.set_text(#n .. ',' .. #b .. ',' .. t[1])\n\
-         end)",
-    )
-    .unwrap();
+    host.load(REPORT).unwrap();
     host.run_command("report").unwrap();
     assert_eq!(host.buffer_text(), "2,1,tag1");
+}
+
+#[test]
+fn vault_queries_are_empty_without_source() {
+    let host = PluginHost::new().unwrap();
+    host.set_buffer("", 0);
+    host.load(REPORT).unwrap();
+    host.run_command("report").unwrap();
+    assert_eq!(host.buffer_text(), "0,0,-");
 }
 
 #[test]

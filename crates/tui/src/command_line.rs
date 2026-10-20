@@ -64,7 +64,8 @@ fn toggle_tree(app: &mut App) {
         app.ui.panel_focus = false;
         return;
     }
-    app.ui.panel = Some(Panel::tree(&app.vault_items()));
+    let items = app.vault_items();
+    app.ui.panel = Some(Panel::tree(&items));
     app.ui.panel_focus = true;
 }
 

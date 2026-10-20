@@ -1,23 +1,34 @@
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
-use crate::module::{Event, Request};
+use crate::module::{Event, Request, VaultQuery};
 use crate::workspace::Workspace;
 
 pub struct Cx<'a> {
     ws: &'a Workspace,
     requests: Vec<Request>,
+    vault: Option<Rc<dyn VaultQuery>>,
 }
 
 impl<'a> Cx<'a> {
-    pub(crate) fn new(ws: &'a Workspace) -> Self {
+    pub(crate) fn new(ws: &'a Workspace, vault: Option<Rc<dyn VaultQuery>>) -> Self {
         Self {
             ws,
             requests: Vec::new(),
+            vault,
         }
     }
 
-    pub(crate) fn into_requests(self) -> Vec<Request> {
-        self.requests
+    pub(crate) fn into_parts(self) -> (Vec<Request>, Option<Rc<dyn VaultQuery>>) {
+        (self.requests, self.vault)
+    }
+
+    pub fn provide_vault(&mut self, vault: Rc<dyn VaultQuery>) {
+        self.vault = Some(vault);
+    }
+
+    pub fn vault(&self) -> Option<Rc<dyn VaultQuery>> {
+        self.vault.clone()
     }
 
     pub fn cwd(&self) -> &Path {

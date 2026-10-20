@@ -14,7 +14,6 @@ static MANIFEST: Manifest = Manifest {
         Trigger::Event("follow_link"),
         Trigger::Observe("note_open"),
         Trigger::Observe("note_save"),
-        Trigger::Observe("vault_changed"),
     ],
 };
 
@@ -57,6 +56,9 @@ impl LuaModule {
         let Some(host) = &self.host else {
             return Ok((Vec::new(), Vec::new()));
         };
+        if let Some(vault) = cx.vault() {
+            host.set_vault(vault);
+        }
         let before = cx.text();
         host.set_buffer(&before, cx.cursor());
         let result = run(host);
@@ -118,6 +120,9 @@ impl Module for LuaModule {
             }
         }
         drop(take(&host));
+        if let Some(vault) = cx.vault() {
+            host.set_vault(vault);
+        }
         self.host = Some(host);
         Ok(())
     }
@@ -132,18 +137,7 @@ impl Module for LuaModule {
                 self.emit_all(cx, |host| host.fire(ev.name()))
             }
             Event::FollowLink(target) => self.emit_follow(cx, target),
-            Event::VaultChanged {
-                notes,
-                tags,
-                backlinks,
-            } => {
-                if let Some(host) = &self.host {
-                    host.set_vault(notes.clone(), tags.clone());
-                    host.replace_backlinks(backlinks.clone());
-                }
-                Ok(())
-            }
-            Event::NoteCreate(_) => Ok(()),
+            Event::VaultChanged { .. } | Event::NoteCreate(_) => Ok(()),
         };
         if let Err(err) = result {
             cx.message(err);

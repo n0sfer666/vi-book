@@ -26,8 +26,16 @@ fn follow_wiki(app: &mut App, link: &Link) {
     if requests::intercepts(app, Event::FollowLink(link.target.clone())) {
         return;
     }
-    let Some(found) = app.vault().map(|vault| follow(vault.index(), link)) else {
-        return;
+    let found = match app
+        .vault()
+        .map(|v| v.index().map(|index| follow(&index, link)))
+    {
+        Some(Ok(found)) => found,
+        Some(Err(err)) => {
+            app.ui.message = err;
+            return;
+        }
+        None => return,
     };
     match found {
         Follow::Open(path) => app.open_rel(&path),

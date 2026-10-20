@@ -51,3 +51,20 @@ runs: 10 · median · 120x40 · quiet 100 ms
 
 Without init.lua the VM no longer starts at launch; the gain is within noise (−0.6 ms, −0.3 MB on
 the small vault). The vault scan still dominates the 10k rows.
+
+## Lazy vault index (S07 4a)
+
+2026-10-20 · bb379f1 + S07 4a · Apple M3 Pro · Darwin · NVIM v0.12.6
+runs: 10 · median · 120x40 · quiet 100 ms
+
+| scenario | editor | first frame, ms | peak RSS, MB |
+|---|---|---:|---:|
+| file, vault 10 | v-ide | 32.8 | 13.8 |
+| file, vault 10 | nvim --clean | 120.8 | 10.3 |
+| file, vault 10k | v-ide | 24.0 | 13.9 |
+| file, vault 10k | nvim --clean | 117.0 | 10.9 |
+| picker, vault 1k | v-ide | 431.4 | 10.8 |
+| picker, vault 10k | v-ide | 4263.4 | 19.2 |
+
+Opening a file no longer scans the vault: the 10k row drops from 4657 ms to 24 ms and its RSS from
+28.6 MB to 13.9 MB. The picker still pays the full scan; S07 4c (mtime cache) targets it.

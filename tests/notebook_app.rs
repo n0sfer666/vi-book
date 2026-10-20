@@ -80,7 +80,7 @@ fn today_command_opens_daily_and_vault_indexes_it() {
     let items = app
         .modules
         .get::<VaultModule>()
-        .map(VaultModule::items)
+        .and_then(|vault| vault.items().ok())
         .unwrap_or_default();
     assert_eq!(items, vec![rel]);
     let _ = fs::remove_dir_all(&root);

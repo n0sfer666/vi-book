@@ -6,7 +6,14 @@ impl App {
         self.modules.get::<VaultModule>()
     }
 
-    pub(crate) fn vault_items(&self) -> Vec<String> {
-        self.vault().map(VaultModule::items).unwrap_or_default()
+    pub(crate) fn vault_items(&mut self) -> Vec<String> {
+        match self.vault().map(VaultModule::items) {
+            Some(Ok(items)) => items,
+            Some(Err(err)) => {
+                self.ui.message = err;
+                Vec::new()
+            }
+            None => Vec::new(),
+        }
     }
 }

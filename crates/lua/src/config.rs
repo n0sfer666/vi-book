@@ -1,6 +1,7 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
+
+use v_ide_editor::module::VaultQuery;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Keymap {
@@ -13,9 +14,7 @@ pub struct Keymap {
 pub struct Bridge {
     pub buf_text: String,
     pub buf_cursor: usize,
-    pub vault_notes: Vec<String>,
-    pub vault_tags: Vec<String>,
-    pub backlinks: HashMap<String, Vec<String>>,
+    pub vault: Option<Rc<dyn VaultQuery>>,
     pub creates: Vec<String>,
     pub opens: Vec<String>,
     pub external_opens: Vec<String>,

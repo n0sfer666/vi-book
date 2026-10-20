@@ -168,6 +168,10 @@ handler returns.
 The *vault* is the active folder v-ide was opened on; tag and link search are
 scoped to it.
 
+The vault is scanned on the first query (or picker, link follow, tree), not at
+startup. If the scan fails, these functions raise a Lua error `vault: <reason>`
+and the next call retries.
+
 ---
 
 ## 8. Syntax-highlighting palette — `vibook.color(name, spec)`

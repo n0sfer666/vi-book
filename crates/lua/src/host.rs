@@ -1,8 +1,8 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use mlua::{Function, Table};
+use v_ide_editor::module::VaultQuery;
 
 use crate::config::{Bridge, ColorSpec, Keymap, PRELUDE, Shared};
 use crate::error::Error;
@@ -39,21 +39,8 @@ impl PluginHost {
         self.bridge.borrow().buf_text.clone()
     }
 
-    pub fn set_vault(&self, notes: Vec<String>, tags: Vec<String>) {
-        let mut b = self.bridge.borrow_mut();
-        b.vault_notes = notes;
-        b.vault_tags = tags;
-    }
-
-    pub fn set_backlinks(&self, path: &str, sources: Vec<String>) {
-        self.bridge
-            .borrow_mut()
-            .backlinks
-            .insert(path.to_string(), sources);
-    }
-
-    pub fn replace_backlinks(&self, backlinks: HashMap<String, Vec<String>>) {
-        self.bridge.borrow_mut().backlinks = backlinks;
+    pub fn set_vault(&self, vault: Rc<dyn VaultQuery>) {
+        self.bridge.borrow_mut().vault = Some(vault);
     }
 
     pub fn creates(&self) -> Vec<String> {

@@ -61,16 +61,15 @@ fn opt_scan_hidden_reaches_lua_vault() {
 }
 
 #[test]
-fn opt_scan_hidden_reindex_failure_is_shown() {
+fn opt_scan_hidden_failure_surfaces_on_demand() {
     let dir = common::temp_root("opt-hidden-fail");
     let mut app = App::new(common::named_doc("x", "a.md"));
     common::open_vault(&mut app, &dir);
     std::fs::remove_dir_all(&dir).unwrap();
     let path = common::config_file("opt-hidden-fail", "vibook.opt.scan_hidden = true");
     lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
-    assert!(
-        app.ui.message.starts_with("reindex failed:"),
-        "{}",
-        app.ui.message
-    );
+    let warned = app.ui.message.clone();
+    app.open_picker();
+    assert_eq!(warned, "config: old");
+    assert!(app.ui.message.starts_with("vault:"), "{}", app.ui.message);
 }

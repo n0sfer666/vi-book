@@ -1,13 +1,15 @@
 use std::any::Any;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::module::entry::Entry;
-use crate::module::{Cx, Event, Module, Registration, Request};
+use crate::module::{Cx, Event, Module, Registration, Request, VaultQuery};
 use crate::workspace::Workspace;
 
 pub struct Modules {
     entries: Vec<Entry>,
     last: HashMap<&'static str, Event>,
+    vault: Option<Rc<dyn VaultQuery>>,
 }
 
 impl Modules {
@@ -15,6 +17,7 @@ impl Modules {
         Self {
             entries: registrations.into_iter().map(Entry::new).collect(),
             last: HashMap::new(),
+            vault: None,
         }
     }
 
@@ -51,7 +54,7 @@ impl Modules {
             .position(|e| e.declares(name))
             .or_else(|| self.entries.iter().position(|e| e.provides(name)))?;
         let entry = &mut self.entries[index];
-        let mut cx = Cx::new(ws);
+        let mut cx = Cx::new(ws, self.vault.clone());
         if let Some(err) = entry.failure() {
             cx.message(err);
         } else if let Some(module) = entry.active(&mut cx, &self.last)
@@ -59,11 +62,11 @@ impl Modules {
         {
             cx.message(err);
         }
-        Some(cx.into_requests())
+        Some(self.finish(cx))
     }
 
     pub fn event(&mut self, ws: &Workspace, ev: &Event) -> Vec<Request> {
-        let mut cx = Cx::new(ws);
+        let mut cx = Cx::new(ws, self.vault.clone());
         let name = ev.name();
         for entry in self.entries.iter_mut() {
             let module = if entry.listens(name) {
@@ -80,14 +83,20 @@ impl Modules {
         if self.entries.iter().any(|e| e.observes(name)) {
             self.last.insert(name, ev.clone());
         }
-        cx.into_requests()
+        self.finish(cx)
     }
 
     fn activate_where(&mut self, ws: &Workspace, pick: impl Fn(&Entry) -> bool) -> Vec<Request> {
-        let mut cx = Cx::new(ws);
+        let mut cx = Cx::new(ws, self.vault.clone());
         for entry in self.entries.iter_mut().filter(|e| pick(e)) {
             entry.active(&mut cx, &self.last);
         }
-        cx.into_requests()
+        self.finish(cx)
+    }
+
+    fn finish(&mut self, cx: Cx<'_>) -> Vec<Request> {
+        let (requests, vault) = cx.into_parts();
+        self.vault = vault;
+        requests
     }
 }

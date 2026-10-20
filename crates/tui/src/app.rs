@@ -54,10 +54,13 @@ pub fn run() -> Result<(), Error> {
     app.load_config();
     if let Some(rel) = open {
         app.open_rel(&rel);
-    } else if app.vault().is_none_or(VaultModule::is_empty) {
-        app.ui.menu = Some(Menu::empty_vault());
     } else {
-        app.open_picker();
+        let items = app.vault_items();
+        if items.is_empty() {
+            app.ui.menu = Some(Menu::empty_vault());
+        } else {
+            app.ui.picker = Some(Picker::new(items, "e"));
+        }
     }
     let mut term = Term::new(app.color_depth);
     term.enter()?;
@@ -99,7 +102,8 @@ impl App {
     }
 
     pub fn open_picker(&mut self) {
-        self.ui.picker = Some(Picker::new(self.vault_items(), "e"));
+        let items = self.vault_items();
+        self.ui.picker = Some(Picker::new(items, "e"));
     }
 
     fn event_loop(&mut self, term: &mut Term) -> Result<(), Error> {

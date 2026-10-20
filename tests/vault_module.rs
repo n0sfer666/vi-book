@@ -29,7 +29,7 @@ fn ws_at(root: &Path, current: Option<&str>) -> Workspace {
 
 fn started(ws: &Workspace) -> Modules {
     let mut modules = Modules::new(vec![VaultModule::registration()]);
-    assert!(matches!(modules.startup(ws).as_slice(), [changed] if is_changed(changed)));
+    assert_eq!(modules.startup(ws), Vec::new());
     modules
 }
 
@@ -40,7 +40,7 @@ fn is_changed(request: &Request) -> bool {
 fn items(modules: &Modules) -> Vec<String> {
     modules
         .get::<VaultModule>()
-        .map(VaultModule::items)
+        .and_then(|vault| vault.items().ok())
         .unwrap_or_default()
 }
 
@@ -67,9 +67,9 @@ fn startup_indexes_cwd() {
     let modules = started(&ws_at(&root, None));
     let vault = modules.get::<VaultModule>().unwrap();
     assert_eq!(vault.root(), root.as_path());
-    assert_eq!(vault.items(), strings(&["a.md", "sub/b.md"]));
-    assert_eq!(vault.index().notes().len(), 2);
-    assert!(!vault.is_empty());
+    assert_eq!(vault.items().unwrap(), strings(&["a.md", "sub/b.md"]));
+    assert_eq!(vault.index().unwrap().notes().len(), 2);
+    assert!(!vault.items().unwrap().is_empty());
     assert!(!vault.scan_hidden());
     let _ = fs::remove_dir_all(&root);
 }
@@ -78,18 +78,9 @@ fn startup_indexes_cwd() {
 fn empty_vault_is_empty() {
     let root = temp_vault("empty");
     let modules = started(&ws_at(&root, None));
-    assert!(modules.get::<VaultModule>().unwrap().is_empty());
+    let items = modules.get::<VaultModule>().unwrap().items();
+    assert!(items.is_ok_and(|items| items.is_empty()));
     let _ = fs::remove_dir_all(&root);
-}
-
-#[test]
-fn missing_cwd_fails_activation() {
-    let root = temp_vault("missing").join("nope");
-    let ws = ws_at(&root, None);
-    let mut modules = Modules::new(vec![VaultModule::registration()]);
-    let requests = modules.startup(&ws);
-    assert!(matches!(requests.as_slice(), [Request::Message(_)]));
-    assert!(modules.get::<VaultModule>().is_none());
 }
 
 #[test]
@@ -112,6 +103,7 @@ fn new_creates_note_reindexes_and_opens() {
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
     let abs = root.join("ideas/x.md");
+    assert_eq!(items(&modules), Vec::<String>::new());
     let requests = modules.command(&ws, "new", " ideas/x ");
     assert_eq!(
         requests,
@@ -147,6 +139,7 @@ fn scan_hidden_command_toggles_and_reindexes() {
     seed(&root);
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
+    assert_eq!(items(&modules), strings(&["a.md", "sub/b.md"]));
     let on = modules.command(&ws, "scan-hidden", "on").unwrap();
     assert!(
         matches!(on.as_slice(), [c, m] if is_changed(c) && *m == msg("scan hidden folders: on")),
@@ -173,12 +166,13 @@ fn bridge_sets_scan_hidden_and_reindexes() {
     seed(&root);
     let mut modules = started(&ws_at(&root, None));
     let vault = modules.get_mut::<VaultModule>().unwrap();
+    assert_eq!(vault.items().unwrap().len(), 2);
     vault.set_scan_hidden(true).unwrap();
     assert!(vault.scan_hidden());
     fs::write(root.join("d.md"), "# D\n").unwrap();
-    assert_eq!(vault.items().len(), 3);
+    assert_eq!(vault.items().unwrap().len(), 3);
     vault.reindex().unwrap();
-    assert_eq!(vault.items().len(), 4);
+    assert_eq!(vault.items().unwrap().len(), 4);
     let _ = fs::remove_dir_all(&root);
 }
 
@@ -208,6 +202,7 @@ fn note_create_event_reindexes() {
     seed(&root);
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
+    assert_eq!(items(&modules), strings(&["a.md", "sub/b.md"]));
     let abs = root.join("fresh.md");
     fs::write(&abs, "# F\n").unwrap();
     let requests = modules.event(&ws, &Event::NoteCreate(abs));

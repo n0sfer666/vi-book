@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -116,33 +115,6 @@ fn note_hooks_transform_buffer() {
     assert_eq!(
         modules.event(&ws, &Event::NoteSave(path)),
         vec![text("[save] BODY")]
-    );
-}
-
-#[test]
-fn vault_changed_feeds_vault_queries() {
-    let mut modules = started("s6", 
-        "vibook.command('peek', function()
-           local back = vibook.vault.backlinks('a.md')
-           vibook.buf.set_text(#vibook.vault.notes() .. ',' .. vibook.vault.tags()[1] .. ',' .. #back)
-         end)",
-    );
-    let ws = ws("");
-    let changed = |backlinks| Event::VaultChanged {
-        notes: vec![String::from("a.md"), String::from("b.md")],
-        tags: vec![String::from("idea")],
-        backlinks,
-    };
-    let linked = HashMap::from([(String::from("a.md"), vec![String::from("b.md")])]);
-    assert_eq!(modules.event(&ws, &changed(linked)), Vec::new());
-    assert_eq!(
-        modules.command(&ws, "peek", ""),
-        Some(vec![text("2,idea,1")])
-    );
-    modules.event(&ws, &changed(HashMap::new()));
-    assert_eq!(
-        modules.command(&ws, "peek", ""),
-        Some(vec![text("2,idea,0")])
     );
 }
 
