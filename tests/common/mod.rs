@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub mod vault;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 

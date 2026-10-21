@@ -1,7 +1,9 @@
+mod common;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use v_ide_editor::document::Document;
+use common::vault::{strings, ws_at};
 use v_ide_editor::module::{Event, Modules, Request};
 use v_ide_editor::workspace::Workspace;
 use v_ide_vault::index::{Index, Resolution};
@@ -19,17 +21,6 @@ fn temp_vault(name: &str) -> PathBuf {
     root
 }
 
-fn ws_at(root: &Path, current: Option<&str>) -> Workspace {
-    let mut doc = Document::new("");
-    if let Some(rel) = current {
-        doc.path = Some(root.join(rel));
-        doc.name = rel.to_string();
-    }
-    let mut ws = Workspace::new(doc);
-    ws.set_cwd(root.to_path_buf());
-    ws
-}
-
 fn started(ws: &Workspace) -> Modules {
     let mut modules = Modules::new(vec![VaultModule::registration()]);
     modules.startup(ws);
@@ -38,10 +29,6 @@ fn started(ws: &Workspace) -> Modules {
 
 fn vault(modules: &Modules) -> &VaultModule {
     modules.get::<VaultModule>().unwrap()
-}
-
-fn strings(items: &[&str]) -> Vec<String> {
-    items.iter().map(|s| s.to_string()).collect()
 }
 
 fn backlinks(modules: &mut Modules, root: &Path) -> Option<Vec<Request>> {
