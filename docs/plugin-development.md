@@ -172,6 +172,9 @@ The vault is scanned on the first query (or picker, link follow, tree), not at
 startup. If the scan fails, these functions raise a Lua error `vault: <reason>`
 and the next call retries.
 
+Saving or creating a note in v-ide updates these lists by rereading only that
+note. Files changed outside v-ide are not picked up yet.
+
 ---
 
 ## 8. Syntax-highlighting palette — `vibook.color(name, spec)`
