@@ -23,6 +23,14 @@ impl Names {
         Self { paths, by_name }
     }
 
+    pub(crate) fn insert(&mut self, path: String) {
+        if let Err(at) = self.paths.binary_search(&path) {
+            let mut paths = std::mem::take(&mut self.paths);
+            paths.insert(at, path);
+            *self = Self::from_paths(paths);
+        }
+    }
+
     pub fn paths(&self) -> &[String] {
         &self.paths
     }

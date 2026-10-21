@@ -19,7 +19,11 @@ use lazy::LazyIndex;
 static MANIFEST: Manifest = Manifest {
     name: "vault",
     commands: &["pick", "new", "scan-hidden", "backlinks"],
-    triggers: &[Trigger::Startup, Trigger::Event("note_create")],
+    triggers: &[
+        Trigger::Startup,
+        Trigger::Event("note_create"),
+        Trigger::Event("note_save"),
+    ],
 };
 
 pub struct VaultModule {
@@ -149,12 +153,10 @@ impl Module for VaultModule {
     }
 
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event) {
-        if !matches!(ev, Event::NoteCreate(_)) {
+        let (Event::NoteCreate(path) | Event::NoteSave(path)) = ev else {
             return;
-        }
-        if !self.index.is_built() {
-            let _ = self.index.forget_names();
-        } else if self.reindex().is_ok() {
+        };
+        if self.index.upsert(path).is_ok_and(|facts| facts) {
             self.announce(cx);
         }
     }

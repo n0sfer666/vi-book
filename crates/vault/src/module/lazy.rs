@@ -1,12 +1,15 @@
 use std::cell::{Cell, Ref, RefCell};
+use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use v_ide_editor::module::VaultQuery;
+use v_ide_editor::path::rel_path;
 
 use crate::index::Index;
 use crate::names::Names;
-use crate::scan::{scan_with, walk_paths};
+use crate::note::Note;
+use crate::scan::{hidden, scan_with, walk_paths};
 
 pub struct LazyIndex {
     root: PathBuf,
@@ -57,6 +60,48 @@ impl LazyIndex {
                 Err(err)
             }
         }
+    }
+
+    pub fn upsert(&self, abs: &Path) -> io::Result<bool> {
+        let Some(rel) = self.member(abs) else {
+            return Ok(false);
+        };
+        if !self.is_built() {
+            if let Some(names) = self
+                .names
+                .try_borrow_mut()
+                .map_err(io::Error::other)?
+                .as_mut()
+            {
+                names.insert(rel);
+            }
+            return Ok(false);
+        }
+        let mut index = self.index.try_borrow_mut().map_err(io::Error::other)?;
+        match fs::read_to_string(abs) {
+            Ok(source) => {
+                if let Some(index) = index.as_mut() {
+                    index.upsert(Note::from_source(&rel, &source));
+                }
+                Ok(true)
+            }
+            Err(err) => {
+                *index = None;
+                drop(index);
+                self.forget_names()?;
+                Err(err)
+            }
+        }
+    }
+
+    fn member(&self, abs: &Path) -> Option<String> {
+        let rel = abs.strip_prefix(&self.root).ok()?;
+        let inside = rel.components().all(|c| match c {
+            Component::Normal(name) => self.scan_hidden.get() || !hidden(name),
+            _ => false,
+        });
+        let md = rel.extension().is_some_and(|ext| ext == "md");
+        (inside && md).then(|| rel_path(&self.root, abs))
     }
 
     pub fn forget_names(&self) -> io::Result<()> {

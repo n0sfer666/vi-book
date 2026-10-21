@@ -24,6 +24,16 @@ impl Index {
         &self.names
     }
 
+    pub(crate) fn upsert(&mut self, note: Note) {
+        match self.notes.binary_search_by(|n| n.path.cmp(&note.path)) {
+            Ok(at) => self.notes[at] = note,
+            Err(at) => {
+                self.names.insert(note.path.clone());
+                self.notes.insert(at, note);
+            }
+        }
+    }
+
     pub fn resolve(&self, target: &str) -> Resolution {
         self.names.resolve(target)
     }

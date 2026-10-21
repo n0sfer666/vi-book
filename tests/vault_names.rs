@@ -175,9 +175,8 @@ fn failed_reindex_falls_back_to_names() {
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
     assert_eq!(vault(&modules).index().unwrap().notes().len(), 2);
-    fs::write(root.join("bad.md"), [0xff, 0xfe, 0x00]).unwrap();
     let abs = root.join("fresh.md");
-    fs::write(&abs, "# F\n").unwrap();
+    fs::write(&abs, [0xff, 0xfe, 0x00]).unwrap();
     assert_eq!(modules.event(&ws, &Event::NoteCreate(abs)), Vec::new());
     let found = vault(&modules).names().unwrap().resolve("fresh");
     assert_eq!(found, Resolution::One(String::from("fresh.md")));

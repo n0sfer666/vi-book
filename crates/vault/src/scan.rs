@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::num::NonZeroUsize;
@@ -36,8 +37,7 @@ fn walk(dir: &Path, include_hidden: bool, paths: &mut Vec<PathBuf>) -> io::Resul
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
-        let name = entry.file_name();
-        if !include_hidden && name.to_string_lossy().starts_with('.') {
+        if !include_hidden && hidden(&entry.file_name()) {
             continue;
         }
         let file_type = entry.file_type()?;
@@ -48,6 +48,10 @@ fn walk(dir: &Path, include_hidden: bool, paths: &mut Vec<PathBuf>) -> io::Resul
         }
     }
     Ok(())
+}
+
+pub(crate) fn hidden(name: &OsStr) -> bool {
+    name.to_string_lossy().starts_with('.')
 }
 
 fn parse_all(root: &Path, paths: &[PathBuf]) -> io::Result<Vec<Note>> {
