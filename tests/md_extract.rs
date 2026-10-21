@@ -123,3 +123,16 @@ fn broken_markdown_does_not_panic() {
     extract("---\nbad");
     extract("**unclosed [[half");
 }
+
+#[test]
+fn code_zones_use_char_offsets_after_multibyte_text() {
+    let facts = extract("ё `[[x]]` [[y]] #тег");
+    assert_eq!(facts.links, vec![link("y", 10, 15)]);
+    assert_eq!(facts.tags, vec![tag("тег", 16, 20)]);
+}
+
+#[test]
+fn fenced_zone_after_multibyte_line_is_skipped() {
+    let facts = extract("привет\n```\n[[x]]\n```\n[[y]]");
+    assert_eq!(facts.links, vec![link("y", 21, 26)]);
+}

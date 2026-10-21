@@ -4,16 +4,20 @@ use crate::{frontmatter_scan, parser};
 pub fn extract(source: &str) -> NoteFacts {
     let frontmatter = frontmatter_scan::scan(source);
     let body_start = frontmatter.as_ref().map_or(0, |fm| fm.end);
-    let zones = parser::code_zones(source);
+    let zones = parser::merge_zones(&parser::code_zones(source));
     let chars: Vec<char> = source.chars().collect();
     let mut facts = NoteFacts {
         frontmatter,
         ..NoteFacts::default()
     };
+    let mut next_zone = 0;
     let mut i = body_start;
     while i < chars.len() {
-        if parser::in_zones(&zones, i) {
-            i += 1;
+        while zones.get(next_zone).is_some_and(|zone| zone.end <= i) {
+            next_zone += 1;
+        }
+        if let Some(zone) = zones.get(next_zone).filter(|zone| zone.start <= i) {
+            i = zone.end;
             continue;
         }
         if let Some(link) = wiki_link_at(&chars, i) {
