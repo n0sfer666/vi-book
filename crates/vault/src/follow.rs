@@ -1,6 +1,5 @@
-use crate::index::Resolution;
 use crate::link::{self, Link};
-use crate::names::Names;
+use crate::names::{Names, Resolution};
 use v_ide_markdown::extract::extract;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,7 +1,13 @@
 use std::collections::HashMap;
 
-use crate::index::Resolution;
 use crate::note::stem;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Resolution {
+    None,
+    One(String),
+    Many(Vec<String>),
+}
 
 pub struct Names {
     paths: Vec<String>,

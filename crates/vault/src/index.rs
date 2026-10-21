@@ -1,14 +1,9 @@
 use std::collections::BTreeSet;
 
+pub use crate::names::Resolution;
+
 use crate::names::Names;
 use crate::note::{self, Note};
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Resolution {
-    None,
-    One(String),
-    Many(Vec<String>),
-}
 
 pub struct Index {
     notes: Vec<Note>,
