@@ -1,3 +1,5 @@
+mod common;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -15,8 +17,7 @@ vibook.on('follow_link', function() vibook.buf.set_text(peek()) end)
 vibook.command('count', function() vibook.buf.set_text(#vibook.vault.notes() .. '') end)";
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root =
-        std::env::temp_dir().join(format!("vi-book-lua-vault-{}-{name}", std::process::id()));
+    let root = common::scratch_path(&format!("lua-vault-{name}"));
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(root.join("sub")).unwrap();
     fs::write(root.join("a.md"), "# A\n").unwrap();

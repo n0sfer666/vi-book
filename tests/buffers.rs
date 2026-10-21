@@ -11,10 +11,7 @@ use v_ide_tui::app::App;
 use v_ide_tui::view::View;
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("vi-book-buf-{}-{name}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
-    root
+    common::scratch(&format!("buf-{name}"))
 }
 
 fn pool_buffer(root: &std::path::Path, rel: &str) -> Document {

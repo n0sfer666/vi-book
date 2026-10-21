@@ -1,3 +1,5 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
@@ -16,10 +18,7 @@ fn ws(text: &str) -> Workspace {
 fn started(label: &str, script: &str) -> Modules {
     let mut modules = Modules::new(vec![LuaModule::registration()]);
     assert_eq!(modules.activate(&ws(""), "lua"), Vec::new());
-    let path = std::env::temp_dir().join(format!(
-        "vi-book-lua-module-{}-{label}.lua",
-        std::process::id()
-    ));
+    let path = common::scratch_path(&format!("lua-module-{label}.lua"));
     fs::write(&path, script).unwrap();
     let lua = modules.get::<LuaModule>().expect("lua module active");
     let messages = lua.load_config(Some((path.clone(), None)));
@@ -54,8 +53,7 @@ fn bundled_links_plugin_classifies_targets() {
 fn load_config_reports_warning_then_error() {
     let mut modules = Modules::new(vec![LuaModule::registration()]);
     modules.activate(&ws(""), "lua");
-    let path =
-        std::env::temp_dir().join(format!("vi-book-lua-module-{}-bad.lua", std::process::id()));
+    let path = common::scratch_path("lua-module-bad.lua");
     fs::write(&path, "this is not lua").unwrap();
     let lua = modules.get::<LuaModule>().unwrap();
     let messages = lua.load_config(Some((path.clone(), Some("config: old"))));

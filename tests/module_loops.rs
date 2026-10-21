@@ -39,9 +39,7 @@ static AGAIN: Manifest = Manifest {
 };
 
 fn app() -> (App, PathBuf) {
-    let root = std::env::temp_dir().join(format!("vi-book-loops-{}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
+    let root = common::scratch("loops");
     fs::write(root.join("a.md"), "# A\n").unwrap();
     fs::write(root.join("b.md"), "# B\n").unwrap();
     let mut app = App::new(common::named_doc("", ""));

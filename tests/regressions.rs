@@ -59,7 +59,7 @@ fn unknown_key_notation_is_skipped() {
 }
 
 fn temp_file(name: &str, content: &[u8]) -> PathBuf {
-    let path = std::env::temp_dir().join(format!("vi-book-regr-{}-{name}", std::process::id()));
+    let path = common::scratch_path(&format!("regr-{name}"));
     fs::write(&path, content).unwrap();
     path
 }

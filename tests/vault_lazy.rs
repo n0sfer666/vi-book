@@ -1,3 +1,5 @@
+mod common;
+
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -35,8 +37,7 @@ impl Module for Probe {
 }
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root =
-        std::env::temp_dir().join(format!("vi-book-vault-lazy-{}-{name}", std::process::id()));
+    let root = common::scratch_path(&format!("vault-lazy-{name}"));
     let _ = fs::remove_dir_all(&root);
     root
 }

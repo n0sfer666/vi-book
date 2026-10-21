@@ -1,3 +1,5 @@
+mod common;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -10,13 +12,7 @@ use v_ide_notebook::module::NotebookModule;
 use v_ide_vault::module::VaultModule;
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!(
-        "vi-book-notebook-module-{}-{name}",
-        std::process::id()
-    ));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
-    root
+    common::scratch(&format!("notebook-module-{name}"))
 }
 
 fn ws_at(root: &Path, current: Option<PathBuf>) -> Workspace {

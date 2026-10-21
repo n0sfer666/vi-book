@@ -57,10 +57,7 @@ fn config_without_startup_activates_lua() {
 #[test]
 fn vault_error_on_demand_replaces_warning() {
     let mut app = App::new(common::named_doc("x", "a.md"));
-    common::open_vault(
-        &mut app,
-        &std::env::temp_dir().join("vi-book-no-such-vault"),
-    );
+    common::open_vault(&mut app, &common::scratch_path("no-such-vault"));
     let startup = app.ui.message.clone();
     let path = common::config_file("startup-warn", "vibook.opt.leader = ','");
     lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
@@ -74,10 +71,7 @@ fn vault_error_on_demand_replaces_warning() {
 #[test]
 fn config_error_overrides_startup_message() {
     let mut app = App::new(common::named_doc("x", "a.md"));
-    common::open_vault(
-        &mut app,
-        &std::env::temp_dir().join("vi-book-no-such-vault"),
-    );
+    common::open_vault(&mut app, &common::scratch_path("no-such-vault"));
     let path = common::config_file("startup-error", "error(\"boom\")");
     lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
     assert!(

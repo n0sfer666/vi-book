@@ -1,3 +1,5 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
@@ -11,10 +13,7 @@ struct TempVault {
 
 impl TempVault {
     fn new(name: &str) -> Self {
-        let root =
-            std::env::temp_dir().join(format!("vi-book-vault-{}-{name}", std::process::id()));
-        let _ = fs::remove_dir_all(&root);
-        fs::create_dir_all(&root).unwrap();
+        let root = common::scratch(&format!("vault-scan-{name}"));
         Self { root }
     }
 

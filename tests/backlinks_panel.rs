@@ -10,11 +10,7 @@ use v_ide_tui::input;
 use v_ide_tui::panel::Panel;
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root =
-        std::env::temp_dir().join(format!("vi-book-backlinks-{}-{name}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
-    root
+    common::scratch(&format!("backlinks-{name}"))
 }
 
 fn app_for(root: &std::path::Path) -> App {

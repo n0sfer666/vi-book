@@ -10,13 +10,7 @@ use v_ide_tui::app::App;
 use v_ide_tui::requests;
 
 fn temp_root(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!(
-        "vi-book-module-requests-{}-{name}",
-        std::process::id()
-    ));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
-    root
+    common::scratch(&format!("module-requests-{name}"))
 }
 
 #[test]

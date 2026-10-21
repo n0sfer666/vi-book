@@ -1,3 +1,5 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 
@@ -7,7 +9,7 @@ use v_ide_engine::Mode;
 use v_ide_text::Position;
 
 fn temp_path(name: &str) -> PathBuf {
-    std::env::temp_dir().join(format!("vi-book-test-{}-{}", std::process::id(), name))
+    common::scratch_path(&format!("file-io-{name}"))
 }
 
 fn roundtrip(name: &str, content: &[u8]) {

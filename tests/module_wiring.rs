@@ -37,9 +37,7 @@ static LOOPER: Manifest = Manifest {
 };
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("vi-book-wiring-{}-{name}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
+    let root = common::scratch(&format!("wiring-{name}"));
     fs::write(root.join("a.md"), "# A\n").unwrap();
     fs::write(root.join("b.md"), "# B\n").unwrap();
     root

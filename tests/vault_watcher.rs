@@ -1,3 +1,5 @@
+mod common;
+
 use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -22,9 +24,7 @@ fn removal_marks_file_vanished_regardless_of_dirty() {
 
 #[test]
 fn watcher_reports_modified_file_path() {
-    let root = std::env::temp_dir().join(format!("vi-book-watch-{}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
+    let root = common::scratch("watch");
     let file = root.join("note.md");
     fs::write(&file, "one").unwrap();
 

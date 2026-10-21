@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+pub mod scratch;
 pub mod vault;
 
 use std::fs;
@@ -13,6 +14,8 @@ use v_ide_text::Position;
 use v_ide_tui::app::App;
 use v_ide_tui::frame::Frame;
 use v_ide_tui::{command_line, requests};
+
+pub use scratch::{scratch, scratch_path};
 
 pub struct Case {
     pub name: &'static str,
@@ -89,15 +92,11 @@ pub fn open_vault(app: &mut App, root: &Path) {
 }
 
 pub fn temp_root(label: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("vi-book-lua-{}-{label}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
-    root
+    scratch(&format!("lua-{label}"))
 }
 
 pub fn config_file(label: &str, script: &str) -> PathBuf {
-    let path =
-        std::env::temp_dir().join(format!("vi-book-init-{}-{label}.lua", std::process::id()));
+    let path = scratch_path(&format!("init-{label}.lua"));
     fs::write(&path, script).unwrap();
     path
 }

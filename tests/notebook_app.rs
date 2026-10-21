@@ -11,10 +11,7 @@ use v_ide_tui::command_line;
 use v_ide_vault::module::VaultModule;
 
 fn temp_vault(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("vi-book-app-{}-{name}", std::process::id()));
-    let _ = fs::remove_dir_all(&root);
-    fs::create_dir_all(&root).unwrap();
-    root
+    common::scratch(&format!("app-{name}"))
 }
 
 #[test]
