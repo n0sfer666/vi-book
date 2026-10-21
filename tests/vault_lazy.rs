@@ -171,7 +171,8 @@ fn note_create_after_scan_announces_snapshot() {
     let ws = ws_at(&root);
     let mut modules = modules();
     modules.startup(&ws);
-    assert_eq!(items(&modules).len(), 3);
+    let vault = modules.get::<VaultModule>().unwrap();
+    assert_eq!(vault.index().unwrap().notes().len(), 3);
     let abs = root.join("c.md");
     fs::write(&abs, "back to [[a]]\n").unwrap();
     let requests = modules.event(&ws, &Event::NoteCreate(abs));

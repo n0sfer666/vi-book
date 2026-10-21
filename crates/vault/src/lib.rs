@@ -4,6 +4,7 @@ pub mod fuzzy;
 pub mod index;
 pub mod link;
 pub mod module;
+pub mod names;
 pub mod note;
 pub mod rename;
 pub mod scan;

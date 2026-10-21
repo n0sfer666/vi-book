@@ -11,6 +11,7 @@ use v_ide_editor::module::{Cx, Event, Manifest, Module, Registration, Trigger};
 use v_ide_editor::path::rel_path;
 
 use crate::index::Index;
+use crate::names::Names;
 use changed::changed;
 use create::create;
 use lazy::LazyIndex;
@@ -47,6 +48,10 @@ impl VaultModule {
         self.index.get()
     }
 
+    pub fn names(&self) -> Result<Ref<'_, Names>, String> {
+        self.index.names()
+    }
+
     pub fn items(&self) -> Result<Vec<String>, String> {
         self.index.paths()
     }
@@ -60,7 +65,7 @@ impl VaultModule {
         if self.index.is_built() {
             self.reindex()
         } else {
-            Ok(())
+            self.index.forget_names()
         }
     }
 
@@ -144,10 +149,12 @@ impl Module for VaultModule {
     }
 
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event) {
-        if let Event::NoteCreate(_) = ev
-            && self.index.is_built()
-            && self.reindex().is_ok()
-        {
+        if !matches!(ev, Event::NoteCreate(_)) {
+            return;
+        }
+        if !self.index.is_built() {
+            let _ = self.index.forget_names();
+        } else if self.reindex().is_ok() {
             self.announce(cx);
         }
     }

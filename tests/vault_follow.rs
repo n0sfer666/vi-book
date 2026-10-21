@@ -54,7 +54,10 @@ fn index_of(paths: &[(&str, &str)]) -> Index {
 fn follow_opens_unique_target() {
     let index = index_of(&[("docs/note.md", "x")]);
     let link = link_at("[[note]]", 3).unwrap();
-    assert_eq!(follow(&index, &link), Follow::Open("docs/note.md".into()));
+    assert_eq!(
+        follow(index.names(), &link),
+        Follow::Open("docs/note.md".into())
+    );
 }
 
 #[test]
@@ -62,7 +65,7 @@ fn follow_disambiguates_collisions() {
     let index = index_of(&[("a/note.md", "x"), ("b/note.md", "y")]);
     let link = link_at("[[note]]", 3).unwrap();
     assert_eq!(
-        follow(&index, &link),
+        follow(index.names(), &link),
         Follow::Disambiguate(vec!["a/note.md".into(), "b/note.md".into()])
     );
 }
@@ -71,7 +74,7 @@ fn follow_disambiguates_collisions() {
 fn follow_offers_create_for_broken_link() {
     let index = index_of(&[("other.md", "x")]);
     let link = link_at("[[ghost]]", 3).unwrap();
-    assert_eq!(follow(&index, &link), Follow::Create("ghost".into()));
+    assert_eq!(follow(index.names(), &link), Follow::Create("ghost".into()));
 }
 
 #[test]

@@ -11,7 +11,8 @@ const PEEK: &str = "local function peek()
   return #vibook.vault.notes() .. ',' .. vibook.vault.tags()[1] .. ',' .. #vibook.vault.backlinks('a.md')
 end
 vibook.command('peek', function() vibook.buf.set_text(peek()) end)
-vibook.on('follow_link', function() vibook.buf.set_text(peek()) end)";
+vibook.on('follow_link', function() vibook.buf.set_text(peek()) end)
+vibook.command('count', function() vibook.buf.set_text(#vibook.vault.notes() .. '') end)";
 
 fn temp_vault(name: &str) -> PathBuf {
     let root =
@@ -87,4 +88,15 @@ fn scan_error_raises_lua_error() {
             if m.starts_with("plugin error") && m.contains("vault: ")),
         "{requests:?}"
     );
+}
+
+#[test]
+fn notes_survive_unreadable_note() {
+    let root = temp_vault("unreadable");
+    let mut modules = started(&root, "unreadable");
+    let ws = ws_at(&root);
+    fs::write(root.join("bad.md"), [0xff, 0xfe]).unwrap();
+    let count = modules.command(&ws, "count", "");
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(count, Some(text("4")));
 }

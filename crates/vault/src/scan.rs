@@ -24,6 +24,14 @@ pub fn scan_with(root: &Path, include_hidden: bool) -> io::Result<Vec<Note>> {
     Ok(notes)
 }
 
+pub fn walk_paths(root: &Path, include_hidden: bool) -> io::Result<Vec<String>> {
+    let mut paths = Vec::new();
+    walk(root, include_hidden, &mut paths)?;
+    let mut rels: Vec<String> = paths.iter().map(|path| rel_path(root, path)).collect();
+    rels.sort();
+    Ok(rels)
+}
+
 fn walk(dir: &Path, include_hidden: bool, paths: &mut Vec<PathBuf>) -> io::Result<()> {
     for entry in fs::read_dir(dir)? {
         let entry = entry?;

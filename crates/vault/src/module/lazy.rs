@@ -5,11 +5,13 @@ use std::path::{Path, PathBuf};
 use v_ide_editor::module::VaultQuery;
 
 use crate::index::Index;
-use crate::scan::scan_with;
+use crate::names::Names;
+use crate::scan::{scan_with, walk_paths};
 
 pub struct LazyIndex {
     root: PathBuf,
     scan_hidden: Cell<bool>,
+    names: RefCell<Option<Names>>,
     index: RefCell<Option<Index>>,
 }
 
@@ -18,6 +20,7 @@ impl LazyIndex {
         Self {
             root,
             scan_hidden: Cell::new(false),
+            names: RefCell::new(None),
             index: RefCell::new(None),
         }
     }
@@ -39,9 +42,45 @@ impl LazyIndex {
     }
 
     pub fn rebuild(&self) -> io::Result<()> {
-        let index = Index::from_notes(scan_with(&self.root, self.scan_hidden.get())?);
-        *self.index.try_borrow_mut().map_err(io::Error::other)? = Some(index);
+        let built = scan_with(&self.root, self.scan_hidden.get()).map(Index::from_notes);
+        if let Ok(mut names) = self.names.try_borrow_mut() {
+            *names = None;
+        }
+        let mut index = self.index.try_borrow_mut().map_err(io::Error::other)?;
+        match built {
+            Ok(fresh) => {
+                *index = Some(fresh);
+                Ok(())
+            }
+            Err(err) => {
+                *index = None;
+                Err(err)
+            }
+        }
+    }
+
+    pub fn forget_names(&self) -> io::Result<()> {
+        *self.names.try_borrow_mut().map_err(io::Error::other)? = None;
         Ok(())
+    }
+
+    pub fn names(&self) -> Result<Ref<'_, Names>, String> {
+        if self.is_built() {
+            return self.get().map(|index| Ref::map(index, Index::names));
+        }
+        if self.names.try_borrow().is_ok_and(|names| names.is_none()) {
+            let paths = walk_paths(&self.root, self.scan_hidden.get())
+                .map_err(|err| format!("vault: {err}"))?;
+            *self
+                .names
+                .try_borrow_mut()
+                .map_err(|err| format!("vault: {err}"))? = Some(Names::from_paths(paths));
+        }
+        let names = self
+            .names
+            .try_borrow()
+            .map_err(|err| format!("vault: {err}"))?;
+        Ref::filter_map(names, Option::as_ref).map_err(|_| String::from("vault: not indexed"))
     }
 
     pub fn get(&self) -> Result<Ref<'_, Index>, String> {
@@ -56,7 +95,7 @@ impl LazyIndex {
     }
 
     pub fn paths(&self) -> Result<Vec<String>, String> {
-        Ok(self.get()?.notes().iter().map(|n| n.path.clone()).collect())
+        Ok(self.names()?.paths().to_vec())
     }
 }
 

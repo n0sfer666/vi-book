@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
-use std::collections::HashMap;
 
+use crate::names::Names;
 use crate::note::{self, Note};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,36 +12,25 @@ pub enum Resolution {
 
 pub struct Index {
     notes: Vec<Note>,
-    by_name: HashMap<String, Vec<usize>>,
+    names: Names,
 }
 
 impl Index {
     pub fn from_notes(notes: Vec<Note>) -> Self {
-        let mut by_name: HashMap<String, Vec<usize>> = HashMap::new();
-        for (i, note) in notes.iter().enumerate() {
-            by_name.entry(note.name.clone()).or_default().push(i);
-        }
-        Self { notes, by_name }
+        let names = Names::from_paths(notes.iter().map(|note| note.path.clone()).collect());
+        Self { notes, names }
     }
 
     pub fn notes(&self) -> &[Note] {
         &self.notes
     }
 
+    pub fn names(&self) -> &Names {
+        &self.names
+    }
+
     pub fn resolve(&self, target: &str) -> Resolution {
-        let mut paths: Vec<String> = self
-            .by_name
-            .get(target)
-            .into_iter()
-            .flatten()
-            .map(|&i| self.notes[i].path.clone())
-            .collect();
-        paths.sort();
-        match paths.len() {
-            0 => Resolution::None,
-            1 => Resolution::One(paths.remove(0)),
-            _ => Resolution::Many(paths),
-        }
+        self.names.resolve(target)
     }
 
     pub fn backlinks(&self, path: &str) -> Vec<&Note> {
@@ -56,7 +45,7 @@ impl Index {
         let mut broken = Vec::new();
         for note in &self.notes {
             for link in &note.links {
-                if !self.by_name.contains_key(&link.target) {
+                if !self.names.contains(&link.target) {
                     broken.push((note.path.clone(), link.target.clone()));
                 }
             }

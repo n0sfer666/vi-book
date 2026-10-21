@@ -1,5 +1,6 @@
-use crate::index::{Index, Resolution};
+use crate::index::Resolution;
 use crate::link::{self, Link};
+use crate::names::Names;
 use v_ide_markdown::extract::extract;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,8 +18,8 @@ pub fn link_at(source: &str, cursor: usize) -> Option<Link> {
         .and_then(|raw| link::parse(&raw.name))
 }
 
-pub fn follow(index: &Index, link: &Link) -> Follow {
-    match index.resolve(&link.target) {
+pub fn follow(names: &Names, link: &Link) -> Follow {
+    match names.resolve(&link.target) {
         Resolution::One(path) => Follow::Open(path),
         Resolution::Many(paths) => Follow::Disambiguate(paths),
         Resolution::None => Follow::Create(link.target.clone()),

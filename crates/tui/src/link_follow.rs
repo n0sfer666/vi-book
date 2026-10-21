@@ -28,7 +28,7 @@ fn follow_wiki(app: &mut App, link: &Link) {
     }
     let found = match app
         .vault()
-        .map(|v| v.index().map(|index| follow(&index, link)))
+        .map(|v| v.names().map(|names| follow(&names, link)))
     {
         Some(Ok(found)) => found,
         Some(Err(err)) => {

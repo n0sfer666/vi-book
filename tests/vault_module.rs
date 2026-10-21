@@ -44,6 +44,12 @@ fn items(modules: &Modules) -> Vec<String> {
         .unwrap_or_default()
 }
 
+fn indexed(modules: &Modules) -> usize {
+    modules.get::<VaultModule>().map_or(0, |vault| {
+        vault.index().map_or(0, |index| index.notes().len())
+    })
+}
+
 fn msg(text: &str) -> Request {
     Request::Message(String::from(text))
 }
@@ -103,7 +109,7 @@ fn new_creates_note_reindexes_and_opens() {
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
     let abs = root.join("ideas/x.md");
-    assert_eq!(items(&modules), Vec::<String>::new());
+    assert_eq!(indexed(&modules), 0);
     let requests = modules.command(&ws, "new", " ideas/x ");
     assert_eq!(
         requests,
@@ -139,7 +145,7 @@ fn scan_hidden_command_toggles_and_reindexes() {
     seed(&root);
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
-    assert_eq!(items(&modules), strings(&["a.md", "sub/b.md"]));
+    assert_eq!(indexed(&modules), 2);
     let on = modules.command(&ws, "scan-hidden", "on").unwrap();
     assert!(
         matches!(on.as_slice(), [c, m] if is_changed(c) && *m == msg("scan hidden folders: on")),
@@ -166,7 +172,7 @@ fn bridge_sets_scan_hidden_and_reindexes() {
     seed(&root);
     let mut modules = started(&ws_at(&root, None));
     let vault = modules.get_mut::<VaultModule>().unwrap();
-    assert_eq!(vault.items().unwrap().len(), 2);
+    assert_eq!(vault.index().unwrap().notes().len(), 2);
     vault.set_scan_hidden(true).unwrap();
     assert!(vault.scan_hidden());
     fs::write(root.join("d.md"), "# D\n").unwrap();
@@ -202,7 +208,7 @@ fn note_create_event_reindexes() {
     seed(&root);
     let ws = ws_at(&root, None);
     let mut modules = started(&ws);
-    assert_eq!(items(&modules), strings(&["a.md", "sub/b.md"]));
+    assert_eq!(indexed(&modules), 2);
     let abs = root.join("fresh.md");
     fs::write(&abs, "# F\n").unwrap();
     let requests = modules.event(&ws, &Event::NoteCreate(abs));
