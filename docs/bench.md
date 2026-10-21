@@ -88,3 +88,27 @@ The scan no longer rescans text per code zone, and notes are parsed on all cores
 for 10k / 1k). Peak RSS of the picker grows from 19.1 to 25.7 MB: each worker holds its own
 tree-sitter trees. The "file" rows do not scan; their spread between runs of the same commit
 (33–48 ms) is noise. A real vault of 1444 notes (10 MB) scans in 0.41 s instead of 3.6 s.
+
+## Walk-only name index (S07 4a3)
+
+2026-10-21 · dcc4e13 · Apple M3 Pro · Darwin · NVIM v0.12.6
+runs: 10 · median · 120x40 · quiet 100 ms
+
+| scenario | editor | first frame, ms | peak RSS, MB |
+|---|---|---:|---:|
+| file, vault 10 | v-ide | 24.2 | 13.7 |
+| file, vault 10 | nvim --clean | 119.3 | 10.3 |
+| file, vault 10k | v-ide | 22.5 | 13.7 |
+| file, vault 10k | nvim --clean | 115.1 | 10.9 |
+| picker, vault 1k | v-ide | 7.0 | 9.2 |
+| picker, vault 10k | v-ide | 16.4 | 12.2 |
+| picker, wiki-like 1494 | v-ide | 12.1 | 9.5 |
+
+The picker, follow and Lua `notes()` now read paths from a directory walk; links and tags are
+parsed only for backlinks, tags and `VaultChanged`. All vaults are synthetic and generated in
+`.bench/` by `scripts/bench_vault.py`; "wiki-like" mimics a personal knowledge base: 1494 notes,
+9.9 MB, nested folders, frontmatter, aliased and anchored links, name collisions and a tail of
+dev-log notes with 400–1200 code blocks (up to 112 KB). A/B against 90f217b with the same script
+in the same session: picker 10k 656 → 16 ms, 1k 73 → 7 ms, wiki-like 504 → 12 ms with peak RSS
+92.9 → 9.5 MB. The first backlinks/tags request still pays the full parallel parse (≈ 0.5 s on
+wiki-like); only that path is left for S07 4c (mtime cache).

@@ -5,7 +5,6 @@ import fcntl
 import os
 import platform
 import pty
-import random
 import select
 import shutil
 import signal
@@ -13,13 +12,16 @@ import statistics
 import struct
 import subprocess
 import sys
-import tempfile
 import termios
 import time
 from pathlib import Path
 
+from bench_vault import vault, wiki
+
 ROOT = Path(__file__).resolve().parent.parent
 BINARY = ROOT / "target" / "release" / "v-ide"
+BENCH = ROOT / ".bench"
+CLEANUP_WAIT = 5
 ROWS, COLS = 40, 120
 QUIET = 0.1
 DEADLINE = 10.0
@@ -31,29 +33,6 @@ REPLIES = {
     b"\x1b]10;?": b"\x1b]10;rgb:ffff/ffff/ffff\x1b\\",
     b"\x1b]11;?": b"\x1b]11;rgb:0000/0000/0000\x1b\\",
 }
-WORDS = "alpha beta gamma delta note link vault idea draft review plan task".split()
-
-
-def note(rng, index, count):
-    links = " ".join(f"[[note-{rng.randrange(count):05}]]" for _ in range(3))
-    tags = " ".join(f"#tag-{rng.randrange(50)}" for _ in range(2))
-    prose = "\n\n".join(" ".join(rng.choices(WORDS, k=60)) for _ in range(3))
-    items = "\n".join(f"- {' '.join(rng.choices(WORDS, k=6))}" for _ in range(4))
-    return (
-        f"# Note {index}\n\n{tags}\n\n{prose}\n\n## Links\n\n{links}\n\n"
-        f"{items}\n\n```rust\nfn note_{index}() -> usize {{ {index} }}\n```\n"
-    )
-
-
-def vault(base, count):
-    path = base / f"vault-{count}"
-    path.mkdir()
-    rng = random.Random(count)
-    for index in range(count):
-        (path / f"note-{index:05}.md").write_text(note(rng, index, count))
-    return path
-
-
 def environment(home):
     env = {
         key: value
@@ -119,7 +98,7 @@ def run(argv, cwd, env, runs):
     return millis, megabytes
 
 
-def scenarios(small, large, mid, nvim):
+def scenarios(small, large, mid, wiki_like, nvim):
     small_note = str(small / "note-00000.md")
     large_note = str(large / "note-00000.md")
     rows = [
@@ -129,6 +108,7 @@ def scenarios(small, large, mid, nvim):
         ("file, vault 10k", "nvim --clean", [nvim, "--clean", large_note], large),
         ("picker, vault 1k", "v-ide", [str(BINARY)], mid),
         ("picker, vault 10k", "v-ide", [str(BINARY)], large),
+        (f"picker, wiki-like {wiki_like[1]}", "v-ide", [str(BINARY)], wiki_like[0]),
     ]
     return [row for row in rows if nvim or row[1] == "v-ide"]
 
@@ -154,22 +134,36 @@ def header(nvim, runs):
     print("|---|---|---:|---:|")
 
 
+def cleanup():
+    print(f"\nDelete {BENCH}? [Y/n] (auto in {CLEANUP_WAIT} s) ", end="", flush=True)
+    ready, _, _ = select.select([sys.stdin], [], [], CLEANUP_WAIT)
+    answer = sys.stdin.readline().strip().lower() if ready else ""
+    if answer.startswith("n"):
+        print(f"kept {BENCH}")
+        return
+    shutil.rmtree(BENCH, ignore_errors=True)
+    print(f"deleted {BENCH}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Startup time to first frame and peak RSS")
     parser.add_argument("--runs", type=int, default=10)
     args = parser.parse_args()
     subprocess.run(["cargo", "build", "--release", "--quiet"], cwd=ROOT, check=True)
     nvim = shutil.which("nvim")
-    with tempfile.TemporaryDirectory(prefix="v-ide-bench-") as tmp:
-        base = Path(tmp)
-        home = base / "home"
-        home.mkdir()
-        env = environment(home)
-        small, mid, large = vault(base, 10), vault(base, 1000), vault(base, 10000)
+    shutil.rmtree(BENCH, ignore_errors=True)
+    home = BENCH / "home"
+    home.mkdir(parents=True)
+    env = environment(home)
+    try:
+        small, mid, large = vault(BENCH, 10), vault(BENCH, 1000), vault(BENCH, 10000)
+        wiki_like = wiki(BENCH)
         header(nvim, args.runs)
-        for name, editor, argv, cwd in scenarios(small, large, mid, nvim):
+        for name, editor, argv, cwd in scenarios(small, large, mid, wiki_like, nvim):
             millis, megabytes = run(argv, cwd, env, args.runs)
             print(f"| {name} | {editor} | {millis:.1f} | {megabytes:.1f} |", flush=True)
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":
