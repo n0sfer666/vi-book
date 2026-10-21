@@ -68,3 +68,23 @@ runs: 10 · median · 120x40 · quiet 100 ms
 
 Opening a file no longer scans the vault: the 10k row drops from 4657 ms to 24 ms and its RSS from
 28.6 MB to 13.9 MB. The picker still pays the full scan; S07 4c (mtime cache) targets it.
+
+## Fast vault scan (S07 4a2)
+
+2026-10-21 · ce88aa6 + parallel scan (a19e1bd) · Apple M3 Pro · Darwin · NVIM v0.12.6
+runs: 10 · median · 120x40 · quiet 100 ms
+
+| scenario | editor | first frame, ms | peak RSS, MB |
+|---|---|---:|---:|
+| file, vault 10 | v-ide | 48.0 | 13.7 |
+| file, vault 10 | nvim --clean | 119.5 | 10.3 |
+| file, vault 10k | v-ide | 41.9 | 13.7 |
+| file, vault 10k | nvim --clean | 117.5 | 10.9 |
+| picker, vault 1k | v-ide | 75.7 | 13.0 |
+| picker, vault 10k | v-ide | 644.5 | 25.7 |
+
+The scan no longer rescans text per code zone, and notes are parsed on all cores. The picker on
+10k notes drops from 4216 ms to 645 ms (A/B against b9b9b9c in the same session: 4216 / 430 ms
+for 10k / 1k). Peak RSS of the picker grows from 19.1 to 25.7 MB: each worker holds its own
+tree-sitter trees. The "file" rows do not scan; their spread between runs of the same commit
+(33–48 ms) is noise. A real vault of 1444 notes (10 MB) scans in 0.41 s instead of 3.6 s.
