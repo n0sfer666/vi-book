@@ -1,5 +1,4 @@
 use std::env;
-use std::mem;
 use std::path::PathBuf;
 
 use v_ide_view::{Color, Depth};
@@ -15,7 +14,6 @@ use v_ide_keys::key::parse_keys;
 use v_ide_lua::host::PluginHost;
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::wrap_mode::WrapMode;
-use v_ide_vault::module::VaultModule;
 
 pub fn load_config(app: &mut App) {
     let resolved = config_path::resolve(|key| env::var_os(key), |path| path.exists());
@@ -97,8 +95,6 @@ fn apply_opts(app: &mut App) {
         })
         .collect();
     apply_colors(&mut app.theme, host);
-    let hidden = host.opt_bool("scan_hidden");
-    scan_hidden(app, hidden);
     if let Some(wrap) = wrap {
         app.set_wrap(wrap);
     }
@@ -111,19 +107,6 @@ fn color_depth(value: &str, current: Option<Depth>) -> Option<Depth> {
         "256" => Some(Depth::Ansi256),
         "truecolor" => Some(Depth::TrueColor),
         _ => current,
-    }
-}
-
-fn scan_hidden(app: &mut App, hidden: Option<bool>) {
-    let current = app.vault().map(VaultModule::scan_hidden);
-    let Some(value) = hidden.filter(|value| current.is_some_and(|c| c != *value)) else {
-        return;
-    };
-    let message = mem::take(&mut app.ui.message);
-    let state = if value { "on" } else { "off" };
-    requests::command(app, &format!("scan-hidden {state}"));
-    if app.ui.message == format!("scan hidden folders: {state}") {
-        app.ui.message = message;
     }
 }
 

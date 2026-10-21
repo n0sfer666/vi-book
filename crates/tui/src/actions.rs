@@ -6,14 +6,12 @@ use crate::view::View;
 use crate::{command_line, help, layout, read_view};
 use v_ide_editor::document::Document;
 use v_ide_keys::key::Key;
-use v_ide_vault::module::VaultModule;
 
 pub fn open_menu(app: &mut App) {
     app.ui.menu = Some(Menu::leader(
         app.menu_extra.clone(),
         app.menu_center,
         app.wrap(),
-        app.vault().is_some_and(VaultModule::scan_hidden),
     ));
 }
 

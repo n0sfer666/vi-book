@@ -4,16 +4,9 @@ use v_ide_keys::key::Key;
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_tui::actions;
 use v_ide_tui::app::App;
-use v_ide_vault::module::VaultModule;
 
 fn app() -> App {
     App::new(common::named_doc("x", "a.md"))
-}
-
-fn scan_hidden(app: &App) -> bool {
-    app.modules
-        .get::<VaultModule>()
-        .is_some_and(VaultModule::scan_hidden)
 }
 
 fn press(app: &mut App, c: char) {
@@ -41,43 +34,15 @@ fn settings_wrap_text_and_none() {
     assert_eq!(common::wrap(&a), Some(WrapMode::Text));
 }
 
-fn empty_root() -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("vi-book-menu-hidden-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).unwrap();
-    dir
-}
-
 #[test]
-fn settings_scan_hidden_toggles_vault_flag() {
+fn settings_have_no_scan_hidden_item() {
     let mut a = app();
-    common::open_vault(&mut a, &empty_root());
-    assert!(!scan_hidden(&a));
-    actions::open_menu(&mut a);
-    press(&mut a, 's');
-    press(&mut a, 'h');
-    assert!(scan_hidden(&a), "menu toggles scan-hidden on");
-    assert!(a.ui.menu.is_none(), "menu closes after the toggle");
-}
-
-#[test]
-fn scan_hidden_state_is_marked_in_menu() {
-    let mut a = app();
-    common::open_vault(&mut a, &empty_root());
-    let vault = a.modules.get_mut::<VaultModule>().unwrap();
-    vault.set_scan_hidden(true).unwrap();
     actions::open_menu(&mut a);
     press(&mut a, 's');
     let menu = a.ui.menu.as_ref().unwrap();
-    let item = menu
-        .items
-        .iter()
-        .find(|i| i.action == ":scan-hidden toggle")
-        .expect("scan hidden item");
     assert!(
-        item.label.contains('\u{25cf}'),
-        "active state marked, got: {:?}",
-        item.label
+        menu.items.iter().all(|i| i.action != ":scan-hidden toggle"),
+        "scan-hidden is a command only"
     );
 }
 

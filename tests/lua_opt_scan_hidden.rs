@@ -2,7 +2,6 @@ mod common;
 
 use v_ide_tui::app::App;
 use v_ide_tui::command_line;
-use v_ide_tui::lua_bridge;
 use v_ide_vault::module::VaultModule;
 
 const COUNT: &str = "vibook.command('count', function()\n\
@@ -26,50 +25,15 @@ fn scan_hidden(app: &App) -> bool {
 }
 
 #[test]
-fn opt_scan_hidden_true_enables_flag() {
-    let app = app_with_opt("true", "vibook.opt.scan_hidden = true");
-    assert!(scan_hidden(&app));
-}
-
-#[test]
-fn opt_scan_hidden_absent_stays_off() {
-    let app = app_with_opt("absent", "vibook.opt.leader = ','");
+fn opt_scan_hidden_is_ignored() {
+    let app = app_with_opt("ignored", "vibook.opt.scan_hidden = true");
     assert!(!scan_hidden(&app));
-}
-
-#[test]
-fn opt_scan_hidden_is_silent_at_startup() {
-    let app = app_with_opt("silent", "vibook.opt.scan_hidden = true");
     assert_eq!(app.ui.message, "");
 }
 
 #[test]
-fn opt_scan_hidden_keeps_config_warning() {
-    let dir = common::temp_root("opt-hidden-warn");
-    let mut app = App::new(common::named_doc("x", "a.md"));
-    common::open_vault(&mut app, &dir);
-    let path = common::config_file("opt-hidden-warn", "vibook.opt.scan_hidden = true");
-    lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
-    assert_eq!(app.ui.message, "config: old");
-}
-
-#[test]
-fn opt_scan_hidden_reaches_lua_vault() {
+fn opt_scan_hidden_does_not_reach_lua_vault() {
     let mut app = app_with_opt("lua", &format!("{COUNT}vibook.opt.scan_hidden = true"));
     command_line::run(&mut app, "count");
-    assert_eq!(app.workspace.current().editor.text(), "1");
-}
-
-#[test]
-fn opt_scan_hidden_failure_surfaces_on_demand() {
-    let dir = common::temp_root("opt-hidden-fail");
-    let mut app = App::new(common::named_doc("x", "a.md"));
-    common::open_vault(&mut app, &dir);
-    std::fs::remove_dir_all(&dir).unwrap();
-    let path = common::config_file("opt-hidden-fail", "vibook.opt.scan_hidden = true");
-    lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
-    let warned = app.ui.message.clone();
-    app.open_picker();
-    assert_eq!(warned, "config: old");
-    assert!(app.ui.message.starts_with("vault:"), "{}", app.ui.message);
+    assert_eq!(app.workspace.current().editor.text(), "0");
 }
