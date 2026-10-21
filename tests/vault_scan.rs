@@ -77,6 +77,39 @@ fn scan_defaults_to_skipping_hidden() {
 }
 
 #[test]
+fn scan_many_notes_keeps_path_order_and_facts() {
+    let vault = TempVault::new("many");
+    for i in 0..300 {
+        vault.write(&format!("d{}/n{i:03}.md", i % 7), &format!("[[t{i}]]"));
+    }
+    let notes = scan(&vault.root).unwrap();
+    let mut expected: Vec<String> = (0..300).map(|i| format!("d{}/n{i:03}.md", i % 7)).collect();
+    expected.sort();
+    assert_eq!(paths(&notes), expected);
+    for note in &notes {
+        let stem = note
+            .path
+            .rsplit_once("/n")
+            .unwrap()
+            .1
+            .trim_end_matches(".md");
+        let index: usize = stem.parse().unwrap();
+        assert_eq!(note.links[0].target, format!("t{index}"), "{}", note.path);
+    }
+}
+
+#[test]
+fn scan_fails_on_unreadable_note_among_many() {
+    let vault = TempVault::new("unreadable");
+    for i in 0..50 {
+        vault.write(&format!("n{i:02}.md"), "x");
+    }
+    fs::write(vault.root.join("n25.md"), [0xff, 0xfe]).unwrap();
+    let err = scan(&vault.root).unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::InvalidData);
+}
+
+#[test]
 fn cache_roundtrips_through_disk() {
     let vault = TempVault::new("roundtrip");
     let cache = Cache {
