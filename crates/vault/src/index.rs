@@ -12,7 +12,7 @@ pub struct Index {
 
 impl Index {
     pub fn from_notes(notes: Vec<Note>) -> Self {
-        let names = Names::from_paths(notes.iter().map(|note| note.path.clone()).collect());
+        let names = names_of(&notes);
         Self { notes, names }
     }
 
@@ -24,14 +24,43 @@ impl Index {
         &self.names
     }
 
-    pub(crate) fn upsert(&mut self, note: Note) {
+    pub(crate) fn upsert(&mut self, note: Note) -> bool {
         match self.notes.binary_search_by(|n| n.path.cmp(&note.path)) {
-            Ok(at) => self.notes[at] = note,
+            Ok(at) if self.notes[at] == note => false,
+            Ok(at) => {
+                self.notes[at] = note;
+                true
+            }
             Err(at) => {
                 self.names.insert(note.path.clone());
                 self.notes.insert(at, note);
+                true
             }
         }
+    }
+
+    pub(crate) fn apply(&mut self, notes: Vec<Note>, gone: &BTreeSet<String>) -> bool {
+        let before = self.notes.len();
+        self.notes.retain(|note| !gone.contains(&note.path));
+        let mut changed = false;
+        let mut fresh = Vec::new();
+        for note in notes {
+            match self.notes.binary_search_by(|n| n.path.cmp(&note.path)) {
+                Ok(at) if self.notes[at] == note => {}
+                Ok(at) => {
+                    self.notes[at] = note;
+                    changed = true;
+                }
+                Err(_) => fresh.push(note),
+            }
+        }
+        let moved = self.notes.len() != before || !fresh.is_empty();
+        if moved {
+            self.notes.extend(fresh);
+            self.notes.sort_by(|a, b| a.path.cmp(&b.path));
+            self.names = names_of(&self.notes);
+        }
+        changed || moved
     }
 
     pub fn resolve(&self, target: &str) -> Resolution {
@@ -66,4 +95,8 @@ impl Index {
             .collect();
         set.into_iter().collect()
     }
+}
+
+fn names_of(notes: &[Note]) -> Names {
+    Names::from_paths(notes.iter().map(|note| note.path.clone()).collect())
 }

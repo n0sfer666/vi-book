@@ -1,6 +1,23 @@
+mod applied;
+mod batch;
 mod changed;
 mod create;
+mod disk;
+mod kind;
 mod lazy;
+mod level;
+mod listing;
+mod plan;
+#[cfg(test)]
+mod rescan_tests;
+mod reset;
+mod scope;
+#[cfg(test)]
+mod test_vault;
+mod watch;
+mod watch_state;
+#[cfg(test)]
+mod watch_tests;
 
 use std::cell::Ref;
 use std::io;
@@ -150,6 +167,20 @@ impl Module for VaultModule {
             _ => {}
         }
         Ok(())
+    }
+
+    fn tick(&mut self, cx: &mut Cx<'_>) {
+        let batch = self.index.watch().drain();
+        for err in &batch.errors {
+            cx.message(format!("vault: watch: {err}"));
+        }
+        let applied = disk::apply(&self.index, &batch);
+        for err in &applied.errors {
+            cx.message(format!("vault: {err}"));
+        }
+        if applied.changed {
+            self.announce(cx);
+        }
     }
 
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event) {

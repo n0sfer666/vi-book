@@ -2,6 +2,7 @@
 
 pub mod scratch;
 pub mod vault;
+pub mod watch;
 
 use std::fs;
 use std::path::{Path, PathBuf};

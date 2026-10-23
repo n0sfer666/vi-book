@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use crate::note::stem;
 
@@ -29,6 +29,26 @@ impl Names {
             paths.insert(at, path);
             *self = Self::from_paths(paths);
         }
+    }
+
+    pub(crate) fn apply<'a>(
+        &mut self,
+        found: impl Iterator<Item = &'a String>,
+        gone: &BTreeSet<String>,
+    ) {
+        let fresh: Vec<&String> = found
+            .filter(|path| self.paths.binary_search(path).is_err())
+            .collect();
+        if fresh.is_empty() && !self.paths.iter().any(|path| gone.contains(path)) {
+            return;
+        }
+        let mut paths: Vec<String> = std::mem::take(&mut self.paths)
+            .into_iter()
+            .filter(|path| !gone.contains(path))
+            .chain(fresh.into_iter().cloned())
+            .collect();
+        paths.sort();
+        *self = Self::from_paths(paths);
     }
 
     pub fn paths(&self) -> &[String] {

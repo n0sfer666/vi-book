@@ -4,7 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use v_ide_vault::watcher::{DiskChange, Reaction, Watcher, react};
+use v_ide_vault::watcher::{Change, DiskChange, Reaction, Watcher, react};
 
 #[test]
 fn clean_buffer_reloads_on_disk_modify() {
@@ -35,7 +35,7 @@ fn watcher_reports_modified_file_path() {
     let deadline = Duration::from_secs(5);
     let start = std::time::Instant::now();
     while start.elapsed() < deadline {
-        if let Some(path) = watcher.poll(Duration::from_millis(200))
+        if let Some(Change::Path(path)) = watcher.poll(Duration::from_millis(200))
             && path.file_name().is_some_and(|n| n == "note.md")
         {
             seen = Some(path);

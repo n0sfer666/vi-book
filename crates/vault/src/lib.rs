@@ -1,4 +1,5 @@
 pub mod cache;
+mod change;
 pub mod follow;
 pub mod fuzzy;
 pub mod index;

@@ -33,7 +33,7 @@ pub fn walk_paths(root: &Path, include_hidden: bool) -> io::Result<Vec<String>> 
     Ok(rels)
 }
 
-fn walk(dir: &Path, include_hidden: bool, paths: &mut Vec<PathBuf>) -> io::Result<()> {
+pub(crate) fn walk(dir: &Path, include_hidden: bool, paths: &mut Vec<PathBuf>) -> io::Result<()> {
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();

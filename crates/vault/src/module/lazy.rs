@@ -1,21 +1,26 @@
 use std::cell::{Cell, Ref, RefCell};
 use std::fs;
 use std::io;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 use v_ide_editor::module::VaultQuery;
-use v_ide_editor::path::rel_path;
 
 use crate::index::Index;
 use crate::names::Names;
 use crate::note::Note;
-use crate::scan::{hidden, scan_with, walk_paths};
+use crate::scan::{scan_with, walk_paths};
+
+use super::level::Level;
+use super::reset::Reset;
+use super::scope;
+use super::watch::Watch;
 
 pub struct LazyIndex {
     root: PathBuf,
     scan_hidden: Cell<bool>,
     names: RefCell<Option<Names>>,
     index: RefCell<Option<Index>>,
+    watch: Watch,
 }
 
 impl LazyIndex {
@@ -25,6 +30,7 @@ impl LazyIndex {
             scan_hidden: Cell::new(false),
             names: RefCell::new(None),
             index: RefCell::new(None),
+            watch: Watch::new(),
         }
     }
 
@@ -44,7 +50,12 @@ impl LazyIndex {
         self.index.try_borrow().is_ok_and(|index| index.is_some())
     }
 
+    pub fn watch(&self) -> &Watch {
+        &self.watch
+    }
+
     pub fn rebuild(&self) -> io::Result<()> {
+        self.watch.start(&self.root);
         let built = scan_with(&self.root, self.scan_hidden.get()).map(Index::from_notes);
         if let Ok(mut names) = self.names.try_borrow_mut() {
             *names = None;
@@ -53,6 +64,7 @@ impl LazyIndex {
         match built {
             Ok(fresh) => {
                 *index = Some(fresh);
+                self.watch.rescanned();
                 Ok(())
             }
             Err(err) => {
@@ -63,28 +75,18 @@ impl LazyIndex {
     }
 
     pub fn upsert(&self, abs: &Path) -> io::Result<bool> {
-        let Some(rel) = self.member(abs) else {
+        let Some(rel) = scope::member(&self.root, self.scan_hidden.get(), abs) else {
             return Ok(false);
         };
         if !self.is_built() {
-            if let Some(names) = self
-                .names
-                .try_borrow_mut()
-                .map_err(io::Error::other)?
-                .as_mut()
-            {
-                names.insert(rel);
-            }
+            self.edit_names(|names| names.insert(rel))?;
             return Ok(false);
         }
         let mut index = self.index.try_borrow_mut().map_err(io::Error::other)?;
         match fs::read_to_string(abs) {
-            Ok(source) => {
-                if let Some(index) = index.as_mut() {
-                    index.upsert(Note::from_source(&rel, &source));
-                }
-                Ok(true)
-            }
+            Ok(source) => Ok(index
+                .as_mut()
+                .is_some_and(|index| index.upsert(Note::from_source(&rel, &source)))),
             Err(err) => {
                 *index = None;
                 drop(index);
@@ -94,14 +96,45 @@ impl LazyIndex {
         }
     }
 
-    fn member(&self, abs: &Path) -> Option<String> {
-        let rel = abs.strip_prefix(&self.root).ok()?;
-        let inside = rel.components().all(|c| match c {
-            Component::Normal(name) => self.scan_hidden.get() || !hidden(name),
-            _ => false,
-        });
-        let md = rel.extension().is_some_and(|ext| ext == "md");
-        (inside && md).then(|| rel_path(&self.root, abs))
+    pub fn edit<R>(&self, edit: impl FnOnce(Level<'_>) -> R) -> io::Result<Option<R>> {
+        let mut index = self.index.try_borrow_mut().map_err(io::Error::other)?;
+        if let Some(index) = index.as_mut() {
+            return Ok(Some(edit(Level::Facts(index))));
+        }
+        drop(index);
+        let mut names = self.names.try_borrow_mut().map_err(io::Error::other)?;
+        Ok(names.as_mut().map(|names| edit(Level::Names(names))))
+    }
+
+    fn edit_names(&self, edit: impl FnOnce(&mut Names)) -> io::Result<()> {
+        if let Some(names) = self
+            .names
+            .try_borrow_mut()
+            .map_err(io::Error::other)?
+            .as_mut()
+        {
+            edit(names);
+        }
+        Ok(())
+    }
+
+    pub fn reset(&self) -> io::Result<Reset> {
+        let mut index = match self.index.try_borrow_mut() {
+            Ok(index) => index,
+            Err(err) => return Ok(Reset::Busy(err.to_string())),
+        };
+        if index.is_none() {
+            drop(index);
+            return Ok(self
+                .forget_names()
+                .map_or_else(|err| Reset::Busy(err.to_string()), |()| Reset::Forgot));
+        }
+        *index = Some(scan_with(&self.root, self.scan_hidden.get()).map(Index::from_notes)?);
+        drop(index);
+        if let Ok(mut names) = self.names.try_borrow_mut() {
+            *names = None;
+        }
+        Ok(Reset::Rebuilt)
     }
 
     pub fn forget_names(&self) -> io::Result<()> {
@@ -114,6 +147,7 @@ impl LazyIndex {
             return self.get().map(|index| Ref::map(index, Index::names));
         }
         if self.names.try_borrow().is_ok_and(|names| names.is_none()) {
+            self.watch.start(&self.root);
             let paths = walk_paths(&self.root, self.scan_hidden.get())
                 .map_err(|err| format!("vault: {err}"))?;
             *self
