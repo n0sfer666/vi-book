@@ -173,7 +173,20 @@ startup. If the scan fails, these functions raise a Lua error `vault: <reason>`
 and the next call retries.
 
 Saving or creating a note in v-ide updates these lists by rereading only that
-note. Files changed outside v-ide are not picked up yet.
+note. Notes added, changed, removed or renamed outside v-ide are picked up the
+same way within a fraction of a second; renaming or removing a folder rereads
+only the notes inside it. If a changed note cannot be read, its previous lists
+stay and the status line shows `vault: <note>: <reason>`. If the file watcher
+cannot start, the status line shows `vault: watch: <reason>` once and outside
+changes are not picked up; on Linux this usually means the inotify limit
+`fs.inotify.max_user_watches` is too low for the vault. If the limit is reached
+later, as the vault grows, the status line shows `vault: watch: <reason>` once
+and folders created after that are not watched; everything else keeps working.
+If the watcher reports lost events or an error, the vault is rescanned in full and
+the error is shown as `vault: watch: <reason>`. If a note cannot be read during
+that rescan, the lists of the whole vault stay as they were, the status line shows
+`vault: <reason>` once, and the rescan is retried on the next change to any file
+in the vault, so fixing the note brings the lists up to date.
 
 ---
 
