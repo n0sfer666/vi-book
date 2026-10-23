@@ -15,6 +15,13 @@ pub fn startup(app: &mut App) {
     apply(app, requests);
 }
 
+pub fn tick(app: &mut App) -> bool {
+    let requests = app.modules.tick(&app.workspace);
+    let changed = !requests.is_empty();
+    apply(app, requests);
+    changed
+}
+
 pub fn command(app: &mut App, line: &str) -> bool {
     let (name, args) = line.split_once(' ').unwrap_or((line, ""));
     match app.modules.command(&app.workspace, name, args) {

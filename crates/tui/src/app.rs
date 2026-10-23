@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::env;
+use std::time::Duration;
 
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 
@@ -44,6 +45,8 @@ pub struct App {
     pub last_clip: String,
     pub color_depth: Option<Depth>,
 }
+
+const TICK: Duration = Duration::from_millis(100);
 
 pub fn run() -> Result<(), Error> {
     let arg = env::args().nth(1);
@@ -107,17 +110,24 @@ impl App {
     }
 
     fn event_loop(&mut self, term: &mut Term) -> Result<(), Error> {
+        let mut stale = true;
         loop {
-            let (w, h) = term.size()?;
-            let mut frame = Frame::new(w, h);
-            render::draw(&mut frame, self);
-            term.draw(&frame)?;
-            if let Event::Key(key) = event::read()?
+            if stale {
+                let (w, h) = term.size()?;
+                let mut frame = Frame::new(w, h);
+                render::draw(&mut frame, self);
+                term.draw(&frame)?;
+            }
+            stale = event::poll(TICK)?;
+            if stale
+                && let Event::Key(key) = event::read()?
                 && key.kind == KeyEventKind::Press
             {
                 self.handle(key);
             }
+            stale |= requests::tick(self);
             if let Some(path) = self.external_request.take() {
+                stale = true;
                 if let Some(editor) = self.external_editor() {
                     let _ = crate::external::run(term, &editor, &path);
                 } else {

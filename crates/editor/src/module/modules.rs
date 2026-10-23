@@ -86,6 +86,16 @@ impl Modules {
         self.finish(cx)
     }
 
+    pub fn tick(&mut self, ws: &Workspace) -> Vec<Request> {
+        let mut cx = Cx::new(ws, self.vault.clone());
+        for entry in self.entries.iter_mut() {
+            if let Some(module) = entry.module_mut() {
+                module.tick(&mut cx);
+            }
+        }
+        self.finish(cx)
+    }
+
     fn activate_where(&mut self, ws: &Workspace, pick: impl Fn(&Entry) -> bool) -> Vec<Request> {
         let mut cx = Cx::new(ws, self.vault.clone());
         for entry in self.entries.iter_mut().filter(|e| pick(e)) {

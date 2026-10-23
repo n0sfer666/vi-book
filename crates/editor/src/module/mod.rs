@@ -24,6 +24,8 @@ pub trait Module: Any {
     fn command(&mut self, cx: &mut Cx<'_>, name: &str, args: &str) -> Result<(), String>;
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event);
 
+    fn tick(&mut self, _cx: &mut Cx<'_>) {}
+
     fn commands(&self) -> Vec<String> {
         Vec::new()
     }
