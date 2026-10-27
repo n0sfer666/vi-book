@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod cache;
 mod change;
 pub mod follow;

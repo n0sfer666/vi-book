@@ -8,6 +8,7 @@ repository.workspace = true
 
 [dependencies]
 v-ide-editor = { path = "../editor" }
+v-ide-syntax = { path = "../syntax", optional = true }
 tree-sitter-md = { version = "0.5.3", features = ["parser"] }
 tree-sitter = "0.26.9"
 unicode-width = "=0.2.0"
@@ -28,6 +29,7 @@ tree-sitter-yaml = { version = "0.7.2", optional = true }
 [features]
 default = ["highlight"]
 highlight = [
+    "dep:v-ide-syntax",
     "dep:tree-sitter-rust",
     "dep:tree-sitter-python",
     "dep:tree-sitter-json",

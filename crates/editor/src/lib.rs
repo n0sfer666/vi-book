@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod disk;
 pub mod document;
 pub mod filetype;

@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod desired_col;
 pub mod editor;
 pub mod insert;

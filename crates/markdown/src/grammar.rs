@@ -1,6 +1,12 @@
 use tree_sitter::Language;
 
 pub(crate) fn grammar(lang: &str) -> Option<(Language, String)> {
+    v_ide_syntax::grammar(lang)
+        .map(|grammar| (grammar.language, grammar.highlights.to_string()))
+        .or_else(|| bundled(lang))
+}
+
+fn bundled(lang: &str) -> Option<(Language, String)> {
     let js = tree_sitter_javascript::HIGHLIGHT_QUERY;
     let (language_fn, query) = match lang {
         "rust" | "rs" => (

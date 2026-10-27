@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod atom;
 pub mod blocks;
 pub mod extract;

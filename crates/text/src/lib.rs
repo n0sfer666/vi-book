@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod buffer;
 pub mod edit;
 pub mod history;

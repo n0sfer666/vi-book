@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod ansi;
 pub mod cell;
 pub mod color;

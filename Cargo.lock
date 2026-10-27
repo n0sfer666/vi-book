@@ -407,6 +407,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
+name = "libloading"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "754ca22de805bb5744484a5b151a9e1a8e837d5dc232c2d7d8c2e3492edc8b60"
+dependencies = [
+ "cfg-if",
+ "windows-link",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1196,6 +1206,7 @@ dependencies = [
  "v-ide-lua",
  "v-ide-markdown",
  "v-ide-notebook",
+ "v-ide-syntax",
  "v-ide-text",
  "v-ide-tui",
  "v-ide-vault",
@@ -1252,6 +1263,7 @@ dependencies = [
  "tree-sitter-yaml",
  "unicode-width",
  "v-ide-editor",
+ "v-ide-syntax",
 ]
 
 [[package]]
@@ -1259,6 +1271,15 @@ name = "v-ide-notebook"
 version = "0.1.0"
 dependencies = [
  "v-ide-editor",
+]
+
+[[package]]
+name = "v-ide-syntax"
+version = "0.1.0"
+dependencies = [
+ "libloading",
+ "tree-sitter",
+ "tree-sitter-language",
 ]
 
 [[package]]
