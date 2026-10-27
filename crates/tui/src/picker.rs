@@ -1,5 +1,5 @@
+use crate::fuzzy;
 use crate::list_nav;
-use v_ide_vault::fuzzy;
 
 pub struct Picker {
     items: Vec<String>,

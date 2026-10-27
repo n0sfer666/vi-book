@@ -1,5 +1,5 @@
+use v_ide_markdown::link::{self, Link};
 use v_ide_vault::index::{Index, Resolution};
-use v_ide_vault::link::{self, Link};
 use v_ide_vault::note::Note;
 
 fn link(target: &str, alias: Option<&str>, anchor: Option<&str>) -> Link {

@@ -1,13 +1,10 @@
 pub mod cache;
 mod change;
 pub mod follow;
-pub mod fuzzy;
 pub mod index;
-pub mod link;
 pub mod module;
 pub mod names;
 pub mod note;
 pub mod rename;
 pub mod scan;
-pub mod target;
 pub mod watcher;

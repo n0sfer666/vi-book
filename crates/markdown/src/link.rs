@@ -1,3 +1,4 @@
+use crate::extract::extract;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -11,6 +12,14 @@ impl Link {
     pub fn display(&self) -> &str {
         self.alias.as_deref().unwrap_or(&self.target)
     }
+}
+
+pub fn link_at(source: &str, cursor: usize) -> Option<Link> {
+    extract(source)
+        .links
+        .into_iter()
+        .find(|raw| cursor >= raw.start && cursor < raw.end)
+        .and_then(|raw| parse(&raw.name))
 }
 
 pub fn parse(raw: &str) -> Option<Link> {

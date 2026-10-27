@@ -1,5 +1,5 @@
-use crate::link;
 use v_ide_markdown::extract::extract;
+use v_ide_markdown::link;
 
 pub fn update_links(source: &str, old: &str, new: &str) -> String {
     let chars: Vec<char> = source.chars().collect();

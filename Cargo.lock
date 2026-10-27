@@ -1235,6 +1235,7 @@ dependencies = [
 name = "v-ide-markdown"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "tree-sitter",
  "tree-sitter-bash",
  "tree-sitter-c",

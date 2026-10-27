@@ -1,6 +1,7 @@
+use v_ide_markdown::link::link_at;
+use v_ide_tui::fuzzy::{filter, score};
 use v_ide_tui::picker::Picker;
-use v_ide_vault::follow::{Follow, follow, link_at};
-use v_ide_vault::fuzzy::{filter, score};
+use v_ide_vault::follow::{Follow, follow};
 use v_ide_vault::index::Index;
 use v_ide_vault::note::Note;
 

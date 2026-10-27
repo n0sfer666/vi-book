@@ -1,20 +1,11 @@
-use crate::link::{self, Link};
 use crate::names::{Names, Resolution};
-use v_ide_markdown::extract::extract;
+use v_ide_markdown::link::Link;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Follow {
     Open(String),
     Disambiguate(Vec<String>),
     Create(String),
-}
-
-pub fn link_at(source: &str, cursor: usize) -> Option<Link> {
-    extract(source)
-        .links
-        .into_iter()
-        .find(|raw| cursor >= raw.start && cursor < raw.end)
-        .and_then(|raw| link::parse(&raw.name))
 }
 
 pub fn follow(names: &Names, link: &Link) -> Follow {

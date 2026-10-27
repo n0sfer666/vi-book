@@ -11,6 +11,7 @@ v-ide-editor = { path = "../editor" }
 tree-sitter-md = { version = "0.5.3", features = ["parser"] }
 tree-sitter = "0.26.9"
 unicode-width = "=0.2.0"
+serde = { version = "1.0.228", features = ["derive"] }
 tree-sitter-highlight = "0.26.9"
 tree-sitter-rust = "0.24.2"
 tree-sitter-python = "0.25.0"

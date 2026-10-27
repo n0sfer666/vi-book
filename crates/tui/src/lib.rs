@@ -13,6 +13,7 @@ pub mod disk_message;
 pub mod event_map;
 pub mod external;
 pub mod frame;
+pub mod fuzzy;
 pub mod help;
 pub mod hscroll;
 pub mod input;

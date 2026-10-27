@@ -1,6 +1,6 @@
+use crate::fuzzy;
 use crate::{disk_mark, list_nav};
 use v_ide_editor::disk::DiskMark;
-use v_ide_vault::fuzzy;
 
 #[derive(Clone)]
 pub struct BufferEntry {

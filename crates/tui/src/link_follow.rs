@@ -4,9 +4,9 @@ use crate::external;
 use crate::help;
 use crate::requests;
 use v_ide_editor::module::Event;
+use v_ide_markdown::link::Link;
+use v_ide_markdown::target::{Target, target_at};
 use v_ide_vault::follow::{Follow, follow};
-use v_ide_vault::link::Link;
-use v_ide_vault::target::{Target, target_at};
 
 pub fn follow_at_cursor(app: &mut App) {
     let Some(target) = target_at(

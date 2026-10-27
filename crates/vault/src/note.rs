@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::link::{self, Link};
 use v_ide_markdown::extract::extract;
+use v_ide_markdown::link::{self, Link};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Note {
