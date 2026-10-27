@@ -19,7 +19,6 @@ from pathlib import Path
 from bench_vault import vault, wiki
 
 ROOT = Path(__file__).resolve().parent.parent
-BINARY = ROOT / "target" / "release" / "v-ide"
 BENCH = ROOT / ".bench"
 CLEANUP_WAIT = 5
 ROWS, COLS = 40, 120
@@ -98,17 +97,17 @@ def run(argv, cwd, env, runs):
     return millis, megabytes
 
 
-def scenarios(small, large, mid, wiki_like, nvim):
+def scenarios(binary, small, large, mid, wiki_like, nvim):
     small_note = str(small / "note-00000.md")
     large_note = str(large / "note-00000.md")
     rows = [
-        ("file, vault 10", "v-ide", [str(BINARY), small_note], small),
+        ("file, vault 10", "v-ide", [str(binary), small_note], small),
         ("file, vault 10", "nvim --clean", [nvim, "--clean", small_note], small),
-        ("file, vault 10k", "v-ide", [str(BINARY), large_note], large),
+        ("file, vault 10k", "v-ide", [str(binary), large_note], large),
         ("file, vault 10k", "nvim --clean", [nvim, "--clean", large_note], large),
-        ("picker, vault 1k", "v-ide", [str(BINARY)], mid),
-        ("picker, vault 10k", "v-ide", [str(BINARY)], large),
-        (f"picker, wiki-like {wiki_like[1]}", "v-ide", [str(BINARY)], wiki_like[0]),
+        ("picker, vault 1k", "v-ide", [str(binary)], mid),
+        ("picker, vault 10k", "v-ide", [str(binary)], large),
+        (f"picker, wiki-like {wiki_like[1]}", "v-ide", [str(binary)], wiki_like[0]),
     ]
     return [row for row in rows if nvim or row[1] == "v-ide"]
 
@@ -124,11 +123,25 @@ def machine():
     return platform.processor() or platform.machine()
 
 
-def header(nvim, runs):
+def build(features):
+    if features == "default":
+        subprocess.run(["cargo", "build", "--release", "--quiet"], cwd=ROOT, check=True)
+        return ROOT / "target" / "release" / "v-ide"
+    flags = ["--no-default-features"]
+    if features != "none":
+        flags += ["--features", features]
+    target = ROOT / "target" / f"feat-{features.replace(',', '-')}"
+    command = ["cargo", "build", "--release", "--quiet", "-p", "v-ide", *flags]
+    subprocess.run([*command, "--target-dir", str(target)], cwd=ROOT, check=True)
+    return target / "release" / "v-ide"
+
+
+def header(nvim, runs, features, binary):
     commit = output(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"])
     version = output([nvim, "--version"]) if nvim else "not found"
     print(f"{datetime.date.today()} · {commit} · {machine()} · {platform.system()} · {version}")
     print(f"runs: {runs} · median · {COLS}x{ROWS} · quiet {int(QUIET * 1000)} ms")
+    print(f"features: {features} · binary {binary.stat().st_size / 1e6:.1f} MB")
     print()
     print("| scenario | editor | first frame, ms | peak RSS, MB |")
     print("|---|---|---:|---:|")
@@ -148,8 +161,15 @@ def cleanup():
 def main():
     parser = argparse.ArgumentParser(description="Startup time to first frame and peak RSS")
     parser.add_argument("--runs", type=int, default=10)
+    parser.add_argument("--features", default="default", help="default, none or a list: lua,vault")
     args = parser.parse_args()
-    subprocess.run(["cargo", "build", "--release", "--quiet"], cwd=ROOT, check=True)
+    args.features = ",".join(part.strip() for part in args.features.split(",") if part.strip())
+    if not args.features:
+        parser.error("--features needs default, none or a list of features")
+    try:
+        binary = build(args.features)
+    except subprocess.CalledProcessError:
+        sys.exit(f"cargo build failed for features: {args.features}")
     nvim = shutil.which("nvim")
     shutil.rmtree(BENCH, ignore_errors=True)
     home = BENCH / "home"
@@ -158,8 +178,8 @@ def main():
     try:
         small, mid, large = vault(BENCH, 10), vault(BENCH, 1000), vault(BENCH, 10000)
         wiki_like = wiki(BENCH)
-        header(nvim, args.runs)
-        for name, editor, argv, cwd in scenarios(small, large, mid, wiki_like, nvim):
+        header(nvim, args.runs, args.features, binary)
+        for name, editor, argv, cwd in scenarios(binary, small, large, mid, wiki_like, nvim):
             millis, megabytes = run(argv, cwd, env, args.runs)
             print(f"| {name} | {editor} | {millis:.1f} | {megabytes:.1f} |", flush=True)
     finally:

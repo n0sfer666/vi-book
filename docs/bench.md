@@ -4,10 +4,13 @@
 `nvim --clean`.
 
 ```nu
-python3 -I scripts/bench_startup.py --runs 10
+python3 scripts/bench_startup.py --runs 10
+python3 scripts/bench_startup.py --runs 10 --features none
 ```
 
-The script builds `target/release/v-ide`, generates deterministic vaults (10, 1000 and 10000
+The script builds `target/release/v-ide` (`--features default`) or, for `none` or a list such as
+`lua,vault`, a build without default features in `target/feat-<features>/` with commas turned
+into `-` (`target/feat-lua-vault/`). It generates deterministic vaults (10, 1000 and 10000
 notes) in a temp directory, and starts each editor in a PTY (120x40, `TERM=xterm-256color`,
 empty `HOME`, no user config). It answers terminal queries the way a basic xterm does
 (DA1, DSR, OSC 10/11) in the order they arrive.
@@ -112,3 +115,39 @@ dev-log notes with 400–1200 code blocks (up to 112 KB). A/B against 90f217b wi
 in the same session: picker 10k 656 → 16 ms, 1k 73 → 7 ms, wiki-like 504 → 12 ms with peak RSS
 92.9 → 9.5 MB. The first backlinks/tags request still pays the full parallel parse (≈ 0.5 s on
 wiki-like); only that path is left for S07 4c (mtime cache).
+
+## Cargo features (S07 5)
+
+2026-10-27 · d5e22d8 · Apple M3 Pro · Darwin · NVIM v0.12.6
+
+Release binary size by feature set: the `binary … MB` part of the `features:` header line of
+`python3 scripts/bench_startup.py --runs 1 --features <set>` for each row; only default and none
+were timed below.
+
+| features | binary, MB |
+|---|---:|
+| default (lua, vault, notebook, highlight) | 12.6 |
+| none | 2.3 |
+| lua | 2.9 |
+| vault | 2.7 |
+| notebook | 2.3 |
+| highlight | 11.5 |
+
+The 11 code-block grammars behind `highlight` are ≈ 9.2 MB of the 12.6 MB binary; S08 moves
+them to runtime loading. Lua adds ≈ 0.6 MB, vault ≈ 0.4 MB, notebook under 0.1 MB.
+
+runs: 10 · median · 120x40 · quiet 100 ms
+
+| scenario | editor | default, ms | default RSS, MB | none, ms | none RSS, MB |
+|---|---|---:|---:|---:|---:|
+| file, vault 10 | v-ide | 33.4 | 13.8 | 14.2 | 9.1 |
+| file, vault 10 | nvim --clean | 119.7 | 10.3 | 122.4 | 10.3 |
+| file, vault 10k | v-ide | 35.9 | 13.8 | 14.8 | 9.1 |
+| file, vault 10k | nvim --clean | 118.3 | 10.9 | 118.7 | 10.9 |
+| picker, vault 1k | v-ide | 13.9 | 10.3 | 11.9 | 8.0 |
+| picker, vault 10k | v-ide | 29.4 | 13.2 | 11.4 | 8.0 |
+| picker, wiki-like 1494 | v-ide | 20.2 | 10.6 | 7.6 | 8.0 |
+
+Without `vault` the "picker" rows open an empty buffer, so they measure a bare start, not a
+picker. The "file" rows lose about 20 ms and 4.7 MB without features; the default "file" rows
+sit inside the 22–48 ms spread seen in earlier sections.
