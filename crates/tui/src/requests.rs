@@ -4,7 +4,7 @@ use crate::app::App;
 use crate::list_panel::ListPanel;
 use crate::panel::Panel;
 use crate::picker::Picker;
-use crate::{command_line, external};
+use crate::{checktime, command_line, external};
 use v_ide_editor::module::{Event, Request};
 use v_ide_editor::path::rel_path;
 
@@ -19,7 +19,7 @@ pub fn tick(app: &mut App) -> bool {
     let requests = app.modules.tick(&app.workspace);
     let changed = !requests.is_empty();
     apply(app, requests);
-    changed
+    checktime::run(app) || changed
 }
 
 pub fn command(app: &mut App, line: &str) -> bool {

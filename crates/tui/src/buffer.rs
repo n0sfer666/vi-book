@@ -65,6 +65,7 @@ impl App {
                 path: current.name.clone(),
                 dirty: current.is_dirty(),
                 current: true,
+                mark: current.disk_mark(),
             });
         }
         for (i, buf) in self.workspace.pool().iter().enumerate() {
@@ -74,6 +75,7 @@ impl App {
                     path: buf.doc.name.clone(),
                     dirty: buf.doc.is_dirty(),
                     current: false,
+                    mark: buf.doc.disk_mark(),
                 });
             }
         }

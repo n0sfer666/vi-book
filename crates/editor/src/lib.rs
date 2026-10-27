@@ -1,3 +1,4 @@
+pub mod disk;
 pub mod document;
 pub mod filetype;
 pub mod io;

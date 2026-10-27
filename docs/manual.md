@@ -147,11 +147,37 @@ own buffer, cursor and mode. `<C-w>` is the *window prefix*:
 Or use commands: `:vsplit [file]` opens a column (optionally another note),
 `:only` collapses back to one.
 
+## Files changed outside v-ide
+
+Every open buffer is checked against its file several times a second, so edits
+from another program, `git checkout` or `$EDITOR` show up on their own. Your own
+`:w` and rewrites with the same content are not treated as changes.
+
+- **No unsaved changes** — the buffer is reloaded and the status line shows
+  `"<note>" reloaded`. Cursor and scroll stay; `u` brings back the text from before
+  the reload. While you are typing or selecting, the reload waits until you are
+  back in normal mode.
+- **Unsaved changes** — your text is kept, the status line shows
+  `"<note>" changed on disk (:e! load, :w! overwrite)` and the buffer is marked
+  `[changed]`. Plain `:w` and `:wq` check the file first and refuse until you
+  pick: `:e!` takes the file from disk (`u` brings your text back), `:w!` writes
+  your text over it.
+- **File deleted** — the text stays, the status line shows `"<note>" deleted on disk`
+  and the buffer is marked `[deleted]`; `:w` writes the file again. `:e!` on a
+  note that was never written says `"<note>" not on disk`.
+
+The marks also appear in `:buffers`. A mark goes away when the file on disk is
+back to what you last loaded or saved. When several buffers change at once, the
+status line shows the most important event with `(+N more)`. Writing a note that
+is open in another column updates that column too (or marks it `[changed]` if it
+has unsaved edits).
+
 ## Commands
 
 Type `:` then a command:
 
 - `:w` `:q` `:wq` `:q!` — write / quit.
+- `:w!` `:e!` — write over / reload from a file changed outside v-ide.
 - `:tree` `:backlinks` — toggle the side panels.
 - `:today` `:daily-prev` `:daily-next` — daily notes.
 - `:new <name>` — create `<name>.md` and open it.

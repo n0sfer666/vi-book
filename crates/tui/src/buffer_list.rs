@@ -1,4 +1,5 @@
-use crate::list_nav;
+use crate::{disk_mark, list_nav};
+use v_ide_editor::disk::DiskMark;
 use v_ide_vault::fuzzy;
 
 #[derive(Clone)]
@@ -7,13 +8,15 @@ pub struct BufferEntry {
     pub path: String,
     pub dirty: bool,
     pub current: bool,
+    pub mark: Option<DiskMark>,
 }
 
 impl BufferEntry {
     pub fn label(&self) -> String {
         let marker = if self.current { "% " } else { "  " };
         let dirty = if self.dirty { " [+]" } else { "" };
-        format!("{marker}{}{dirty}", self.path)
+        let mark = disk_mark::suffix(self.mark);
+        format!("{marker}{}{dirty}{mark}", self.path)
     }
 }
 

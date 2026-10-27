@@ -1,8 +1,12 @@
+use std::io::ErrorKind;
+
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
 use crate::panel::Panel;
-use crate::{actions, requests};
+use crate::{actions, checktime, disk_message, requests};
+use v_ide_editor::Error;
+use v_ide_editor::disk::{DiskMark, Reaction};
 use v_ide_editor::module::Event;
 
 pub fn handle(app: &mut App, event: KeyEvent) {
@@ -27,11 +31,13 @@ pub fn handle(app: &mut App, event: KeyEvent) {
 
 pub fn run(app: &mut App, command: &str) {
     match command {
-        "w" => _ = save(app),
+        "w" => _ = save(app, false),
+        "w!" => _ = save(app, true),
+        "e!" => reload(app),
         "q" => quit(app, false),
         "q!" => quit(app, true),
         "wq" => {
-            if save(app) {
+            if save(app, false) {
                 app.quit = true;
             }
         }
@@ -69,10 +75,31 @@ fn toggle_tree(app: &mut App) {
     app.ui.panel_focus = true;
 }
 
-fn save(app: &mut App) -> bool {
+fn reload(app: &mut App) {
+    let doc = app.workspace.current_mut();
+    app.ui.message = match doc.reload() {
+        Ok(()) => disk_message::message(&doc.name, Reaction::Reload),
+        Err(Error::Io(err)) if err.kind() == ErrorKind::NotFound => match doc.disk_mark() {
+            Some(DiskMark::Deleted) => disk_message::message(&doc.name, Reaction::Vanished),
+            _ => disk_message::missing(&doc.name),
+        },
+        Err(err) => format!("reload failed: {err}"),
+    };
+}
+
+fn save(app: &mut App, force: bool) -> bool {
+    let doc = app.workspace.current_mut();
+    if !force {
+        doc.check_disk();
+    }
+    if !force && doc.disk_mark() == Some(DiskMark::Changed) {
+        app.ui.message = disk_message::message(&doc.name, Reaction::Conflict);
+        return false;
+    }
     match app.workspace.current_mut().save() {
         Ok(()) => {
             app.ui.message = String::from("written");
+            checktime::sync_twins(app);
             if let Some(path) = app.workspace.current().path.clone() {
                 requests::emit(app, Event::NoteSave(path));
             }

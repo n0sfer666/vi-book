@@ -79,18 +79,21 @@ fn buffer_list_modal_renders_markers_and_is_opaque() {
             path: "architecture.md".into(),
             dirty: false,
             current: true,
+            mark: None,
         },
         BufferEntry {
             idx: 1,
             path: "notes/arch.md".into(),
             dirty: true,
             current: false,
+            mark: None,
         },
         BufferEntry {
             idx: 2,
             path: "readme.md".into(),
             dirty: false,
             current: false,
+            mark: None,
         },
     ]));
     let grid = render_app(&mut app);

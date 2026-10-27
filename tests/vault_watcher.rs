@@ -4,23 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use v_ide_vault::watcher::{Change, DiskChange, Reaction, Watcher, react};
-
-#[test]
-fn clean_buffer_reloads_on_disk_modify() {
-    assert_eq!(react(false, DiskChange::Modified), Reaction::Reload);
-}
-
-#[test]
-fn dirty_buffer_conflicts_on_disk_modify() {
-    assert_eq!(react(true, DiskChange::Modified), Reaction::Conflict);
-}
-
-#[test]
-fn removal_marks_file_vanished_regardless_of_dirty() {
-    assert_eq!(react(false, DiskChange::Removed), Reaction::Vanished);
-    assert_eq!(react(true, DiskChange::Removed), Reaction::Vanished);
-}
+use v_ide_vault::watcher::{Change, Watcher};
 
 #[test]
 fn watcher_reports_modified_file_path() {

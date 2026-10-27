@@ -6,28 +6,6 @@ use notify::{Event, RecursiveMode, Watcher as _};
 
 pub use crate::change::{Change, changes};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DiskChange {
-    Modified,
-    Removed,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Reaction {
-    Reload,
-    Conflict,
-    Vanished,
-    Ignore,
-}
-
-pub fn react(buffer_dirty: bool, change: DiskChange) -> Reaction {
-    match (change, buffer_dirty) {
-        (DiskChange::Removed, _) => Reaction::Vanished,
-        (DiskChange::Modified, false) => Reaction::Reload,
-        (DiskChange::Modified, true) => Reaction::Conflict,
-    }
-}
-
 pub struct Watcher {
     _inner: notify::RecommendedWatcher,
     rx: Receiver<Change>,

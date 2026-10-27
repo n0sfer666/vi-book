@@ -1,6 +1,7 @@
 use v_ide_view::{Grid, Rect, Style};
 
 use crate::app::App;
+use crate::disk_mark;
 use crate::view::View;
 use v_ide_engine::mode::Mode;
 
@@ -18,9 +19,10 @@ pub(crate) fn draw_status(grid: &mut Grid, app: &App, area: Rect) {
         }
     };
     let dirty = if doc.is_dirty() { " [+]" } else { "" };
+    let mark = disk_mark::suffix(doc.disk_mark());
     let cursor = doc.editor.cursor();
     let status = format!(
-        " {mode}  {}{dirty}  {}:{} ",
+        " {mode}  {}{dirty}{mark}  {}:{} ",
         doc.name,
         cursor.line + 1,
         cursor.col + 1
