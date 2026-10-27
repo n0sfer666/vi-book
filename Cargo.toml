@@ -21,7 +21,14 @@ name = "v-ide"
 path = "src/main.rs"
 
 [dependencies]
-v-ide-tui = { path = "crates/tui" }
+v-ide-tui = { path = "crates/tui", default-features = false }
+
+[features]
+default = ["lua", "vault", "notebook", "highlight"]
+lua = ["v-ide-tui/lua"]
+vault = ["v-ide-tui/vault"]
+notebook = ["v-ide-tui/notebook"]
+highlight = ["v-ide-tui/highlight"]
 
 [dev-dependencies]
 v-ide-text = { path = "crates/text" }

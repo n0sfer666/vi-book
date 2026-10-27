@@ -22,6 +22,7 @@ pub mod layout;
 pub mod link_follow;
 pub mod list_nav;
 pub mod list_panel;
+#[cfg(feature = "lua")]
 pub mod lua_bridge;
 pub mod markdown_bridge;
 pub mod menu;
@@ -43,6 +44,7 @@ pub mod term;
 pub mod term_paint;
 pub mod theme;
 pub mod ui_state;
+#[cfg(feature = "vault")]
 pub mod vault_bridge;
 pub mod view;
 

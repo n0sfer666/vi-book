@@ -11,10 +11,17 @@ v-ide-text = { path = "../text" }
 v-ide-keys = { path = "../keys" }
 v-ide-engine = { path = "../engine" }
 v-ide-editor = { path = "../editor" }
-v-ide-markdown = { path = "../markdown" }
-v-ide-vault = { path = "../vault" }
-v-ide-notebook = { path = "../notebook" }
-v-ide-lua = { path = "../lua" }
+v-ide-markdown = { path = "../markdown", default-features = false }
+v-ide-vault = { path = "../vault", optional = true }
+v-ide-notebook = { path = "../notebook", optional = true }
+v-ide-lua = { path = "../lua", optional = true }
 v-ide-view = { path = "../view" }
 crossterm = "0.28"
 arboard = "3.4.1"
+
+[features]
+default = ["lua", "vault", "notebook", "highlight"]
+lua = ["dep:v-ide-lua"]
+vault = ["dep:v-ide-vault"]
+notebook = ["dep:v-ide-notebook"]
+highlight = ["v-ide-markdown/highlight"]

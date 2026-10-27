@@ -1,4 +1,6 @@
 use crate::app::App;
+use crate::menu::Menu;
+use crate::picker::Picker;
 use v_ide_vault::module::VaultModule;
 
 impl App {
@@ -14,6 +16,20 @@ impl App {
                 Vec::new()
             }
             None => Vec::new(),
+        }
+    }
+
+    pub fn open_picker(&mut self) {
+        let items = self.vault_items();
+        self.ui.picker = Some(Picker::new(items, "e"));
+    }
+
+    pub(crate) fn start_without_file(&mut self) {
+        let items = self.vault_items();
+        if items.is_empty() {
+            self.ui.menu = Some(Menu::empty_vault());
+        } else {
+            self.ui.picker = Some(Picker::new(items, "e"));
         }
     }
 }

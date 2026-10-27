@@ -8,12 +8,15 @@ use v_ide_keys::key::Key;
 pub fn global_nav(app: &mut App, mapped: Option<Key>) -> bool {
     match mapped {
         Some(Key::Char(':')) => app.ui.command = Some(String::new()),
+        #[cfg(feature = "vault")]
         Some(Key::Ctrl('p')) => app.open_picker(),
+        #[cfg(feature = "notebook")]
         Some(Key::Ctrl('o')) => {
             if let Some(rel) = app.history.back() {
                 app.open_rel(&rel);
             }
         }
+        #[cfg(feature = "notebook")]
         Some(Key::Ctrl('i')) => {
             if let Some(rel) = app.history.forward() {
                 app.open_rel(&rel);

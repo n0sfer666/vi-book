@@ -1,9 +1,15 @@
+#[cfg(feature = "notebook")]
 use crate::list_nav;
 use crate::list_panel::ListPanel;
+#[cfg(feature = "notebook")]
 use v_ide_notebook::tree::{Row, Tree};
 
 pub enum Panel {
-    Tree { tree: Tree, selected: usize },
+    #[cfg(feature = "notebook")]
+    Tree {
+        tree: Tree,
+        selected: usize,
+    },
     List(ListPanel),
 }
 
@@ -15,6 +21,7 @@ pub enum Activation {
 }
 
 impl Panel {
+    #[cfg(feature = "notebook")]
     pub fn tree(paths: &[String]) -> Self {
         Panel::Tree {
             tree: Tree::from_paths(paths),
@@ -24,6 +31,7 @@ impl Panel {
 
     pub fn title(&self) -> String {
         match self {
+            #[cfg(feature = "notebook")]
             Panel::Tree { .. } => String::from(" tree "),
             Panel::List(list) => format!(" {} ", list.title()),
         }
@@ -31,6 +39,7 @@ impl Panel {
 
     pub fn selected(&self) -> usize {
         match self {
+            #[cfg(feature = "notebook")]
             Panel::Tree { selected, .. } => *selected,
             Panel::List(list) => list.selected(),
         }
@@ -38,6 +47,7 @@ impl Panel {
 
     pub fn len(&self) -> usize {
         match self {
+            #[cfg(feature = "notebook")]
             Panel::Tree { tree, .. } => tree.flatten().len(),
             Panel::List(list) => list.rows().len(),
         }
@@ -49,21 +59,25 @@ impl Panel {
 
     pub fn rows(&self) -> Vec<String> {
         match self {
+            #[cfg(feature = "notebook")]
             Panel::Tree { tree, .. } => tree.flatten().iter().map(row_label).collect(),
             Panel::List(list) => list.rows().to_vec(),
         }
     }
 
     pub fn move_down(&mut self) {
-        let len = self.len();
         match self {
-            Panel::Tree { selected, .. } => *selected = list_nav::next(*selected, len),
+            #[cfg(feature = "notebook")]
+            Panel::Tree { tree, selected } => {
+                *selected = list_nav::next(*selected, tree.flatten().len())
+            }
             Panel::List(list) => list.move_down(),
         }
     }
 
     pub fn move_up(&mut self) {
         match self {
+            #[cfg(feature = "notebook")]
             Panel::Tree { selected, .. } => *selected = list_nav::prev(*selected),
             Panel::List(list) => list.move_up(),
         }
@@ -71,6 +85,7 @@ impl Panel {
 
     pub fn activate(&mut self) -> Activation {
         match self {
+            #[cfg(feature = "notebook")]
             Panel::Tree { tree, selected } => {
                 let rows = tree.flatten();
                 match rows.get(*selected) {
@@ -93,6 +108,7 @@ impl Panel {
     }
 }
 
+#[cfg(feature = "notebook")]
 fn row_label(row: &Row) -> String {
     let indent = "  ".repeat(row.depth);
     let marker = if row.is_dir {

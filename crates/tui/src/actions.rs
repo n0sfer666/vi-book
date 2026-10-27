@@ -66,8 +66,10 @@ fn activate(app: &mut App, idx: usize) {
 pub fn dispatch(app: &mut App, action: &str) {
     app.ui.menu = None;
     match action {
+        #[cfg(feature = "vault")]
         ":pick" => app.open_picker(),
         ":buffers" => app.open_buffer_list(),
+        #[cfg(feature = "vault")]
         ":newprompt" => app.ui.command = Some("new ".to_string()),
         ":toggle-view" => toggle_view(app),
         ":help" => app.ui.help = true,

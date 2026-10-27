@@ -47,6 +47,15 @@ cargo build --release
 cargo test            # tests/ is an immutable contract
 ```
 
+Optional modules are Cargo features, all enabled by default: `vault` (note index, picker,
+backlinks, `[[wiki]]` links), `notebook` (daily notes, note history; `:tree` needs `vault` too),
+`lua` (init.lua and plugins), `highlight` (syntax colors in code blocks). A build without a
+feature simply lacks its commands, keys and menu items:
+
+```
+cargo build --release --no-default-features --features vault,notebook
+```
+
 ## License
 
 MIT OR Apache-2.0

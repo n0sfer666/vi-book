@@ -3,6 +3,7 @@ use std::io::ErrorKind;
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::app::App;
+#[cfg(all(feature = "notebook", feature = "vault"))]
 use crate::panel::Panel;
 use crate::{actions, checktime, disk_message, requests};
 use v_ide_editor::Error;
@@ -41,6 +42,7 @@ pub fn run(app: &mut App, command: &str) {
                 app.quit = true;
             }
         }
+        #[cfg(all(feature = "notebook", feature = "vault"))]
         "tree" => toggle_tree(app),
         "help" => app.ui.help = true,
         "buffers" => app.open_buffer_list(),
@@ -64,6 +66,7 @@ pub fn run(app: &mut App, command: &str) {
     }
 }
 
+#[cfg(all(feature = "notebook", feature = "vault"))]
 fn toggle_tree(app: &mut App) {
     if matches!(app.ui.panel, Some(Panel::Tree { .. })) {
         app.ui.panel = None;

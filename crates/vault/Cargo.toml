@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 v-ide-editor = { path = "../editor" }
-v-ide-markdown = { path = "../markdown" }
+v-ide-markdown = { path = "../markdown", default-features = false }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 notify = "8.2.0"

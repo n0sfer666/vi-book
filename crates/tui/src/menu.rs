@@ -49,12 +49,17 @@ pub struct Menu {
 impl Menu {
     pub fn leader(extra: Vec<MenuItem>, center: bool, wrap: WrapMode) -> Self {
         let mut items = vec![
+            #[cfg(feature = "vault")]
             MenuItem::new('f', "Find note", ":pick"),
             MenuItem::new(' ', "Buffers", ":buffers"),
+            #[cfg(feature = "vault")]
             MenuItem::new('n', "New note", ":newprompt"),
             MenuItem::new('e', "Toggle read/edit", ":toggle-view"),
+            #[cfg(all(feature = "notebook", feature = "vault"))]
             MenuItem::new('t', "Toggle tree", ":tree"),
+            #[cfg(feature = "vault")]
             MenuItem::new('b', "Backlinks", ":backlinks"),
+            #[cfg(feature = "notebook")]
             MenuItem::new('d', "Today's note", ":today"),
             MenuItem::new('w', "Write", ":w"),
             MenuItem::submenu('s', "Settings", settings(wrap)),
@@ -70,6 +75,7 @@ impl Menu {
             " no notes here — get started ".to_string(),
             vec![
                 MenuItem::new('n', "Create a note", ":newprompt"),
+                #[cfg(feature = "notebook")]
                 MenuItem::new('d', "Create today's daily note", ":today"),
                 MenuItem::new('?', "Help", ":help"),
                 MenuItem::new('q', "Quit", ":q"),

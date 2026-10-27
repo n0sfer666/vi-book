@@ -3,6 +3,8 @@ pub mod blocks;
 pub mod extract;
 pub mod facts;
 pub mod frontmatter_scan;
+#[cfg(feature = "highlight")]
+mod grammar;
 pub mod highlight;
 pub mod inline;
 pub mod link;

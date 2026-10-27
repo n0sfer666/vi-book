@@ -6,6 +6,7 @@ use crate::requests;
 use v_ide_editor::module::Event;
 use v_ide_markdown::link::Link;
 use v_ide_markdown::target::{Target, target_at};
+#[cfg(feature = "vault")]
 use v_ide_vault::follow::{Follow, follow};
 
 pub fn follow_at_cursor(app: &mut App) {
@@ -23,9 +24,14 @@ pub fn follow_at_cursor(app: &mut App) {
 }
 
 fn follow_wiki(app: &mut App, link: &Link) {
-    if requests::intercepts(app, Event::FollowLink(link.target.clone())) {
-        return;
+    if !requests::intercepts(app, Event::FollowLink(link.target.clone())) {
+        #[cfg(feature = "vault")]
+        resolve_wiki(app, link);
     }
+}
+
+#[cfg(feature = "vault")]
+fn resolve_wiki(app: &mut App, link: &Link) {
     let found = match app
         .vault()
         .map(|v| v.names().map(|names| follow(&names, link)))

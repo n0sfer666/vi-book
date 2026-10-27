@@ -5,22 +5,25 @@ use std::time::Duration;
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 
 use crate::frame::Frame;
-use crate::menu::{Menu, MenuItem};
-use crate::picker::Picker;
+use crate::menu::MenuItem;
 use crate::read_state::ReadState;
 use crate::term::Term;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{launch, lua_bridge, render, requests, router};
+use crate::{launch, render, requests, router};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
 use v_ide_keys::key::Key;
+#[cfg(feature = "lua")]
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::module::MarkdownModule;
+#[cfg(feature = "notebook")]
 use v_ide_notebook::history::History;
+#[cfg(feature = "notebook")]
 use v_ide_notebook::module::NotebookModule;
+#[cfg(feature = "vault")]
 use v_ide_vault::module::VaultModule;
 use v_ide_view::Depth;
 
@@ -31,6 +34,7 @@ pub struct App {
     pub read_states: HashMap<DocId, ReadState>,
     pub quit: bool,
     pub theme: Theme,
+    #[cfg(feature = "notebook")]
     pub history: History,
     pub nesting: usize,
     pub normal_maps: HashMap<Key, String>,
@@ -58,12 +62,8 @@ pub fn run() -> Result<(), Error> {
     if let Some(rel) = open {
         app.open_rel(&rel);
     } else {
-        let items = app.vault_items();
-        if items.is_empty() {
-            app.ui.menu = Some(Menu::empty_vault());
-        } else {
-            app.ui.picker = Some(Picker::new(items, "e"));
-        }
+        #[cfg(feature = "vault")]
+        app.start_without_file();
     }
     let mut term = Term::new(app.color_depth);
     term.enter()?;
@@ -76,14 +76,18 @@ impl App {
             workspace: Workspace::new(doc),
             modules: Modules::new(vec![
                 MarkdownModule::registration(),
+                #[cfg(feature = "vault")]
                 VaultModule::registration(),
+                #[cfg(feature = "notebook")]
                 NotebookModule::registration(),
+                #[cfg(feature = "lua")]
                 LuaModule::registration(),
             ]),
             ui: UiState::new(),
             read_states: HashMap::new(),
             quit: false,
             theme: Theme::default(),
+            #[cfg(feature = "notebook")]
             history: History::new(),
             nesting: 0,
             normal_maps: HashMap::new(),
@@ -101,12 +105,8 @@ impl App {
     }
 
     pub fn load_config(&mut self) {
-        lua_bridge::load_config(self);
-    }
-
-    pub fn open_picker(&mut self) {
-        let items = self.vault_items();
-        self.ui.picker = Some(Picker::new(items, "e"));
+        #[cfg(feature = "lua")]
+        crate::lua_bridge::load_config(self);
     }
 
     fn event_loop(&mut self, term: &mut Term) -> Result<(), Error> {

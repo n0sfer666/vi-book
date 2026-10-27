@@ -38,6 +38,7 @@ impl App {
         self.load(rel);
         if self.workspace.current().name == rel {
             let id = self.workspace.current_id();
+            #[cfg(feature = "notebook")]
             self.history.visit(rel);
             self.note_opened();
             if let Some(doc) = self.workspace.doc_mut(id) {
@@ -98,8 +99,8 @@ impl App {
             .unwrap_or_default();
         self.ui.read = state;
         self.ui.left = 0;
-        let path = self.workspace.current().name.clone();
-        self.history.visit(&path);
+        #[cfg(feature = "notebook")]
+        self.history.visit(&self.workspace.current().name);
     }
 
     pub fn close_buffer(&mut self, idx: usize) {
@@ -110,6 +111,7 @@ impl App {
         if idx == 0 {
             if self.workspace.pool().is_empty() {
                 self.blank_active();
+                #[cfg(feature = "vault")]
                 self.open_picker();
             } else {
                 self.switch_to_buffer(0);
