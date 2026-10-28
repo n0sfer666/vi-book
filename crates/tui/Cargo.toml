@@ -16,6 +16,7 @@ v-ide-vault = { path = "../vault", optional = true }
 v-ide-notebook = { path = "../notebook", optional = true }
 v-ide-lua = { path = "../lua", optional = true }
 v-ide-view = { path = "../view" }
+v-ide-syntax = { path = "../syntax", optional = true }
 crossterm = "0.28"
 arboard = "3.4.1"
 
@@ -24,4 +25,4 @@ default = ["lua", "vault", "notebook", "highlight"]
 lua = ["dep:v-ide-lua"]
 vault = ["dep:v-ide-vault"]
 notebook = ["dep:v-ide-notebook"]
-highlight = ["v-ide-markdown/highlight"]
+highlight = ["v-ide-markdown/highlight", "dep:v-ide-syntax"]

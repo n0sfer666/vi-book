@@ -2,12 +2,20 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard, OnceLock, PoisonError};
 
-use crate::{Grammar, LoadError, default_dir, load};
+use crate::{Grammar, Languages, LoadError, default_config_dir, default_dir, load};
 
 struct Registry {
     dir: Option<PathBuf>,
+    languages: Languages,
     generation: u64,
     grammars: HashMap<String, Option<Grammar>>,
+}
+
+impl Registry {
+    fn reset(&mut self) {
+        self.generation += 1;
+        self.grammars.clear();
+    }
 }
 
 static REGISTRY: OnceLock<Mutex<Registry>> = OnceLock::new();
@@ -17,6 +25,7 @@ fn registry() -> MutexGuard<'static, Registry> {
         .get_or_init(|| {
             Mutex::new(Registry {
                 dir: default_dir(),
+                languages: default_languages(),
                 generation: 0,
                 grammars: HashMap::new(),
             })
@@ -25,15 +34,29 @@ fn registry() -> MutexGuard<'static, Registry> {
         .unwrap_or_else(PoisonError::into_inner)
 }
 
-pub fn grammar(lang: &str) -> Option<Grammar> {
-    let (dir, generation) = {
+fn default_languages() -> Languages {
+    default_config_dir()
+        .and_then(|dir| Languages::load(&dir).ok())
+        .unwrap_or_else(Languages::builtin)
+}
+
+pub fn canonical(fence: &str) -> Option<String> {
+    registry()
+        .languages
+        .resolve(fence)
+        .map(|spec| spec.name.clone())
+}
+
+pub fn grammar(fence: &str) -> Option<Grammar> {
+    let (lang, dir, generation) = {
         let registry = registry();
-        if let Some(cached) = registry.grammars.get(lang) {
+        let lang = registry.languages.resolve(fence)?.name.clone();
+        if let Some(cached) = registry.grammars.get(&lang) {
             return cached.clone();
         }
-        (registry.dir.clone(), registry.generation)
+        (lang, registry.dir.clone(), registry.generation)
     };
-    let loaded = match dir.as_deref().map(|dir| load(dir, lang)) {
+    let loaded = match dir.as_deref().map(|dir| load(dir, &lang)) {
         Some(Err(LoadError::BadName(_))) => return None,
         loaded => loaded.and_then(Result::ok),
     };
@@ -41,7 +64,7 @@ pub fn grammar(lang: &str) -> Option<Grammar> {
     if registry.generation == generation {
         registry
             .grammars
-            .entry(lang.to_string())
+            .entry(lang)
             .or_insert_with(|| loaded.clone());
     }
     loaded
@@ -54,6 +77,11 @@ pub fn generation() -> u64 {
 pub fn set_dir(dir: PathBuf) {
     let mut registry = registry();
     registry.dir = Some(dir);
-    registry.generation += 1;
-    registry.grammars.clear();
+    registry.reset();
+}
+
+pub fn set_languages(languages: Languages) {
+    let mut registry = registry();
+    registry.languages = languages;
+    registry.reset();
 }

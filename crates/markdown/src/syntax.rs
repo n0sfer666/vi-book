@@ -7,7 +7,7 @@ use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter}
 use crate::grammar::grammar;
 use crate::style::CodeToken;
 #[cfg(feature = "highlight")]
-use v_ide_syntax::generation;
+use v_ide_syntax::{canonical, generation};
 
 const NAMES: &[(&str, CodeToken)] = &[
     ("keyword", CodeToken::Keyword),
@@ -29,6 +29,11 @@ const NAMES: &[(&str, CodeToken)] = &[
 
 #[cfg(not(feature = "highlight"))]
 fn grammar(_lang: &str) -> Option<(tree_sitter::Language, String)> {
+    None
+}
+
+#[cfg(not(feature = "highlight"))]
+fn canonical(_fence: &str) -> Option<String> {
     None
 }
 
@@ -87,7 +92,8 @@ fn configured(lang: &str) -> Option<Arc<HighlightConfiguration>> {
 pub fn highlight(lang: &str, code: &str) -> Vec<Option<CodeToken>> {
     let char_count = code.chars().count();
     let blank = || vec![None; char_count];
-    let Some(config) = configured(&lang.to_lowercase()) else {
+    let canonical = canonical(&lang.to_lowercase());
+    let Some(config) = canonical.as_deref().and_then(configured) else {
         return blank();
     };
     let mut highlighter = Highlighter::new();

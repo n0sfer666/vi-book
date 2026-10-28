@@ -42,7 +42,7 @@ pub fn load(dir: &Path, lang: &str) -> Result<Grammar, LoadError> {
     })
 }
 
-fn valid(lang: &str) -> bool {
+pub(crate) fn valid(lang: &str) -> bool {
     !lang.is_empty()
         && lang
             .bytes()

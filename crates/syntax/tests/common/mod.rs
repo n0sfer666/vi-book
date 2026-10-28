@@ -5,6 +5,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+pub mod repo;
+
 const PARSER_C: &str = include_str!("../fixtures/toy/src/parser.c");
 const PARSER_H: &str = include_str!("../fixtures/toy/src/tree_sitter/parser.h");
 pub const HIGHLIGHTS: &str = include_str!("../fixtures/toy/highlights.scm");

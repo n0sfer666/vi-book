@@ -1,0 +1,106 @@
+[[language]]
+name = "rust"
+aliases = ["rs"]
+extensions = ["rs"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-rust"
+rev = "77a3747266f4d621d0757825e6b11edcbf991ca5"
+
+[[language]]
+name = "python"
+aliases = ["py"]
+extensions = ["py", "pyi"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-python"
+rev = "293fdc02038ee2bf0e2e206711b69c90ac0d413f"
+
+[[language]]
+name = "json"
+extensions = ["json"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-json"
+rev = "ee35a6ebefcef0c5c416c0d1ccec7370cfca5a24"
+
+[[language]]
+name = "bash"
+aliases = ["sh", "shell", "zsh"]
+extensions = ["sh", "bash", "zsh"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-bash"
+rev = "a06c2e4415e9bc0346c6b86d401879ffb44058f7"
+
+[[language]]
+name = "javascript"
+aliases = ["js", "jsx"]
+extensions = ["js", "mjs", "cjs", "jsx"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-javascript"
+rev = "44c892e0be055ac465d5eeddae6d3e194424e7de"
+
+[[language]]
+name = "typescript"
+aliases = ["ts"]
+extensions = ["ts", "mts", "cts"]
+inherits = ["javascript"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-typescript"
+rev = "f975a621f4e7f532fe322e13c4f79495e0a7b2e7"
+subpath = "typescript"
+
+[[language]]
+name = "tsx"
+extensions = ["tsx"]
+inherits = ["javascript"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-typescript"
+rev = "f975a621f4e7f532fe322e13c4f79495e0a7b2e7"
+subpath = "tsx"
+
+[[language]]
+name = "go"
+aliases = ["golang"]
+extensions = ["go"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-go"
+rev = "1547678a9da59885853f5f5cc8a99cc203fa2e2c"
+
+[[language]]
+name = "c"
+extensions = ["c", "h"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-c"
+rev = "b780e47fc780ddc8da13afa35a3f4ed5c157823d"
+
+[[language]]
+name = "toml"
+extensions = ["toml"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter-grammars/tree-sitter-toml"
+rev = "64b56832c2cffe41758f28e05c756a3a98d16f41"
+
+[[language]]
+name = "html"
+extensions = ["html", "htm"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter/tree-sitter-html"
+rev = "5a5ca8551a179998360b4a4ca2c0f366a35acc03"
+
+[[language]]
+name = "yaml"
+aliases = ["yml"]
+extensions = ["yaml", "yml"]
+
+[language.grammar]
+git = "https://github.com/tree-sitter-grammars/tree-sitter-yaml"
+rev = "7708026449bed86239b1cd5bce6e3c34dbca6415"

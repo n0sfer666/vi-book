@@ -16,6 +16,8 @@ pub mod event_map;
 pub mod external;
 pub mod frame;
 pub mod fuzzy;
+#[cfg(feature = "highlight")]
+pub mod grammar_cli;
 pub mod help;
 pub mod hscroll;
 pub mod input;
