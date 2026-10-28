@@ -14,31 +14,7 @@ tree-sitter = "0.26.9"
 unicode-width = "=0.2.0"
 serde = { version = "1.0.228", features = ["derive"] }
 tree-sitter-highlight = "0.26.9"
-tree-sitter-rust = { version = "0.24.2", optional = true }
-tree-sitter-python = { version = "0.25.0", optional = true }
-tree-sitter-json = { version = "0.24.8", optional = true }
-tree-sitter-bash = { version = "0.25.1", optional = true }
-tree-sitter-javascript = { version = "0.25.0", optional = true }
-tree-sitter-typescript = { version = "0.23.2", optional = true }
-tree-sitter-go = { version = "0.25.0", optional = true }
-tree-sitter-c = { version = "0.24.2", optional = true }
-tree-sitter-toml-ng = { version = "0.7.0", optional = true }
-tree-sitter-html = { version = "0.23.2", optional = true }
-tree-sitter-yaml = { version = "0.7.2", optional = true }
 
 [features]
 default = ["highlight"]
-highlight = [
-    "dep:v-ide-syntax",
-    "dep:tree-sitter-rust",
-    "dep:tree-sitter-python",
-    "dep:tree-sitter-json",
-    "dep:tree-sitter-bash",
-    "dep:tree-sitter-javascript",
-    "dep:tree-sitter-typescript",
-    "dep:tree-sitter-go",
-    "dep:tree-sitter-c",
-    "dep:tree-sitter-toml-ng",
-    "dep:tree-sitter-html",
-    "dep:tree-sitter-yaml",
-]
+highlight = ["dep:v-ide-syntax"]

@@ -192,10 +192,10 @@ in the vault, so fixing the note brings the lists up to date.
 
 ## 8. Syntax-highlighting palette — `vibook.color(name, spec)`
 
-Code blocks are highlighted with bundled tree-sitter grammars
-(rust, python, javascript, jsx, typescript, tsx, json, bash, go, c, toml, html,
-yaml and common aliases). Recolour any token — or any markdown face — from your
-config.
+Code blocks are highlighted with tree-sitter grammars installed by
+`v-ide grammar fetch` and `v-ide grammar build` (rust, python, javascript, typescript,
+tsx, json, bash, go, c, toml, html, yaml and common aliases; see the manual).
+Recolour any token — or any markdown face — from your config.
 
 `spec` fields: `fg` (colour), `bold`, `italic`, `underline`, `dim`. `fg`
 accepts terminal colour names (`"red"`, `"magenta"`, `"cyan"`, …) and hex

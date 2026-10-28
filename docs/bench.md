@@ -151,3 +151,20 @@ runs: 10 · median · 120x40 · quiet 100 ms
 Without `vault` the "picker" rows open an empty buffer, so they measure a bare start, not a
 picker. The "file" rows lose about 20 ms and 4.7 MB without features; the default "file" rows
 sit inside the 22–48 ms spread seen in earlier sections.
+
+## Grammars at runtime (S08c)
+
+2026-10-29 · d84b0ba + S08c · Apple M3 Pro · Darwin
+
+The 11 `tree-sitter-*` grammar crates are gone; code-block grammars are shared libraries loaded at
+runtime (`v-ide grammar fetch|build`). Release binary size, built the same way as in the
+"Cargo features" section; lua, vault and notebook carry no grammars and were not rebuilt. Startup
+was not re-measured.
+
+| features | before, MB | after, MB |
+|---|---:|---:|
+| default (lua, vault, notebook, highlight) | 12.6 | 5.7 |
+| none | 2.3 | 2.3 |
+| highlight | 11.5 | 4.6 |
+
+`highlight` now adds ≈ 2.3 MB over none instead of ≈ 9.2 MB.

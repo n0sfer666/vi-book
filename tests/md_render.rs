@@ -1,3 +1,6 @@
+#[path = "../crates/syntax/tests/common/mod.rs"]
+mod toy;
+
 use insta::assert_snapshot;
 use v_ide_markdown::render::render;
 use v_ide_markdown::style::Style;
@@ -38,6 +41,7 @@ fn h3_renders_as_plain_text_line() {
 
 #[test]
 fn fenced_code_renders_in_frame_with_language() {
+    toy::hermetic::hermetic();
     assert_snapshot!(render("```rust\nlet x;\n```", 20).text(), @r"
     ┌─ rust ─┐
     │ let x; │
@@ -109,6 +113,7 @@ fn empty_source_renders_empty() {
 
 #[test]
 fn broken_markdown_does_not_panic() {
+    toy::hermetic::hermetic();
     assert!(!render("```rust\nunclosed", 10).text().is_empty());
     render("**unclosed", 10);
     render("---\nbad", 10);

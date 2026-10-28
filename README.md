@@ -34,7 +34,9 @@ best rendering of code blocks and glyphs.
 - `<C-w>` is the window prefix: `<C-w> w` cycles split focus, `<C-w> p` focuses
   the side panel, `<C-w> s`/`v` splits, `<C-w> o` keeps only the active column.
 - `:w :q :tree :backlinks :today :new <name>` and `:vsplit [file] :only` commands.
-- Code blocks are syntax-highlighted; the palette is themeable from `init.lua`.
+- Code blocks are syntax-highlighted with tree-sitter grammars built by
+  `v-ide grammar fetch` + `v-ide grammar build` (`install.sh` runs both); the palette is
+  themeable from `init.lua`.
 - Following a `[[link]]` to a code file opens it in your external editor.
 
 See `docs/manual.md`, `docs/developers.md` and `docs/plugin-development.md`

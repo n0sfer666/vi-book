@@ -66,13 +66,15 @@ const ok = props.refreshSlot ? <div/> : null; // highlighted
 ```
 ````
 
-Bundled languages (grammars are compiled into the binary — nothing to install):
-**rust, python, javascript, jsx, typescript, tsx, json, bash, go, c, toml,
-html, yaml** (plus aliases like `rs`, `py`, `ts`, `sh`). An unknown or missing
-tag falls back to a single colour.
+Grammars are shared libraries built from source on your machine (`git` and a C
+compiler are needed); `install.sh` does it for you (skip with
+`V_IDE_NO_GRAMMARS=1`; without network it only warns). Out of the box v-ide knows
+**rust, python, javascript, typescript, tsx, json, bash, go, c, toml, html,
+yaml** (plus aliases like `rs`, `py`, `js`, `jsx`, `ts`, `sh`, `yml`). A tag
+without an installed grammar, an unknown tag or a missing tag falls back to a
+single colour.
 
-Grammars can also be installed as shared libraries, which take priority over the
-bundled ones. Languages, aliases and pinned grammar revisions come from a
+Languages, aliases and pinned grammar revisions come from a
 built-in `languages.toml`; `~/.config/v-ide/languages.toml` (or
 `$XDG_CONFIG_HOME/v-ide/languages.toml`) replaces entries with the same `name`
 and adds new ones:

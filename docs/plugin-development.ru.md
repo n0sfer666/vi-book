@@ -194,10 +194,10 @@ watcher файлов не запустился, в строке статуса �
 
 ## 8. Палитра подсветки — `vibook.color(name, spec)`
 
-Код-блоки подсвечиваются вкомпилированными грамматиками tree-sitter
-(rust, python, javascript, jsx, typescript, tsx, json, bash, go, c, toml, html,
-yaml и популярные алиасы). Перекрашивайте любой токен — или любой
-markdown-стиль — из конфига.
+Код-блоки подсвечиваются грамматиками tree-sitter, которые ставят
+`v-ide grammar fetch` и `v-ide grammar build` (rust, python, javascript, typescript,
+tsx, json, bash, go, c, toml, html, yaml и популярные алиасы; подробно — в manual).
+Перекрашивайте любой токен — или любой markdown-стиль — из конфига.
 
 Поля `spec`: `fg` (цвет), `bold`, `italic`, `underline`, `dim`. `fg`
 принимает имена терминальных цветов (`"red"`, `"magenta"`, `"cyan"`, …) и hex

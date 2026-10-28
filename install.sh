@@ -89,6 +89,18 @@ if [ -z "${V_IDE_NO_FONT:-${VIBOOK_NO_FONT:-}}" ]; then
 	install_font || true
 fi
 
+if [ -z "${V_IDE_NO_GRAMMARS:-}" ]; then
+	echo "v-ide: fetching and building code-block grammars..."
+	GRAMMARS_OK=1
+	"$BIN_DIR/$BIN_NAME" grammar fetch || GRAMMARS_OK=0
+	"$BIN_DIR/$BIN_NAME" grammar build || GRAMMARS_OK=0
+	if [ "$GRAMMARS_OK" = 1 ]; then
+		echo "v-ide: grammars installed"
+	else
+		echo "v-ide: grammars not fully installed; retry later with: v-ide grammar fetch; v-ide grammar build"
+	fi
+fi
+
 # PATH hint, per shell family.
 case ":$PATH:" in
 *":$BIN_DIR:"*) ;;

@@ -1,5 +1,8 @@
 mod common;
 
+#[path = "../crates/syntax/tests/common/mod.rs"]
+mod toy;
+
 use v_ide_markdown::style::{CodeToken, Style};
 use v_ide_tui::app::App;
 use v_ide_tui::theme::{Face, Theme, style_for_name};
@@ -42,10 +45,8 @@ fn code_palette_is_overridable() {
 
 #[test]
 fn rendered_code_block_paints_keyword_color() {
-    let mut app = App::new(common::named_doc(
-        "```python\ndef f():\n    pass\n```",
-        "a.md",
-    ));
+    toy::highlighting::toy_highlighting();
+    let mut app = App::new(common::named_doc("```toy\nlet x = 1;\n```", "a.md"));
     app.ui.read.view = View::Read;
     let grid = common::draw(&mut app, 60, 24).grid;
     let magenta = (0..grid.w)

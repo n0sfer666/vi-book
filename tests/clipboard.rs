@@ -1,4 +1,6 @@
 mod common;
+#[path = "../crates/syntax/tests/common/mod.rs"]
+mod toy;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -22,6 +24,7 @@ fn osc52_wraps_base64_payload() {
 
 #[test]
 fn enter_on_a_code_block_copies_it() {
+    toy::hermetic::hermetic();
     let src = "# Title\n\n```rust\nfn main() {}\n```\n";
     let mut app = App::new(common::named_doc(src, "a.md"));
     app.ui.read.view = View::Read;
