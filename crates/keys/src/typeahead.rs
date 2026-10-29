@@ -51,6 +51,7 @@ impl Typeahead {
         &mut self,
         map: &Keymap<A>,
         mode: Option<MapMode>,
+        no_zero: bool,
         now: Instant,
     ) -> Step<A> {
         loop {
@@ -59,7 +60,11 @@ impl Typeahead {
                 self.depth = 0;
                 return Step::Idle;
             }
-            let window = self.origins.iter().take_while(|o| o.remappable()).count();
+            let zero = no_zero && self.keys[0] == Key::char('0');
+            let window = match zero {
+                true => 0,
+                false => self.origins.iter().take_while(|o| o.remappable()).count(),
+            };
             let (exact, partial) = match mode {
                 Some(mode) if window > 0 => map.lookup(mode, &self.keys[..window]),
                 _ => (None, false),

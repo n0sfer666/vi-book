@@ -3,6 +3,7 @@
 pub mod desired_col;
 pub mod editor;
 pub mod insert;
+mod map_mode;
 pub mod mode;
 pub mod motion;
 pub mod normal;

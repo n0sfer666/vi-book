@@ -30,6 +30,7 @@ pub struct Rig {
     pub map: Map,
     pub ta: Typeahead,
     pub mode: Option<MapMode>,
+    pub no_zero: bool,
     pub t0: Instant,
 }
 
@@ -39,12 +40,18 @@ impl Rig {
             map,
             ta: Typeahead::new(TIMEOUT),
             mode: Some(MapMode::Normal),
+            no_zero: false,
             t0: Instant::now(),
         }
     }
 
     pub fn in_mode(mut self, mode: Option<MapMode>) -> Rig {
         self.mode = mode;
+        self
+    }
+
+    pub fn counting(mut self) -> Rig {
+        self.no_zero = true;
         self
     }
 
@@ -89,7 +96,7 @@ impl Rig {
     fn drain(&mut self, now: Instant) -> String {
         let mut out = String::new();
         loop {
-            match self.ta.next(&self.map, self.mode, now) {
+            match self.ta.next(&self.map, self.mode, self.no_zero, now) {
                 Step::Key(key) => {
                     out.push_str(&format_keys(&[key]));
                     self.mode = next_mode(self.mode, key);

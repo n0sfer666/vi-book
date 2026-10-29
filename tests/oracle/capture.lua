@@ -1,5 +1,5 @@
 local MODES = { n = "normal", i = "insert", v = "visual", V = "visual_line", ["\22"] = "visual_block" }
-local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, divergence = true, expect = true }
+local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, divergence = true, expect = true }
 
 local function snapshot()
   local row, byte = unpack(vim.api.nvim_win_get_cursor(0))
@@ -43,6 +43,9 @@ local function run_child(case_path, out_path)
     vim.bo.undolevels = -123456
     local line = lines[case.cursor[1] + 1]
     vim.api.nvim_win_set_cursor(0, { case.cursor[1] + 1, vim.fn.byteidxcomp(line, case.cursor[2]) })
+    for _, map in ipairs(case.maps or {}) do
+      vim.api.nvim_set_keymap(map.mode, map.lhs, map.rhs, { noremap = map.noremap })
+    end
     vim.schedule(function()
       finish(true)
     end)
@@ -54,6 +57,19 @@ local function run_child(case_path, out_path)
   finish(false)
 end
 
+local MAP_MODES = { n = true, i = true, x = true, o = true, c = true }
+local MAP_KEYS = { mode = true, lhs = true, rhs = true, noremap = true }
+
+local function validate_map(name, map)
+  for key in pairs(map) do
+    assert(MAP_KEYS[key], name .. ": unknown map key " .. key)
+  end
+  assert(MAP_MODES[map.mode], name .. ": unsupported map mode " .. tostring(map.mode))
+  assert(type(map.lhs) == "string" and map.lhs ~= "", name .. ": map lhs must be a non-empty string")
+  assert(type(map.rhs) == "string", name .. ": map rhs must be a string")
+  assert(type(map.noremap) == "boolean", name .. ": map noremap must be a boolean")
+end
+
 local function validate(case, seen)
   for key in pairs(case) do
     assert(INPUT_KEYS[key], tostring(case.name) .. ": unknown key " .. key)
@@ -62,6 +78,9 @@ local function validate(case, seen)
   seen[case.name] = true
   assert(not case.before:find("\r", 1, true), case.name .. ": before must not contain \\r")
   assert(case.before:sub(-1) ~= "\n", case.name .. ": before must not end with \\n")
+  for _, map in ipairs(case.maps or {}) do
+    validate_map(case.name, map)
+  end
 end
 
 local function capture(script, case)
@@ -85,6 +104,16 @@ local function pos(value)
   return "[" .. value[1] .. ", " .. value[2] .. "]"
 end
 
+local function render_map(map)
+  local fields = {
+    '"mode": ' .. str(map.mode),
+    '"lhs": ' .. str(map.lhs),
+    '"rhs": ' .. str(map.rhs),
+    '"noremap": ' .. tostring(map.noremap),
+  }
+  return "        { " .. table.concat(fields, ", ") .. " }"
+end
+
 local function render_case(case)
   local e = case.expect
   local out = {
@@ -94,6 +123,13 @@ local function render_case(case)
     '      "cursor": ' .. pos(case.cursor) .. ",",
     '      "keys": ' .. str(case.keys) .. ",",
   }
+  if case.maps then
+    table.insert(out, '      "maps": [')
+    for i, map in ipairs(case.maps) do
+      table.insert(out, render_map(map) .. (i < #case.maps and "," or ""))
+    end
+    table.insert(out, "      ],")
+  end
   if case.divergence then
     table.insert(out, '      "divergence": ' .. str(case.divergence) .. ",")
   end

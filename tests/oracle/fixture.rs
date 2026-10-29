@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use v_ide_keys::MapMode;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -14,8 +15,35 @@ pub struct Case {
     pub before: String,
     pub cursor: [usize; 2],
     pub keys: String,
+    #[serde(default)]
+    pub maps: Vec<Map>,
     pub divergence: Option<String>,
     pub expect: Snapshot,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Map {
+    #[serde(with = "MapModeDef")]
+    pub mode: MapMode,
+    pub lhs: String,
+    pub rhs: String,
+    pub noremap: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(remote = "MapMode")]
+enum MapModeDef {
+    #[serde(rename = "n")]
+    Normal,
+    #[serde(rename = "i")]
+    Insert,
+    #[serde(rename = "x")]
+    Visual,
+    #[serde(rename = "o")]
+    OpPending,
+    #[serde(rename = "c")]
+    Cmdline,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]

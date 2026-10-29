@@ -44,6 +44,7 @@ macro_rules! oracle_topics {
 oracle_topics!(
     counts,
     insert_mode,
+    mappings,
     motions,
     operators,
     registers,

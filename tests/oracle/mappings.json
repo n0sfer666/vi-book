@@ -1,0 +1,416 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "noremap single key",
+      "before": "a\nb\nc",
+      "cursor": [1, 0],
+      "keys": "Q",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "a\nc",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": "b\n"
+      }
+    },
+    {
+      "name": "multi-key lhs",
+      "before": "one two",
+      "cursor": [0, 0],
+      "keys": ",d",
+      "maps": [
+        { "mode": "n", "lhs": ",d", "rhs": "dw", "noremap": true }
+      ],
+      "expect": {
+        "text": "two",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "one "
+      }
+    },
+    {
+      "name": "count before mapping",
+      "before": "a\nb\nc\nd",
+      "cursor": [0, 0],
+      "keys": "2Q",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "c\nd",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\nb\n"
+      }
+    },
+    {
+      "name": "remap chain",
+      "before": "a\nb\nc",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "X", "noremap": false },
+        { "mode": "n", "lhs": "X", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "b\nc",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\n"
+      }
+    },
+    {
+      "name": "noremap breaks chain",
+      "before": "abc",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "X", "noremap": true },
+        { "mode": "n", "lhs": "X", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "abc",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "rhs starting with lhs maps only the rest",
+      "before": "one two three",
+      "cursor": [0, 4],
+      "keys": "wb",
+      "maps": [
+        { "mode": "n", "lhs": "wb", "rhs": "wbx", "noremap": false },
+        { "mode": "n", "lhs": "b", "rhs": "0", "noremap": true }
+      ],
+      "expect": {
+        "text": "ne two three",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "o"
+      }
+    },
+    {
+      "name": "unfinished prefix times out to builtin",
+      "before": "a\nb",
+      "cursor": [0, 0],
+      "keys": "j",
+      "maps": [
+        { "mode": "n", "lhs": "jk", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "a\nb",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "broken prefix replays keys",
+      "before": "abc\nde",
+      "cursor": [0, 0],
+      "keys": "jx",
+      "maps": [
+        { "mode": "n", "lhs": "jk", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "abc\ne",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": "d"
+      }
+    },
+    {
+      "name": "longest match wins",
+      "before": "a\nb\nc",
+      "cursor": [1, 0],
+      "keys": "QQ",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "x", "noremap": true },
+        { "mode": "n", "lhs": "QQ", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "a\nc",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": "b\n"
+      }
+    },
+    {
+      "name": "shorter match after timeout",
+      "before": "abc\nd",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "x", "noremap": true },
+        { "mode": "n", "lhs": "QQ", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "bc\nd",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "shorter match then remainder",
+      "before": "abc\nd",
+      "cursor": [0, 0],
+      "keys": "Qj",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "x", "noremap": true },
+        { "mode": "n", "lhs": "QQ", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "bc\nd",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "insert mapping escapes",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "iXjk",
+      "maps": [
+        { "mode": "i", "lhs": "jk", "rhs": "<Esc>", "noremap": true }
+      ],
+      "expect": {
+        "text": "Xab",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "insert prefix times out to text",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "ij",
+      "maps": [
+        { "mode": "i", "lhs": "jk", "rhs": "<Esc>", "noremap": true }
+      ],
+      "expect": {
+        "text": "jab",
+        "cursor": [0, 1],
+        "mode": "insert",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "normal mapping ignored in insert",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "iQ<Esc>",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "Qab",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "visual mapping",
+      "before": "abcd",
+      "cursor": [0, 0],
+      "keys": "vlL",
+      "maps": [
+        { "mode": "x", "lhs": "L", "rhs": "d", "noremap": true }
+      ],
+      "expect": {
+        "text": "cd",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "ab"
+      }
+    },
+    {
+      "name": "visual mapping ignored in normal",
+      "before": "abcd",
+      "cursor": [0, 0],
+      "keys": "L",
+      "maps": [
+        { "mode": "x", "lhs": "L", "rhs": "dd", "noremap": true }
+      ],
+      "expect": {
+        "text": "abcd",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "operator-pending mapping",
+      "before": "one two",
+      "cursor": [0, 1],
+      "keys": "dp",
+      "maps": [
+        { "mode": "o", "lhs": "p", "rhs": "iw", "noremap": true }
+      ],
+      "expect": {
+        "text": " two",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "one"
+      }
+    },
+    {
+      "name": "operator-pending uses its own table",
+      "before": "one two",
+      "cursor": [0, 5],
+      "keys": "dw",
+      "maps": [
+        { "mode": "o", "lhs": "w", "rhs": "b", "noremap": true }
+      ],
+      "expect": {
+        "text": "one wo",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": "t"
+      }
+    },
+    {
+      "name": "normal mapping ignored after operator",
+      "before": "one two",
+      "cursor": [0, 0],
+      "keys": "dw",
+      "maps": [
+        { "mode": "n", "lhs": "w", "rhs": "b", "noremap": true }
+      ],
+      "expect": {
+        "text": "two",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "one "
+      }
+    },
+    {
+      "name": "cmdline mapping in search",
+      "before": "one two\ntwo",
+      "cursor": [0, 0],
+      "keys": "/twojj",
+      "maps": [
+        { "mode": "c", "lhs": "jj", "rhs": "<CR>", "noremap": true }
+      ],
+      "expect": {
+        "text": "one two\ntwo",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "register name is not mapped",
+      "before": "one\ntwo",
+      "cursor": [0, 0],
+      "keys": "\"ayy",
+      "maps": [
+        { "mode": "n", "lhs": "a", "rhs": "x", "noremap": true }
+      ],
+      "expect": {
+        "text": "one\ntwo",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "one\n"
+      }
+    },
+    {
+      "name": "text object char is not mapped",
+      "before": "one two",
+      "cursor": [0, 5],
+      "keys": "diw",
+      "maps": [
+        { "mode": "o", "lhs": "w", "rhs": "b", "noremap": true }
+      ],
+      "expect": {
+        "text": "one ",
+        "cursor": [0, 3],
+        "mode": "normal",
+        "unnamed": "two"
+      }
+    },
+    {
+      "name": "zero is mapped outside count",
+      "before": "abc def",
+      "cursor": [0, 2],
+      "keys": "0",
+      "maps": [
+        { "mode": "n", "lhs": "0", "rhs": "$", "noremap": true }
+      ],
+      "expect": {
+        "text": "abc def",
+        "cursor": [0, 6],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "zero is not mapped inside count",
+      "before": "abc\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12",
+      "cursor": [0, 0],
+      "keys": "10j",
+      "maps": [
+        { "mode": "n", "lhs": "0", "rhs": "x", "noremap": true }
+      ],
+      "expect": {
+        "text": "abc\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12",
+        "cursor": [10, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "zero is not mapped inside operator count",
+      "before": "abc\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12",
+      "cursor": [0, 0],
+      "keys": "d10j",
+      "maps": [
+        { "mode": "o", "lhs": "0", "rhs": "l", "noremap": true }
+      ],
+      "expect": {
+        "text": "11\n12",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "abc\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
+      }
+    },
+    {
+      "name": "zero motion after counted operator is mapped",
+      "before": "abcdef",
+      "cursor": [0, 0],
+      "keys": "2d0",
+      "maps": [
+        { "mode": "o", "lhs": "0", "rhs": "l", "noremap": true }
+      ],
+      "expect": {
+        "text": "cdef",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "ab"
+      }
+    },
+    {
+      "name": "zero is not mapped inside visual count",
+      "before": "abc\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12",
+      "cursor": [0, 0],
+      "keys": "v10j",
+      "maps": [
+        { "mode": "x", "lhs": "0", "rhs": "l", "noremap": true }
+      ],
+      "expect": {
+        "text": "abc\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12",
+        "cursor": [10, 0],
+        "mode": "visual",
+        "unnamed": ""
+      }
+    }
+  ]
+}
