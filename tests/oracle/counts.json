@@ -24,6 +24,42 @@
         "mode": "normal",
         "unnamed": "a\nb\n"
       }
+    },
+    {
+      "name": "Del erases the typed count",
+      "before": "abcdef",
+      "cursor": [0, 0],
+      "keys": "3<Del>x",
+      "expect": {
+        "text": "bcdef",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "Del erases the last count digit",
+      "before": "abcdefghijklmnop",
+      "cursor": [0, 0],
+      "keys": "12<Del>x",
+      "expect": {
+        "text": "bcdefghijklmnop",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "Del erases the operator count digit",
+      "before": "a b c d e f",
+      "cursor": [0, 0],
+      "keys": "d23<Del>w",
+      "expect": {
+        "text": "c d e f",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a b "
+      }
     }
   ]
 }

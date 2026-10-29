@@ -15,7 +15,7 @@ use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
-use v_ide_keys::key::Key;
+use v_ide_keys::Key;
 #[cfg(feature = "lua")]
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::module::MarkdownModule;

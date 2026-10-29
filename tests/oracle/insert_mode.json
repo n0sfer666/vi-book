@@ -36,6 +36,66 @@
         "mode": "insert",
         "unnamed": ""
       }
+    },
+    {
+      "name": "Tab inserts a tab character",
+      "before": "ab",
+      "cursor": [0, 1],
+      "keys": "i<Tab><Esc>",
+      "expect": {
+        "text": "a\tb",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Del deletes under cursor in insert",
+      "before": "abc",
+      "cursor": [0, 1],
+      "keys": "i<Del><Esc>",
+      "expect": {
+        "text": "ac",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Del at line end joins the next line",
+      "before": "ab\ncd",
+      "cursor": [0, 0],
+      "keys": "A<Del><Esc>",
+      "expect": {
+        "text": "abcd",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Home goes to line start in insert",
+      "before": "  ab",
+      "cursor": [0, 3],
+      "keys": "i<Home>X<Esc>",
+      "expect": {
+        "text": "X  ab",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "End goes to line end in insert",
+      "before": "ab",
+      "cursor": [0, 0],
+      "keys": "i<End>X<Esc>",
+      "expect": {
+        "text": "abX",
+        "cursor": [0, 2],
+        "mode": "normal",
+        "unnamed": ""
+      }
     }
   ]
 }

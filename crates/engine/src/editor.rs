@@ -4,7 +4,7 @@ use crate::pending::{Pending, Stage};
 use crate::register::Registers;
 use crate::search::SearchState;
 use crate::{insert, normal, search, visual};
-use v_ide_keys::key::{Key, parse_keys};
+use v_ide_keys::{Key, parse_keys};
 use v_ide_text::buffer::Buffer;
 use v_ide_text::edit::Edit;
 use v_ide_text::history::History;

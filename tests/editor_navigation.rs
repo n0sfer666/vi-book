@@ -5,12 +5,14 @@ use v_ide_text::Position;
 
 #[test]
 fn arrows_parse_as_keys() {
-    use v_ide_keys::Key;
+    use v_ide_keys::{Code, Key, Mods};
     assert_eq!(
         parse_keys("<Up><Down><Left><Right>"),
-        vec![Key::Up, Key::Down, Key::Left, Key::Right]
+        [Code::Up, Code::Down, Code::Left, Code::Right]
+            .map(|code| Key::new(code, Mods::NONE))
+            .to_vec()
     );
-    assert_eq!(parse_keys("<Space>"), vec![Key::Char(' ')]);
+    assert_eq!(parse_keys("<Space>"), vec![Key::char(' ')]);
 }
 
 #[test]

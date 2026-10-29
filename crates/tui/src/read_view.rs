@@ -5,7 +5,7 @@ use crate::read_select::{code_block_at, toggle_select, yank_line, yank_selection
 use crate::view::View;
 use crate::{clip_sync, event_map, read_motion};
 use v_ide_engine::mode::Mode;
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_markdown::render::render_with;
 use v_ide_markdown::rendered::Rendered;
 
@@ -46,16 +46,18 @@ pub fn leave(app: &mut App, width: usize) {
 }
 
 pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
-    let Some(key) = event_map::to_key(event) else {
+    let Some(key) = event_map::to_stroke(event).map(|stroke| stroke.key) else {
         return;
     };
-    match key {
-        Key::Char('v') => return toggle_select(app, Mode::Visual),
-        Key::Char('V') => return toggle_select(app, Mode::VisualLine),
-        Key::Ctrl('v') => return toggle_select(app, Mode::VisualBlock),
-        Key::Esc => return app.ui.read_select = None,
-        Key::Char('y') if app.ui.read_select.is_some() => return yank_selection(app, width),
-        Key::Char('Y') => return yank_line(app, width),
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char('v')) => return toggle_select(app, Mode::Visual),
+        (Mods::NONE, Code::Char('V')) => return toggle_select(app, Mode::VisualLine),
+        (Mods::CTRL, Code::Char('v')) => return toggle_select(app, Mode::VisualBlock),
+        (Mods::NONE, Code::Esc) => return app.ui.read_select = None,
+        (Mods::NONE, Code::Char('y')) if app.ui.read_select.is_some() => {
+            return yank_selection(app, width);
+        }
+        (Mods::NONE, Code::Char('Y')) => return yank_line(app, width),
         _ => {}
     }
     if delegates_to_edit(key) {
@@ -66,46 +68,58 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
     let rendered = cached_render(app, width);
     let last_line = rendered.lines.len().saturating_sub(1);
     let (line, col) = app.ui.read.read_cursor;
-    match key {
-        Key::Char('j') | Key::Down => app.ui.read.read_cursor = clamp(&rendered, line + 1, col),
-        Key::Char('k') | Key::Up => {
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char('j') | Code::Down) => {
+            app.ui.read.read_cursor = clamp(&rendered, line + 1, col)
+        }
+        (Mods::NONE, Code::Char('k') | Code::Up) => {
             app.ui.read.read_cursor = clamp(&rendered, line.saturating_sub(1), col)
         }
-        Key::Char('h') | Key::Left => {
+        (Mods::NONE, Code::Char('h') | Code::Left) => {
             app.ui.read.read_cursor = clamp(&rendered, line, col.saturating_sub(1))
         }
-        Key::Char('l') | Key::Right => app.ui.read.read_cursor = clamp(&rendered, line, col + 1),
-        Key::Char('w') => {
+        (Mods::NONE, Code::Char('l') | Code::Right) => {
+            app.ui.read.read_cursor = clamp(&rendered, line, col + 1)
+        }
+        (Mods::NONE, Code::Char('w')) => {
             app.ui.read.read_cursor = read_motion::word_forward(&rendered, (line, col))
         }
-        Key::Char('b') => app.ui.read.read_cursor = read_motion::word_back(&rendered, (line, col)),
-        Key::Char('e') => app.ui.read.read_cursor = read_motion::word_end(&rendered, (line, col)),
-        Key::Char('W') => {
+        (Mods::NONE, Code::Char('b')) => {
+            app.ui.read.read_cursor = read_motion::word_back(&rendered, (line, col))
+        }
+        (Mods::NONE, Code::Char('e')) => {
+            app.ui.read.read_cursor = read_motion::word_end(&rendered, (line, col))
+        }
+        (Mods::NONE, Code::Char('W')) => {
             app.ui.read.read_cursor = read_motion::element_forward(&rendered, (line, col))
         }
-        Key::Char('B') => {
+        (Mods::NONE, Code::Char('B')) => {
             app.ui.read.read_cursor = read_motion::element_back(&rendered, (line, col))
         }
-        Key::Char('g') => {
+        (Mods::NONE, Code::Char('g')) => {
             if app.ui.read.read_pending_g {
                 app.ui.read.read_cursor = (0, 0);
             }
             app.ui.read.read_pending_g = !app.ui.read.read_pending_g;
             return;
         }
-        Key::Char('G') => app.ui.read.read_cursor = clamp(&rendered, last_line, 0),
-        Key::Char('0') if app.ui.read.read_pending_g => app.ui.read.read_cursor = (line, 0),
-        Key::Char('$') if app.ui.read.read_pending_g => {
+        (Mods::NONE, Code::Char('G')) => app.ui.read.read_cursor = clamp(&rendered, last_line, 0),
+        (Mods::NONE, Code::Char('0')) if app.ui.read.read_pending_g => {
+            app.ui.read.read_cursor = (line, 0)
+        }
+        (Mods::NONE, Code::Char('$')) if app.ui.read.read_pending_g => {
             app.ui.read.read_cursor = clamp(&rendered, line, usize::MAX)
         }
-        Key::Char('0') => app.ui.read.read_cursor = (rendered.logical(line).start, 0),
-        Key::Char('$') => {
+        (Mods::NONE, Code::Char('0')) => {
+            app.ui.read.read_cursor = (rendered.logical(line).start, 0)
+        }
+        (Mods::NONE, Code::Char('$')) => {
             let last = rendered.logical(line).end - 1;
             app.ui.read.read_cursor = clamp(&rendered, last, usize::MAX)
         }
-        Key::Char('i') => leave(app, width),
-        Key::Ctrl('t') => leave(app, width),
-        Key::Enter => {
+        (Mods::NONE, Code::Char('i')) => leave(app, width),
+        (Mods::CTRL, Code::Char('t')) => leave(app, width),
+        (Mods::NONE, Code::Enter) => {
             if let Some(idx) = source_at(&rendered, line, col) {
                 app.workspace.current_mut().editor.set_cursor_index(idx);
             }
@@ -126,7 +140,7 @@ pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
 }
 
 fn delegates_to_edit(key: Key) -> bool {
-    matches!(key, Key::Char(c) if "pPdcxoOaAIsrR".contains(c))
+    matches!(key.plain_char(), Some(c) if "pPdcxoOaAIsrR".contains(c))
 }
 
 pub(crate) fn clamp(rendered: &Rendered, line: usize, col: usize) -> (usize, usize) {

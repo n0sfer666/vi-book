@@ -114,7 +114,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
     let dirty = app.workspace.current().editor.text();
     assert_ne!(dirty, "B body");
 
-    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('o')));
+    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::ctrl('o')));
     assert_eq!(
         app.workspace.current().name,
         "a.md",
@@ -128,7 +128,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
         "b.md is stashed dirty, not written or reloaded"
     );
 
-    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::Ctrl('i')));
+    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::ctrl('i')));
     assert_eq!(
         app.workspace.current().name,
         "b.md",

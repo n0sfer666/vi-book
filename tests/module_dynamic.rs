@@ -61,7 +61,7 @@ fn ws() -> Workspace {
     let mut ws = Workspace::new(Document::new("hello"));
     ws.current_mut()
         .editor
-        .handle_key(v_ide_keys::Key::Char('$'));
+        .handle_key(v_ide_keys::Key::char('$'));
     ws
 }
 

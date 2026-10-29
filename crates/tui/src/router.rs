@@ -1,9 +1,9 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::KeyEvent;
 
 use crate::app::App;
 use crate::view::View;
 use crate::{actions, clip_sync, command_line, event_map, input, layout, read_view};
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 
 pub fn handle(app: &mut App, key: KeyEvent) {
     app.ui.message.clear();
@@ -23,7 +23,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         command_line::handle(app, key);
         return;
     }
-    let mapped = event_map::to_key(key);
+    let mapped = event_map::to_stroke(key).map(|stroke| stroke.key);
     if app.ui.pending_ctrl_w {
         app.ui.pending_ctrl_w = false;
         window_command(app, mapped);
@@ -33,7 +33,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         actions::menu_key(app, mapped);
         return;
     }
-    if key.code == KeyCode::F(1) {
+    if mapped.is_some_and(actions::is_help_key) {
         app.ui.help = true;
         return;
     }
@@ -42,17 +42,17 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         return;
     }
     if app.workspace.current().editor.idle_normal() {
-        if mapped == Some(Key::Char(app.leader)) {
+        if mapped == Some(Key::char(app.leader)) {
             actions::open_menu(app);
             return;
         }
-        if mapped == Some(Key::Char('?')) {
+        if mapped == Some(Key::char('?')) {
             app.ui.help = true;
             return;
         }
     }
     if (app.ui.read.view == View::Read || app.workspace.current().editor.idle_normal())
-        && mapped == Some(Key::Ctrl('w'))
+        && mapped == Some(Key::ctrl('w'))
     {
         app.ui.pending_ctrl_w = true;
         return;
@@ -74,7 +74,7 @@ pub fn handle(app: &mut App, key: KeyEvent) {
         crate::lua_bridge::apply_keymap(app, &rhs);
         return;
     }
-    if app.workspace.current().editor.idle_normal() && mapped == Some(Key::Ctrl('t')) {
+    if app.workspace.current().editor.idle_normal() && mapped == Some(Key::ctrl('t')) {
         read_view::enter(app, width);
         return;
     }
@@ -84,16 +84,18 @@ pub fn handle(app: &mut App, key: KeyEvent) {
 }
 
 fn window_command(app: &mut App, mapped: Option<Key>) {
-    match mapped {
-        Some(Key::Char('w')) | Some(Key::Ctrl('w')) => app.focus_next(),
-        Some(Key::Char('p')) => {
+    match mapped.map(|k| (k.mods(), k.code())) {
+        Some((Mods::NONE, Code::Char('w'))) | Some((Mods::CTRL, Code::Char('w'))) => {
+            app.focus_next()
+        }
+        Some((Mods::NONE, Code::Char('p'))) => {
             if app.ui.panel.is_some() {
                 app.ui.panel_focus = true;
             }
         }
-        Some(Key::Char('s')) | Some(Key::Char('v')) => app.vsplit(None),
-        Some(Key::Char('o')) => app.only(),
-        Some(Key::Char('c')) => app.close_active(),
+        Some((Mods::NONE, Code::Char('s' | 'v'))) => app.vsplit(None),
+        Some((Mods::NONE, Code::Char('o'))) => app.only(),
+        Some((Mods::NONE, Code::Char('c'))) => app.close_active(),
         _ => {}
     }
 }

@@ -48,6 +48,114 @@
         "mode": "normal",
         "unnamed": "c"
       }
+    },
+    {
+      "name": "Del deletes char under cursor",
+      "before": "abc",
+      "cursor": [0, 1],
+      "keys": "<Del>",
+      "expect": {
+        "text": "ac",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": "b"
+      }
+    },
+    {
+      "name": "Del on last char moves cursor left",
+      "before": "abc",
+      "cursor": [0, 2],
+      "keys": "<Del>",
+      "expect": {
+        "text": "ab",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": "c"
+      }
+    },
+    {
+      "name": "d End deletes to line end",
+      "before": "abc def",
+      "cursor": [0, 2],
+      "keys": "d<End>",
+      "expect": {
+        "text": "ab",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": "c def"
+      }
+    },
+    {
+      "name": "y Home yanks to line start",
+      "before": "abc def",
+      "cursor": [0, 4],
+      "keys": "y<Home>",
+      "expect": {
+        "text": "abc def",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "abc "
+      }
+    },
+    {
+      "name": "c End changes to line end",
+      "before": "abc def",
+      "cursor": [0, 4],
+      "keys": "c<End>X<Esc>",
+      "expect": {
+        "text": "abc X",
+        "cursor": [0, 4],
+        "mode": "normal",
+        "unnamed": "def"
+      }
+    },
+    {
+      "name": "d Left deletes char before",
+      "before": "abc",
+      "cursor": [0, 2],
+      "keys": "d<Left>",
+      "expect": {
+        "text": "ac",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": "b"
+      }
+    },
+    {
+      "name": "d Down deletes two lines",
+      "before": "a\nb\nc",
+      "cursor": [0, 0],
+      "keys": "d<Down>",
+      "expect": {
+        "text": "c",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a\nb\n"
+      }
+    },
+    {
+      "name": "d Up deletes two lines",
+      "before": "a\nb\nc",
+      "cursor": [2, 0],
+      "keys": "d<Up>",
+      "expect": {
+        "text": "a",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "b\nc\n"
+      }
+    },
+    {
+      "name": "d Del cancels the operator",
+      "before": "abc",
+      "cursor": [0, 1],
+      "keys": "d<Del>",
+      "expect": {
+        "text": "abc",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
     }
   ]
 }

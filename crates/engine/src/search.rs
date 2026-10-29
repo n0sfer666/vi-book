@@ -1,5 +1,5 @@
 use crate::editor::Editor;
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 
 #[derive(Default)]
 pub struct SearchState {
@@ -13,20 +13,20 @@ pub fn begin(ed: &mut Editor) {
 }
 
 pub fn handle_input(ed: &mut Editor, key: Key) {
-    match key {
-        Key::Char(c) => {
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char(c)) => {
             if let Some(input) = ed.search.input.as_mut() {
                 input.push(c);
             }
         }
-        Key::Backspace => {
+        (Mods::NONE, Code::Backspace) => {
             if let Some(input) = ed.search.input.as_mut()
                 && input.pop().is_none()
             {
                 ed.search.input = None;
             }
         }
-        Key::Enter => {
+        (Mods::NONE, Code::Enter) => {
             if let Some(input) = ed.search.input.take()
                 && !input.is_empty()
             {
@@ -34,8 +34,8 @@ pub fn handle_input(ed: &mut Editor, key: Key) {
                 jump(ed, true);
             }
         }
-        Key::Esc => ed.search.input = None,
-        Key::Ctrl(_) | Key::Up | Key::Down | Key::Left | Key::Right => {}
+        (Mods::NONE, Code::Esc) => ed.search.input = None,
+        _ => {}
     }
 }
 

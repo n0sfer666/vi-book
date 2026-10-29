@@ -5,7 +5,7 @@ use crate::mode::Mode;
 use crate::motion::{self, Motion, OpTarget};
 use crate::operator::{self, Operator};
 use crate::pending::{Pending, Stage};
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_text::position::Position;
 
 pub fn enter(ed: &mut Editor, linewise: bool) {
@@ -27,19 +27,19 @@ pub fn enter_block(ed: &mut Editor) {
 pub fn handle(ed: &mut Editor, key: Key) {
     if ed.pending.stage == Stage::G {
         ed.pending.stage = Stage::Start;
-        if key == Key::Char('g') {
+        if key == Key::char('g') {
             let count = ed.pending.count.take();
             motion::movement(ed, Motion::FirstLine, count);
         }
         return;
     }
-    match key {
-        Key::Esc => {
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Esc) => {
             ed.mode = Mode::Normal;
             ed.pending.reset();
         }
-        Key::Ctrl('v') => ed.mode = Mode::VisualBlock,
-        Key::Char(c) => visual_char(ed, c),
+        (Mods::CTRL, Code::Char('v')) => ed.mode = Mode::VisualBlock,
+        (Mods::NONE, Code::Char(c)) => visual_char(ed, c),
         _ => {
             if let Some(m) = motion::from_key(key) {
                 run_motion(ed, m);
@@ -59,7 +59,7 @@ fn visual_char(ed: &mut Editor, c: char) {
         'v' => ed.mode = Mode::Visual,
         'V' => ed.mode = Mode::VisualLine,
         _ => {
-            if let Some(m) = motion::from_key(Key::Char(c)) {
+            if let Some(m) = motion::from_key(Key::char(c)) {
                 run_motion(ed, m);
             }
         }

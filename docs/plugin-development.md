@@ -84,8 +84,19 @@ vibook.keymap("n", "H", "0")        -- H jumps to the line start
 vibook.keymap("n", "Y", "y$")       -- Y yanks to end of line
 ```
 
-Single keys and one `<C-x>` chord are supported. Multi-key sequences such as
-`gh` are not applied yet.
+A left-hand side is one key, with or without modifiers, in vim notation:
+`<C-x>` (Ctrl), `<M-x>` or `<A-x>` (Alt), `<S-Tab>` (Shift), `<D-x>` (Super/Cmd),
+and named keys `<Esc> <CR> <BS> <Tab> <Del> <Insert> <Home> <End> <PageUp>
+<PageDown> <Up> <Down> <Left> <Right> <F1>`–`<F12> <Space> <lt> <Bar> <Bslash>`.
+Names are case-insensitive; an unknown `<…>` is read as plain characters.
+Control characters in a Lua string are keys too: `"\t"` is `<Tab>`, `"\27"` is
+`<Esc>`, `"\1"` is `<C-a>`. Multi-key sequences such as `gh` are not applied yet.
+
+A right-hand side of exactly `<Nop>` (any case) makes the key do nothing.
+
+These normal-mode keys are taken by built-ins and cannot be remapped yet:
+`<F1>`, the leader (`<Space>` by default), `?`, `:`, `<C-w>`, `<CR>` (follow a
+link), `<C-p>` (vault picker), `<C-o>` and `<Tab>` (jump list, notebook).
 
 ---
 

@@ -10,7 +10,7 @@ use crate::menu::MenuItem;
 use crate::requests;
 use crate::theme::{self, Face, Theme};
 use v_ide_editor::module::Modules;
-use v_ide_keys::key::parse_keys;
+use v_ide_keys::parse_keys;
 use v_ide_lua::host::PluginHost;
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -41,6 +41,9 @@ pub fn load_config_from(app: &mut App, mut resolved: Option<(PathBuf, Option<&'s
 }
 
 pub fn apply_keymap(app: &mut App, rhs: &str) {
+    if rhs.eq_ignore_ascii_case("<Nop>") {
+        return;
+    }
     if let Some(cmd) = rhs.strip_prefix(':') {
         command_line::run(app, cmd);
     } else {

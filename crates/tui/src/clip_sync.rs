@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::clipboard;
 use v_ide_engine::mode::Mode;
-use v_ide_keys::key::Key;
+use v_ide_keys::Key;
 
 pub fn freshest<'a>(system: &'a str, last_synced: &str) -> Option<&'a str> {
     (!system.is_empty() && system != last_synced).then_some(system)
@@ -24,7 +24,7 @@ pub fn sync_out(app: &mut App) {
 }
 
 fn inject_paste(app: &mut App, key: Key) {
-    if !matches!(key, Key::Char('p') | Key::Char('P')) {
+    if !matches!(key.plain_char(), Some('p' | 'P')) {
         return;
     }
     if app.workspace.current().editor.mode() != Mode::Normal

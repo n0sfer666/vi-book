@@ -39,3 +39,18 @@ fn keymaps_without_lua_module_do_nothing() {
     app.handle(ctrl('s'));
     assert_eq!(app.workspace.current().editor.text(), "hi");
 }
+
+#[test]
+fn nop_rhs_disables_the_key() {
+    let mut app = common::lua_app(
+        common::named_doc("one\ntwo", "a.md"),
+        "keymap-nop",
+        "vibook.keymap('n', 'Q', '<Nop>')\n\
+         vibook.keymap('n', 'X', '<nop>')",
+    );
+    app.handle(KeyEvent::new(KeyCode::Char('Q'), KeyModifiers::SHIFT));
+    app.handle(KeyEvent::new(KeyCode::Char('X'), KeyModifiers::SHIFT));
+    let editor = &app.workspace.current().editor;
+    assert_eq!(editor.text(), "one\ntwo");
+    assert!(editor.idle_normal());
+}

@@ -1,6 +1,6 @@
 mod common;
 
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_markdown::wrap_mode::WrapMode;
 use v_ide_tui::actions;
 use v_ide_tui::app::App;
@@ -10,7 +10,7 @@ fn app() -> App {
 }
 
 fn press(app: &mut App, c: char) {
-    actions::menu_key(app, Some(Key::Char(c)));
+    actions::menu_key(app, Some(Key::char(c)));
 }
 
 #[test]
@@ -52,14 +52,14 @@ fn esc_steps_back_through_levels_then_closes() {
     actions::open_menu(&mut a);
     press(&mut a, 's');
     press(&mut a, 'w');
-    actions::menu_key(&mut a, Some(Key::Esc));
+    actions::menu_key(&mut a, Some(Key::new(Code::Esc, Mods::NONE)));
     assert!(
         a.ui.menu.is_some(),
         "esc in wrap submenu returns to settings"
     );
-    actions::menu_key(&mut a, Some(Key::Esc));
+    actions::menu_key(&mut a, Some(Key::new(Code::Esc, Mods::NONE)));
     assert!(a.ui.menu.is_some(), "esc in settings returns to leader");
-    actions::menu_key(&mut a, Some(Key::Esc));
+    actions::menu_key(&mut a, Some(Key::new(Code::Esc, Mods::NONE)));
     assert!(a.ui.menu.is_none(), "esc at root closes the menu");
 }
 

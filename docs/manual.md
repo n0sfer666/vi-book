@@ -122,6 +122,8 @@ copying*).
 ## Moving around
 
 - `h j k l` or the **arrow keys** — move the cursor.
+- `<Home>` / `<End>` — start / end of the line (also while editing and after
+  an operator: `d<End>` = `d$`).
 - `w` / `b` / `e` — next / previous / end of word.
 - `W` / `B` — next / previous *block*: a heading, paragraph, list item or tag.
 - `gg` / `G` — top / bottom of the note.

@@ -1,6 +1,6 @@
 use crate::editor::Editor;
 use crate::mode::Mode;
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_text::edit::Edit;
 use v_ide_text::position::Position;
 
@@ -52,29 +52,37 @@ pub fn open_above(ed: &mut Editor) {
 }
 
 pub fn handle(ed: &mut Editor, key: Key) {
-    match key {
-        Key::Esc => finalize(ed),
-        Key::Char(c) => {
+    let line = ed.cursor.line;
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Esc) => finalize(ed),
+        (Mods::NONE, Code::Char(c)) => {
             insert_text(ed, c.to_string());
             ed.insert_run.push(c);
             try_escape(ed);
         }
-        Key::Enter => {
+        (Mods::NONE, Code::Enter) => {
             ed.insert_run.clear();
             insert_text(ed, "\n".into());
         }
-        Key::Backspace => {
+        (Mods::NONE, Code::Tab) => {
+            ed.insert_run.clear();
+            insert_text(ed, "\t".into());
+        }
+        (Mods::NONE, Code::Backspace) => {
             ed.insert_run.clear();
             backspace(ed);
         }
-        Key::Up => move_in_insert(ed, ed.cursor.line.saturating_sub(1), ed.cursor.col),
-        Key::Down => move_in_insert(ed, ed.cursor.line + 1, ed.cursor.col),
-        Key::Left => {
-            let (line, col) = (ed.cursor.line, ed.cursor.col);
-            move_in_insert(ed, line, col.saturating_sub(1));
+        (Mods::NONE, Code::Delete) => {
+            ed.insert_run.clear();
+            delete_under(ed);
         }
-        Key::Right => move_in_insert(ed, ed.cursor.line, ed.cursor.col + 1),
-        Key::Ctrl(_) => {}
+        (Mods::NONE, Code::Home) => move_in_insert(ed, line, 0),
+        (Mods::NONE, Code::End) => move_in_insert(ed, line, ed.buffer.line_len(line)),
+        (Mods::NONE, Code::Up) => move_in_insert(ed, line.saturating_sub(1), ed.cursor.col),
+        (Mods::NONE, Code::Down) => move_in_insert(ed, line + 1, ed.cursor.col),
+        (Mods::NONE, Code::Left) => move_in_insert(ed, line, ed.cursor.col.saturating_sub(1)),
+        (Mods::NONE, Code::Right) => move_in_insert(ed, line, ed.cursor.col + 1),
+        _ => {}
     }
 }
 
@@ -107,6 +115,14 @@ fn insert_text(ed: &mut Editor, text: String) {
     let len = text.chars().count();
     push_edit(ed, Edit::insertion(at, text));
     ed.cursor = ed.buffer.char_to_pos(at + len);
+}
+
+fn delete_under(ed: &mut Editor) {
+    let at = ed.cursor_index();
+    if at < ed.buffer.len_chars() {
+        let removed = ed.buffer.slice(at..at + 1);
+        push_edit(ed, Edit::removal(at, removed));
+    }
 }
 
 fn backspace(ed: &mut Editor) {

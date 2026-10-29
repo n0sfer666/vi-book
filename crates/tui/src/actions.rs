@@ -1,11 +1,11 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::KeyEvent;
 
 use crate::app::App;
 use crate::menu::Menu;
 use crate::view::View;
-use crate::{command_line, help, layout, read_view};
+use crate::{command_line, event_map, help, layout, read_view};
 use v_ide_editor::document::Document;
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, FKey, Key, Mods};
 
 pub fn open_menu(app: &mut App) {
     app.ui.menu = Some(Menu::leader(
@@ -16,34 +16,39 @@ pub fn open_menu(app: &mut App) {
 }
 
 pub fn help_key(app: &mut App, event: KeyEvent) {
-    let shift = event.modifiers.contains(KeyModifiers::SHIFT);
-    match event.code {
-        KeyCode::Enter if shift => open_doc(app, "developers.md", help::DEVELOPERS),
-        KeyCode::Enter => open_doc(app, "manual.md", help::MANUAL),
-        KeyCode::Esc | KeyCode::F(1) | KeyCode::Char('?') | KeyCode::Char('q') => {
-            app.ui.help = false
-        }
+    let Some(key) = event_map::to_stroke(event).map(|stroke| stroke.key) else {
+        return;
+    };
+    match (key.mods(), key.code()) {
+        (Mods::SHIFT, Code::Enter) => open_doc(app, "developers.md", help::DEVELOPERS),
+        (Mods::NONE, Code::Enter) => open_doc(app, "manual.md", help::MANUAL),
+        (Mods::NONE, Code::Esc | Code::Char('?' | 'q')) => app.ui.help = false,
+        _ if is_help_key(key) => app.ui.help = false,
         _ => {}
     }
+}
+
+pub fn is_help_key(key: Key) -> bool {
+    FKey::new(1).map(|f1| Key::new(Code::F(f1), Mods::NONE)) == Some(key)
 }
 
 pub fn menu_key(app: &mut App, mapped: Option<Key>) {
     let Some(menu) = app.ui.menu.as_mut() else {
         return;
     };
-    match mapped {
-        Some(Key::Down) | Some(Key::Char('j')) => menu.move_down(),
-        Some(Key::Up) | Some(Key::Char('k')) => menu.move_up(),
-        Some(Key::Esc) => {
+    match mapped.map(|k| (k.mods(), k.code())) {
+        Some((Mods::NONE, Code::Down | Code::Char('j'))) => menu.move_down(),
+        Some((Mods::NONE, Code::Up | Code::Char('k'))) => menu.move_up(),
+        Some((Mods::NONE, Code::Esc)) => {
             if !menu.back() {
                 app.ui.menu = None;
             }
         }
-        Some(Key::Enter) => {
+        Some((Mods::NONE, Code::Enter)) => {
             let idx = menu.selected;
             activate(app, idx);
         }
-        Some(Key::Char(c)) => {
+        Some((Mods::NONE, Code::Char(c))) => {
             if let Some(idx) = menu.index_of(c) {
                 activate(app, idx);
             }

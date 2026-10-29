@@ -84,7 +84,7 @@ fn plugin_sees_cursor_index() {
         "vibook.command('pos', function() vibook.buf.set_text(tostring(vibook.buf.get_cursor())) end)",
     );
     let mut ws = ws("hello");
-    ws.current_mut().editor.handle_key(Key::Char('$'));
+    ws.current_mut().editor.handle_key(Key::char('$'));
     assert_eq!(modules.command(&ws, "pos", ""), Some(vec![text("4")]));
 }
 

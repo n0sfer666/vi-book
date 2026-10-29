@@ -57,7 +57,7 @@ fn editing_active_pane_does_not_touch_others() {
     app.workspace
         .current_mut()
         .editor
-        .handle_key(v_ide_keys::Key::Char('x'));
+        .handle_key(v_ide_keys::Key::char('x'));
     let active_text = app.workspace.current().editor.text();
     app.focus_next();
     assert_ne!(
@@ -113,7 +113,7 @@ fn app_with_dirty_split() -> App {
     app.workspace
         .current_mut()
         .editor
-        .handle_key(v_ide_keys::Key::Char('x'));
+        .handle_key(v_ide_keys::Key::char('x'));
     app
 }
 

@@ -3,7 +3,7 @@ use std::ops::Range;
 use crate::desired_col::DesiredCol;
 use crate::editor::Editor;
 use crate::word;
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_text::buffer::Buffer;
 use v_ide_text::position::Position;
 
@@ -37,16 +37,17 @@ pub enum OpTarget {
 }
 
 pub fn from_key(key: Key) -> Option<Motion> {
-    match key {
-        Key::Char('h') | Key::Left => Some(Motion::Left),
-        Key::Char('l') | Key::Right => Some(Motion::Right),
-        Key::Char('j') | Key::Down => Some(Motion::Down),
-        Key::Char('k') | Key::Up => Some(Motion::Up),
-        Key::Char('$') => Some(Motion::LineEnd),
-        Key::Char('w') => Some(Motion::WordForward),
-        Key::Char('b') => Some(Motion::WordBack),
-        Key::Char('e') => Some(Motion::WordEnd),
-        Key::Char('G') => Some(Motion::LastLine),
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char('h') | Code::Left) => Some(Motion::Left),
+        (Mods::NONE, Code::Char('l') | Code::Right) => Some(Motion::Right),
+        (Mods::NONE, Code::Char('j') | Code::Down) => Some(Motion::Down),
+        (Mods::NONE, Code::Char('k') | Code::Up) => Some(Motion::Up),
+        (Mods::NONE, Code::Home) => Some(Motion::LineStart),
+        (Mods::NONE, Code::Char('$') | Code::End) => Some(Motion::LineEnd),
+        (Mods::NONE, Code::Char('w')) => Some(Motion::WordForward),
+        (Mods::NONE, Code::Char('b')) => Some(Motion::WordBack),
+        (Mods::NONE, Code::Char('e')) => Some(Motion::WordEnd),
+        (Mods::NONE, Code::Char('G')) => Some(Motion::LastLine),
         _ => None,
     }
 }

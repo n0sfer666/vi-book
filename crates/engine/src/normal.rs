@@ -6,7 +6,7 @@ use crate::pending::{Pending, Stage};
 use crate::search;
 use crate::text_object;
 use crate::{insert, visual};
-use v_ide_keys::key::Key;
+use v_ide_keys::{Code, Key, Mods};
 
 pub fn handle(ed: &mut Editor, key: Key) {
     match ed.pending.stage {
@@ -20,13 +20,17 @@ pub fn handle(ed: &mut Editor, key: Key) {
 }
 
 fn start(ed: &mut Editor, key: Key) {
-    match key {
-        Key::Char(c) => start_char(ed, c),
-        Key::Ctrl('r') => {
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char(c)) => start_char(ed, c),
+        (Mods::NONE, Code::Delete) if ed.pending.count.is_some() => {
+            Pending::drop_digit(&mut ed.pending.count)
+        }
+        (Mods::NONE, Code::Delete) => delete_chars(ed),
+        (Mods::CTRL, Code::Char('r')) => {
             ed.redo();
             ed.pending.reset();
         }
-        Key::Ctrl('v') => visual::enter_block(ed),
+        (Mods::CTRL, Code::Char('v')) => visual::enter_block(ed),
         _ => {
             if let Some(m) = motion::from_key(key) {
                 run_motion(ed, m);
@@ -71,7 +75,7 @@ fn start_char(ed: &mut Editor, c: char) {
         'n' => search::repeat(ed, true),
         'N' => search::repeat(ed, false),
         _ => {
-            if let Some(m) = motion::from_key(Key::Char(c)) {
+            if let Some(m) = motion::from_key(Key::char(c)) {
                 run_motion(ed, m);
             } else {
                 ed.pending.reset();
@@ -81,7 +85,7 @@ fn start_char(ed: &mut Editor, c: char) {
 }
 
 fn register(ed: &mut Editor, key: Key) {
-    if let Key::Char(c) = key
+    if let Some(c) = key.plain_char()
         && c.is_ascii_lowercase()
     {
         ed.pending.register = Some(c);
@@ -92,7 +96,7 @@ fn register(ed: &mut Editor, key: Key) {
 }
 
 fn g_prefix(ed: &mut Editor, key: Key) {
-    if key == Key::Char('g') {
+    if key == Key::char('g') {
         run_motion(ed, Motion::FirstLine);
     } else {
         ed.pending.reset();
@@ -100,10 +104,19 @@ fn g_prefix(ed: &mut Editor, key: Key) {
 }
 
 fn operator_stage(ed: &mut Editor, op: Operator, key: Key) {
-    let Key::Char(c) = key else {
-        ed.pending.reset();
-        return;
-    };
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char(c)) => operator_char(ed, op, c),
+        (Mods::NONE, Code::Delete) if ed.pending.op_count.is_some() => {
+            Pending::drop_digit(&mut ed.pending.op_count)
+        }
+        _ => match motion::from_key(key) {
+            Some(m) => apply_motion_op(ed, op, m),
+            None => ed.pending.reset(),
+        },
+    }
+}
+
+fn operator_char(ed: &mut Editor, op: Operator, c: char) {
     match c {
         '0' if ed.pending.op_count.is_none() => apply_motion_op(ed, op, Motion::LineStart),
         '0'..='9' => Pending::push_digit_char(&mut ed.pending.op_count, c),
@@ -123,7 +136,7 @@ fn operator_stage(ed: &mut Editor, op: Operator, key: Key) {
             operator::apply(ed, op, OpTarget::Lines { first, last });
         }
         _ => {
-            if let Some(m) = motion::from_key(Key::Char(c)) {
+            if let Some(m) = motion::from_key(Key::char(c)) {
                 apply_motion_op(ed, op, m);
             } else {
                 ed.pending.reset();
@@ -133,7 +146,7 @@ fn operator_stage(ed: &mut Editor, op: Operator, key: Key) {
 }
 
 fn operator_g(ed: &mut Editor, op: Operator, key: Key) {
-    if key == Key::Char('g') {
+    if key == Key::char('g') {
         apply_motion_op(ed, op, Motion::FirstLine);
     } else {
         ed.pending.reset();
@@ -141,7 +154,7 @@ fn operator_g(ed: &mut Editor, op: Operator, key: Key) {
 }
 
 fn object_stage(ed: &mut Editor, op: Operator, around: bool, key: Key) {
-    if let Key::Char(c) = key
+    if let Some(c) = key.plain_char()
         && let Some(target) = text_object::target(ed, c, around)
     {
         operator::apply(ed, op, target);

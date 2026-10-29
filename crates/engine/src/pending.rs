@@ -37,4 +37,8 @@ impl Pending {
             *slot = Some(slot.unwrap_or(0) * 10 + digit as usize);
         }
     }
+
+    pub fn drop_digit(slot: &mut Option<usize>) {
+        *slot = slot.map(|n| n / 10).filter(|&n| n > 0);
+    }
 }

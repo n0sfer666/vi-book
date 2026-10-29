@@ -60,6 +60,54 @@
         "mode": "normal",
         "unnamed": ""
       }
+    },
+    {
+      "name": "Home moves to line start",
+      "before": "  ab",
+      "cursor": [0, 3],
+      "keys": "<Home>",
+      "expect": {
+        "text": "  ab",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "End moves to line end",
+      "before": "abc",
+      "cursor": [0, 0],
+      "keys": "<End>",
+      "expect": {
+        "text": "abc",
+        "cursor": [0, 2],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "End keeps line end across lines",
+      "before": "abc\nabcdef",
+      "cursor": [0, 0],
+      "keys": "<End>j",
+      "expect": {
+        "text": "abc\nabcdef",
+        "cursor": [1, 5],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Tab in normal does nothing",
+      "before": "abc",
+      "cursor": [0, 1],
+      "keys": "<Tab>",
+      "expect": {
+        "text": "abc",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
     }
   ]
 }

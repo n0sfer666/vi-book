@@ -1,28 +1,29 @@
 use std::io::ErrorKind;
 
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::KeyEvent;
 
 use crate::app::App;
 #[cfg(all(feature = "notebook", feature = "vault"))]
 use crate::panel::Panel;
-use crate::{actions, checktime, disk_message, requests};
+use crate::{actions, checktime, disk_message, event_map, requests};
 use v_ide_editor::Error;
 use v_ide_editor::disk::{DiskMark, Reaction};
 use v_ide_editor::module::Event;
+use v_ide_keys::{Code, Mods};
 
 pub fn handle(app: &mut App, event: KeyEvent) {
     let Some(command) = app.ui.command.as_mut() else {
         return;
     };
-    match event.code {
-        KeyCode::Char(c) => command.push(c),
-        KeyCode::Backspace => {
+    match event_map::to_stroke(event).map(|stroke| (stroke.key.mods(), stroke.key.code())) {
+        Some((Mods::NONE, Code::Char(c))) => command.push(c),
+        Some((Mods::NONE, Code::Backspace)) => {
             if command.pop().is_none() {
                 app.ui.command = None;
             }
         }
-        KeyCode::Esc => app.ui.command = None,
-        KeyCode::Enter => {
+        Some((Mods::NONE, Code::Esc)) => app.ui.command = None,
+        Some((Mods::NONE, Code::Enter)) => {
             let command = app.ui.command.take().unwrap_or_default();
             run(app, &command);
         }

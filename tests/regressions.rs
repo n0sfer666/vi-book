@@ -54,8 +54,9 @@ fn linewise_operator_at_buffer_edge_is_noop() {
 }
 
 #[test]
-fn unknown_key_notation_is_skipped() {
-    assert_eq!(parse_keys("<Wat>x"), vec![Key::Char('x')]);
+fn unknown_key_notation_is_literal() {
+    let literal: Vec<Key> = "<Wat>x".chars().map(Key::char).collect();
+    assert_eq!(parse_keys("<Wat>x"), literal);
 }
 
 fn temp_file(name: &str, content: &[u8]) -> PathBuf {
