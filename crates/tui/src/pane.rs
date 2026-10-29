@@ -93,8 +93,7 @@ impl App {
         self.fresh_buffer(doc)
     }
 
-    fn fresh_buffer(&mut self, mut doc: Document) -> Buffer {
-        doc.editor.set_insert_escape(self.insert_escape.clone());
+    fn fresh_buffer(&mut self, doc: Document) -> Buffer {
         self.workspace.detach(doc)
     }
 }

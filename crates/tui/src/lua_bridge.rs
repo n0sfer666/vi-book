@@ -4,13 +4,13 @@ use std::path::PathBuf;
 use v_ide_view::{Color, Depth};
 
 use crate::app::App;
+use crate::base_keymap;
 use crate::config_path;
-use crate::map_action::MapAction;
+use crate::lua_keymaps;
 use crate::menu::MenuItem;
 use crate::requests;
 use crate::theme::{self, Face, Theme};
 use v_ide_editor::module::Modules;
-use v_ide_keys::{Keymap, MapMode, Mapping, Rhs, parse_keys};
 use v_ide_lua::host::PluginHost;
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -33,39 +33,28 @@ pub fn load_config_from(app: &mut App, mut resolved: Option<(PathBuf, Option<&'s
     if let Some(warning) = warning.filter(|_| app.ui.message.is_empty()) {
         app.ui.message = warning.to_string();
     }
+    let failed = !errors.is_empty();
     if let Some(error) = errors.into_iter().next_back() {
         app.ui.message = error;
     }
     apply_opts(app);
-    install_keymaps(app);
+    install_keymaps(app, failed);
 }
 
 fn host(modules: &Modules) -> Option<&PluginHost> {
     modules.get::<LuaModule>().and_then(LuaModule::host)
 }
 
-fn install_keymaps(app: &mut App) {
+fn install_keymaps(app: &mut App, failed: bool) {
     let Some(host) = host(&app.modules) else {
         return;
     };
-    let mut keymap = Keymap::default();
-    for map in host.keymaps().into_iter().filter(|m| m.mode == "n") {
-        if let [key] = parse_keys(&map.lhs)[..] {
-            let _ = keymap.insert(MapMode::Normal, &[key], mapping(&map.rhs));
-        }
+    let mut keymap = base_keymap::build(app.insert_escape.as_deref());
+    let installed = lua_keymaps::install(&mut keymap, &host.keymaps(), app.leader);
+    if let Some(error) = installed.or(host.keymap_errors().pop()).filter(|_| !failed) {
+        app.ui.message = error;
     }
     app.keymap = keymap;
-}
-
-fn mapping(rhs: &str) -> Mapping<MapAction> {
-    let rhs = if rhs.eq_ignore_ascii_case("<Nop>") {
-        Rhs::Keys(Vec::new())
-    } else if let Some(command) = rhs.strip_prefix(':') {
-        Rhs::Action(MapAction::Command(command.to_string()))
-    } else {
-        Rhs::Keys(parse_keys(rhs))
-    };
-    Mapping { rhs, remap: false }
 }
 
 fn apply_opts(app: &mut App) {

@@ -8,7 +8,6 @@ impl App {
     pub fn load(&mut self, rel: &str) {
         match Document::open(self.workspace.absolute(rel)) {
             Ok(mut doc) => {
-                doc.editor.set_insert_escape(self.insert_escape.clone());
                 doc.name = rel.to_string();
                 if let Some(id) = self.workspace.open(doc) {
                     let state = std::mem::take(&mut self.ui.read);

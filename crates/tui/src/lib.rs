@@ -2,6 +2,7 @@
 
 pub mod actions;
 pub mod app;
+mod base_keymap;
 pub mod buffer;
 pub mod buffer_list;
 pub mod checktime;
@@ -30,6 +31,8 @@ pub mod list_nav;
 pub mod list_panel;
 #[cfg(feature = "lua")]
 pub mod lua_bridge;
+#[cfg(feature = "lua")]
+mod lua_keymaps;
 pub mod map_action;
 pub mod markdown_bridge;
 pub mod menu;

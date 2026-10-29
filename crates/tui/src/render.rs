@@ -84,7 +84,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
         return;
     }
     if app.ui.read.view == View::Edit {
-        cursor::place_cursor(frame, app, active_rect, message_area);
+        cursor::place_cursor(frame, app, &text, active_rect, message_area);
     } else if app.ui.command.is_some() || app.workspace.current().editor.search_input().is_some() {
         cursor::place_bottom_cursor(frame, app, message_area);
     }

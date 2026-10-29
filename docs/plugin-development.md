@@ -58,7 +58,7 @@ If a future capability needs the filesystem or a process, v-ide exposes a
 | Option | Type | Default | Meaning |
 |--------|------|---------|---------|
 | `leader` | string | `" "` | Key that opens the which-key menu. |
-| `insert_escape` | string | `"jj"` | Type this in edit mode to return to normal; `""` disables. |
+| `insert_escape` | string | `"jj"` | Insert-mode mapping to `<Esc>`; `""` disables. An explicit `vibook.keymap("i", …)` with the same keys wins. |
 | `menu_position` | string | `"bottom"` | `"bottom"` bar or `"center"` modal. |
 | `code_editor` | string | `""` | External editor for code links; falls back to `$EDITOR`. |
 | `plugins` | table | `{}` | Per-plugin toggles, e.g. `{ links = false }`. |
@@ -75,26 +75,45 @@ vibook.opt.plugins = { links = true }
 
 ## 4. Key mappings — `vibook.keymap(mode, lhs, rhs)`
 
-Normal-mode (`"n"`) mappings. The right-hand side is either a `:command` or a
-sequence of keys fed to the editor. Mappings take precedence over every
-built-in key, `<F1>`, the leader, `?`, `:` and `<C-w>` included. The keys of a
-right-hand side are not mapped again, but they still reach built-ins:
-`vibook.keymap("n", "Q", "?")` opens help. Mappings do not apply in read view,
-panels and pop-ups.
+`mode` is one of `"n"` (normal), `"i"` (insert), `"x"` or `"v"` (visual, there
+is no select mode), `"o"` (operator-pending, after `d`, `c`, `y`…) and `"c"`
+(the `:` line and `/` search). Any other mode, an empty left-hand side, or a
+non-string argument (a table of modes, a function) is skipped and reported in
+the message line, unless `init.lua` itself failed: then its error is shown.
+
+The right-hand side is either a `:command` or a sequence of keys fed to the
+editor. A `:command` runs in every mode without leaving it, like nvim's
+`<Cmd>…<CR>`: insert stays insert, visual stays visual, an open `:` line stays
+open. Mappings take precedence over every built-in key, `<F1>`, the leader,
+`?`, `:` and `<C-w>` included. The keys of a right-hand side are not mapped
+again, but they still reach built-ins: `vibook.keymap("n", "Q", "?")` opens
+help. Mappings do not apply in read view, panels and pop-ups.
 
 ```lua
-vibook.keymap("n", "<C-s>", ":w")   -- Ctrl-s writes
-vibook.keymap("n", "H", "0")        -- H jumps to the line start
-vibook.keymap("n", "Y", "y$")       -- Y yanks to end of line
+vibook.keymap("n", "<C-s>", ":w")        -- Ctrl-s writes
+vibook.keymap("i", "<C-s>", ":w")        -- ...and in insert, staying there
+vibook.keymap("n", "H", "0")             -- H jumps to the line start
+vibook.keymap("n", "Y", "y$")            -- Y yanks to end of line
+vibook.keymap("n", "<Leader>d", "dd")    -- leader, then d
+vibook.keymap("o", "L", "$")             -- dL deletes to end of line
 ```
 
-A left-hand side is one key, with or without modifiers, in vim notation:
+A left-hand side is one or more keys, each with or without modifiers, in vim
+notation:
 `<C-x>` (Ctrl), `<M-x>` or `<A-x>` (Alt), `<S-Tab>` (Shift), `<D-x>` (Super/Cmd),
 and named keys `<Esc> <CR> <BS> <Tab> <Del> <Insert> <Home> <End> <PageUp>
 <PageDown> <Up> <Down> <Left> <Right> <F1>`–`<F12> <Space> <lt> <Bar> <Bslash>`.
 Names are case-insensitive; an unknown `<…>` is read as plain characters.
 Control characters in a Lua string are keys too: `"\t"` is `<Tab>`, `"\27"` is
-`<Esc>`, `"\1"` is `<C-a>`. Multi-key sequences such as `gh` are not applied yet.
+`<Esc>`, `"\1"` is `<C-a>`. `<Leader>` (any case) stands for `vibook.opt.leader`
+as set at the end of `init.lua`, so the order of lines does not matter. It is
+expanded on both sides, except inside a `:command`.
+
+While a multi-key left-hand side is incomplete, the typed prefix is shown at the
+right of the status line and the editor waits up to one second for the rest.
+After that the prefix runs as plain keys: a lone leader opens the menu after the
+pause when `<Leader>…` mappings exist, and at once otherwise. In insert mode the
+pending character is drawn at the cursor but not written until it resolves.
 
 A right-hand side of exactly `<Nop>` (any case) makes the key do nothing.
 

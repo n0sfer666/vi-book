@@ -98,6 +98,12 @@ impl PluginHost {
             .collect()
     }
 
+    pub fn keymap_errors(&self) -> Vec<String> {
+        self.vibook_field("__keymap_errors")
+            .map(|list| list.sequence_values().filter_map(Result::ok).collect())
+            .unwrap_or_default()
+    }
+
     pub fn menu_items(&self) -> Vec<(String, String, String)> {
         let Ok(menu) = self.vibook_field("__menu") else {
             return Vec::new();

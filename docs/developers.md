@@ -29,11 +29,11 @@ of keys fed to the editor.
 ```lua
 vibook.keymap("n", "<C-s>", ":w")     -- Ctrl-s writes
 vibook.keymap("n", "H", "0")          -- H jumps to line start
-vibook.keymap("n", "<leader>x", ...)  -- (multi-key maps are not applied yet)
+vibook.keymap("n", "<leader>x", "dd") -- leader, then x deletes the line
 ```
 
-Built-in `jj` → `<Esc>` is provided by `vibook.opt.insert_escape`; set it to
-`"jk"` to use that instead, or `""` to turn it off.
+Built-in `jj` → `<Esc>` is an insert-mode mapping from `vibook.opt.insert_escape`;
+set it to `"jk"` to use that instead, or `""` to turn it off.
 
 ## Custom menu entries — `vibook.menu_item`
 

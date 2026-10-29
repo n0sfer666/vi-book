@@ -26,24 +26,6 @@ fn arrow_keys_move_like_hjkl() {
 }
 
 #[test]
-fn insert_escape_sequence_leaves_mode_without_inserting() {
-    let mut ed = Editor::new("");
-    ed.set_insert_escape(Some("jj".into()));
-    ed.handle_keys("ihellojj");
-    assert_eq!(ed.text(), "hello");
-    assert_eq!(ed.mode(), Mode::Normal);
-}
-
-#[test]
-fn insert_escape_does_not_fire_on_single_char() {
-    let mut ed = Editor::new("");
-    ed.set_insert_escape(Some("jj".into()));
-    ed.handle_keys("ijazz");
-    assert_eq!(ed.text(), "jazz");
-    assert_eq!(ed.mode(), Mode::Insert);
-}
-
-#[test]
 fn insert_escape_disabled_by_default_in_library() {
     let mut ed = Editor::new("");
     ed.handle_keys("ijj");

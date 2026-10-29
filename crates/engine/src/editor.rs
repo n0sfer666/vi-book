@@ -22,8 +22,6 @@ pub struct Editor {
     pub(crate) insert_edits: Vec<Edit>,
     pub(crate) visual_anchor: Position,
     pub(crate) search: SearchState,
-    pub(crate) insert_escape: Option<String>,
-    pub(crate) insert_run: String,
 }
 
 impl Editor {
@@ -39,13 +37,7 @@ impl Editor {
             insert_edits: Vec::new(),
             visual_anchor: Position::default(),
             search: SearchState::default(),
-            insert_escape: None,
-            insert_run: String::new(),
         }
-    }
-
-    pub fn set_insert_escape(&mut self, seq: Option<String>) {
-        self.insert_escape = seq.filter(|s| !s.is_empty());
     }
 
     pub fn text(&self) -> String {

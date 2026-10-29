@@ -7,7 +7,6 @@ use v_ide_text::position::Position;
 pub fn begin(ed: &mut Editor, pos: Position) {
     ed.mode = Mode::Insert;
     ed.cursor = pos;
-    ed.insert_run.clear();
     ed.pending.reset();
 }
 
@@ -55,27 +54,11 @@ pub fn handle(ed: &mut Editor, key: Key) {
     let line = ed.cursor.line;
     match (key.mods(), key.code()) {
         (Mods::NONE, Code::Esc) => finalize(ed),
-        (Mods::NONE, Code::Char(c)) => {
-            insert_text(ed, c.to_string());
-            ed.insert_run.push(c);
-            try_escape(ed);
-        }
-        (Mods::NONE, Code::Enter) => {
-            ed.insert_run.clear();
-            insert_text(ed, "\n".into());
-        }
-        (Mods::NONE, Code::Tab) => {
-            ed.insert_run.clear();
-            insert_text(ed, "\t".into());
-        }
-        (Mods::NONE, Code::Backspace) => {
-            ed.insert_run.clear();
-            backspace(ed);
-        }
-        (Mods::NONE, Code::Delete) => {
-            ed.insert_run.clear();
-            delete_under(ed);
-        }
+        (Mods::NONE, Code::Char(c)) => insert_text(ed, c.to_string()),
+        (Mods::NONE, Code::Enter) => insert_text(ed, "\n".into()),
+        (Mods::NONE, Code::Tab) => insert_text(ed, "\t".into()),
+        (Mods::NONE, Code::Backspace) => backspace(ed),
+        (Mods::NONE, Code::Delete) => delete_under(ed),
         (Mods::NONE, Code::Home) => move_in_insert(ed, line, 0),
         (Mods::NONE, Code::End) => move_in_insert(ed, line, ed.buffer.line_len(line)),
         (Mods::NONE, Code::Up) => move_in_insert(ed, line.saturating_sub(1), ed.cursor.col),
@@ -87,27 +70,9 @@ pub fn handle(ed: &mut Editor, key: Key) {
 }
 
 fn move_in_insert(ed: &mut Editor, line: usize, col: usize) {
-    ed.insert_run.clear();
     let line = line.min(ed.buffer.line_count().saturating_sub(1));
     ed.cursor = Position::new(line, col.min(ed.buffer.line_len(line)));
     ed.sync_desired();
-}
-
-fn try_escape(ed: &mut Editor) {
-    let Some(seq) = ed.insert_escape.clone() else {
-        return;
-    };
-    if !ed.insert_run.ends_with(&seq) {
-        return;
-    }
-    let n = seq.chars().count();
-    let at = ed.cursor_index();
-    if at >= n {
-        let removed = ed.buffer.slice(at - n..at);
-        push_edit(ed, Edit::removal(at - n, removed));
-        ed.cursor = ed.buffer.char_to_pos(at - n);
-    }
-    finalize(ed);
 }
 
 fn insert_text(ed: &mut Editor, text: String) {

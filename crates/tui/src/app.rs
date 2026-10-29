@@ -11,7 +11,7 @@ use crate::read_state::ReadState;
 use crate::term::Term;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{key_feed, launch, render, requests};
+use crate::{base_keymap, key_feed, launch, render, requests};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
@@ -53,6 +53,7 @@ pub struct App {
 }
 
 const TICK: Duration = Duration::from_millis(100);
+const INSERT_ESCAPE: &str = "jj";
 
 pub fn run() -> Result<(), Error> {
     let arg = env::args().nth(1);
@@ -92,12 +93,12 @@ impl App {
             #[cfg(feature = "notebook")]
             history: History::new(),
             nesting: 0,
-            keymap: Keymap::default(),
+            keymap: base_keymap::build(Some(INSERT_ESCAPE)),
             typeahead: Typeahead::new(TIMEOUT),
             leader: ' ',
             menu_center: false,
             menu_extra: Vec::new(),
-            insert_escape: Some(String::from("jj")),
+            insert_escape: Some(String::from(INSERT_ESCAPE)),
             window_states: HashMap::new(),
             code_editor: None,
             external_request: None,

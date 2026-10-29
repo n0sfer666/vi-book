@@ -38,6 +38,7 @@ vibook.opt = {}
 vibook.__commands = {}
 vibook.__handlers = {}
 vibook.__keymaps = {}
+vibook.__keymap_errors = {}
 vibook.__menu = {}
 vibook.__colors = {}
 function vibook.menu_item(key, label, rhs)
@@ -52,6 +53,10 @@ function vibook.on(event, fn)
   table.insert(vibook.__handlers[event], fn)
 end
 function vibook.keymap(mode, lhs, rhs)
+  if type(mode) ~= "string" or type(lhs) ~= "string" or type(rhs) ~= "string" then
+    table.insert(vibook.__keymap_errors, "keymap: mode, lhs and rhs must be strings")
+    return
+  end
   table.insert(vibook.__keymaps, { mode = mode, lhs = lhs, rhs = rhs })
 end
 "#;
