@@ -40,6 +40,20 @@ impl Typeahead {
         self.deadline
     }
 
+    pub fn flush_mapped(&mut self) {
+        self.depth = 0;
+        let mapped = self
+            .origins
+            .iter()
+            .take_while(|&&o| o != Origin::Typed)
+            .count();
+        if mapped > 0 {
+            self.deadline = None;
+        }
+        self.keys.drain(..mapped);
+        self.origins.drain(..mapped);
+    }
+
     pub fn pending(&self) -> &[Key] {
         match self.deadline {
             Some(_) => &self.keys,
@@ -91,14 +105,7 @@ impl Typeahead {
         self.origins.drain(..len);
         self.depth += 1;
         if self.depth >= MAX_DEPTH {
-            self.depth = 0;
-            let mapped = self
-                .origins
-                .iter()
-                .take_while(|&&o| o != Origin::Typed)
-                .count();
-            self.keys.drain(..mapped);
-            self.origins.drain(..mapped);
+            self.flush_mapped();
             return Some(Step::Recursive);
         }
         let keys = match &mapping.rhs {

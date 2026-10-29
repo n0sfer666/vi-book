@@ -10,7 +10,7 @@ fn app() -> App {
 }
 
 fn press(app: &mut App, c: char) {
-    actions::menu_key(app, Some(Key::char(c)));
+    actions::menu_key(app, Key::char(c));
 }
 
 #[test]
@@ -52,14 +52,14 @@ fn esc_steps_back_through_levels_then_closes() {
     actions::open_menu(&mut a);
     press(&mut a, 's');
     press(&mut a, 'w');
-    actions::menu_key(&mut a, Some(Key::new(Code::Esc, Mods::NONE)));
+    actions::menu_key(&mut a, Key::new(Code::Esc, Mods::NONE));
     assert!(
         a.ui.menu.is_some(),
         "esc in wrap submenu returns to settings"
     );
-    actions::menu_key(&mut a, Some(Key::new(Code::Esc, Mods::NONE)));
+    actions::menu_key(&mut a, Key::new(Code::Esc, Mods::NONE));
     assert!(a.ui.menu.is_some(), "esc in settings returns to leader");
-    actions::menu_key(&mut a, Some(Key::new(Code::Esc, Mods::NONE)));
+    actions::menu_key(&mut a, Key::new(Code::Esc, Mods::NONE));
     assert!(a.ui.menu.is_none(), "esc at root closes the menu");
 }
 

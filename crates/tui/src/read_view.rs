@@ -1,9 +1,7 @@
-use crossterm::event::KeyEvent;
-
 use crate::app::App;
 use crate::read_select::{code_block_at, toggle_select, yank_line, yank_selection};
 use crate::view::View;
-use crate::{clip_sync, event_map, read_motion};
+use crate::{clip_sync, read_motion};
 use v_ide_engine::mode::Mode;
 use v_ide_keys::{Code, Key, Mods};
 use v_ide_markdown::render::render_with;
@@ -45,10 +43,7 @@ pub fn leave(app: &mut App, width: usize) {
     app.ui.read.view = View::Edit;
 }
 
-pub fn handle_key(app: &mut App, event: KeyEvent, width: usize) {
-    let Some(key) = event_map::to_stroke(event).map(|stroke| stroke.key) else {
-        return;
-    };
+pub fn handle_key(app: &mut App, key: Key, width: usize) {
     match (key.mods(), key.code()) {
         (Mods::NONE, Code::Char('v')) => return toggle_select(app, Mode::Visual),
         (Mods::NONE, Code::Char('V')) => return toggle_select(app, Mode::VisualLine),

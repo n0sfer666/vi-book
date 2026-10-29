@@ -76,7 +76,11 @@ vibook.opt.plugins = { links = true }
 ## 4. Key mappings — `vibook.keymap(mode, lhs, rhs)`
 
 Normal-mode (`"n"`) mappings. The right-hand side is either a `:command` or a
-sequence of keys fed to the editor. Built-in keys take precedence.
+sequence of keys fed to the editor. Mappings take precedence over every
+built-in key, `<F1>`, the leader, `?`, `:` and `<C-w>` included. The keys of a
+right-hand side are not mapped again, but they still reach built-ins:
+`vibook.keymap("n", "Q", "?")` opens help. Mappings do not apply in read view,
+panels and pop-ups.
 
 ```lua
 vibook.keymap("n", "<C-s>", ":w")   -- Ctrl-s writes
@@ -93,10 +97,6 @@ Control characters in a Lua string are keys too: `"\t"` is `<Tab>`, `"\27"` is
 `<Esc>`, `"\1"` is `<C-a>`. Multi-key sequences such as `gh` are not applied yet.
 
 A right-hand side of exactly `<Nop>` (any case) makes the key do nothing.
-
-These normal-mode keys are taken by built-ins and cannot be remapped yet:
-`<F1>`, the leader (`<Space>` by default), `?`, `:`, `<C-w>`, `<CR>` (follow a
-link), `<C-p>` (vault picker), `<C-o>` and `<Tab>` (jump list, notebook).
 
 ---
 

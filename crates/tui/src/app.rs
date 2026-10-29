@@ -1,21 +1,22 @@
 use std::collections::HashMap;
 use std::env;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
 
 use crate::frame::Frame;
+use crate::map_action::MapAction;
 use crate::menu::MenuItem;
 use crate::read_state::ReadState;
 use crate::term::Term;
 use crate::theme::Theme;
 use crate::ui_state::UiState;
-use crate::{launch, render, requests, router};
+use crate::{key_feed, launch, render, requests};
 use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
-use v_ide_keys::Key;
+use v_ide_keys::{Keymap, TIMEOUT, Typeahead};
 #[cfg(feature = "lua")]
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::module::MarkdownModule;
@@ -37,7 +38,8 @@ pub struct App {
     #[cfg(feature = "notebook")]
     pub history: History,
     pub nesting: usize,
-    pub normal_maps: HashMap<Key, String>,
+    pub keymap: Keymap<MapAction>,
+    pub typeahead: Typeahead,
     pub leader: char,
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,
@@ -90,7 +92,8 @@ impl App {
             #[cfg(feature = "notebook")]
             history: History::new(),
             nesting: 0,
-            normal_maps: HashMap::new(),
+            keymap: Keymap::default(),
+            typeahead: Typeahead::new(TIMEOUT),
             leader: ' ',
             menu_center: false,
             menu_extra: Vec::new(),
@@ -118,12 +121,20 @@ impl App {
                 render::draw(&mut frame, self);
                 term.draw(&frame)?;
             }
-            stale = event::poll(TICK)?;
+            stale = event::poll(self.poll_wait())?;
             if stale
                 && let Event::Key(key) = event::read()?
                 && key.kind == KeyEventKind::Press
             {
                 self.handle(key);
+            }
+            if self
+                .typeahead
+                .deadline()
+                .is_some_and(|deadline| Instant::now() >= deadline)
+            {
+                self.timeout(Instant::now());
+                stale = true;
             }
             stale |= requests::tick(self);
             if let Some(path) = self.external_request.take() {
@@ -145,7 +156,17 @@ impl App {
     }
 
     pub fn handle(&mut self, key: KeyEvent) {
-        router::handle(self, key);
+        key_feed::feed(self, key);
+    }
+
+    pub fn timeout(&mut self, now: Instant) {
+        key_feed::timeout(self, now);
+    }
+
+    fn poll_wait(&self) -> Duration {
+        self.typeahead.deadline().map_or(TICK, |deadline| {
+            TICK.min(deadline.saturating_duration_since(Instant::now()))
+        })
     }
 
     pub fn external_editor(&self) -> Option<String> {

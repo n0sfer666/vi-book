@@ -55,7 +55,7 @@ fn enter_on_backlink_opens_file_and_closes_panel() {
     let mut app = app_for(&root);
     app.open_rel("a.md");
     command_line::run(&mut app, "backlinks");
-    input::panel_key(&mut app, Some(Key::new(Code::Enter, Mods::NONE)));
+    input::panel_key(&mut app, Key::new(Code::Enter, Mods::NONE));
     let path = app.workspace.current().name.clone();
     let panel = app.ui.panel.is_some();
     let focus = app.ui.panel_focus;

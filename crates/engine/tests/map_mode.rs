@@ -93,3 +93,20 @@ fn counting_tracks_count_of_current_command() {
         assert_eq!(editor.counting(), expected, "after {keys:?}");
     }
 }
+
+#[test]
+fn discard_count_drops_count_and_keeps_mode() {
+    for keys in ["3", "\"a3", "v2", "d2", "2d3"] {
+        let mut editor = Editor::new("one two\nthree four");
+        editor.handle_keys(keys);
+        let mode = editor.map_mode();
+        editor.discard_count();
+        assert!(!editor.counting(), "after {keys:?}");
+        assert_eq!(editor.map_mode(), mode, "after {keys:?}");
+    }
+    let mut editor = Editor::new("one two");
+    editor.handle_keys("3");
+    editor.discard_count();
+    editor.handle_keys("x");
+    assert_eq!(editor.text(), "ne two");
+}

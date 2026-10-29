@@ -148,3 +148,32 @@ fn typed_key_breaks_wait_on_mapped_prefix() {
     ]));
     assert_eq!(rig.type_keys("Wx"), "gx");
 }
+
+#[test]
+fn flush_mapped_drops_expanded_keys_and_keeps_typed() {
+    let mut rig = Rig::new(keymap(&[(Normal, "a", "xyz", false)]));
+    rig.feed("ab");
+    let first = rig.ta.next(&rig.map, rig.mode, false, rig.t0);
+    assert!(matches!(first, v_ide_keys::Step::Key(key) if key == Key::char('x')));
+    rig.ta.flush_mapped();
+    assert_eq!(rig.tick(0), "b");
+}
+
+#[test]
+fn flush_mapped_without_expansion_keeps_typed_keys() {
+    let mut rig = Rig::new(keymap(&[(Normal, "a", "xyz", false)]));
+    rig.feed("cd");
+    rig.ta.flush_mapped();
+    assert_eq!(rig.tick(0), "cd");
+}
+
+#[test]
+fn flush_mapped_clears_deadline_of_mapped_prefix() {
+    let mut rig = Rig::new(keymap(&[
+        (Normal, "W", "g", true),
+        (Normal, "gh", "{gh}", false),
+    ]));
+    assert_eq!(rig.type_keys("W"), "");
+    rig.ta.flush_mapped();
+    assert_eq!(rig.ta.deadline(), None);
+}

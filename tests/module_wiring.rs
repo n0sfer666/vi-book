@@ -5,7 +5,6 @@ mod fakes;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use v_ide_editor::module::{Cx, Event, Manifest, Module, Modules, Registration, Request, Trigger};
 use v_ide_keys::{Code, Key, Mods};
 use v_ide_tui::app::App;
@@ -56,8 +55,8 @@ fn app_with(modules: Modules) -> App {
     app
 }
 
-fn enter() -> KeyEvent {
-    KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)
+fn enter() -> Key {
+    Key::new(Code::Enter, Mods::NONE)
 }
 
 #[test]
@@ -142,7 +141,7 @@ fn list_panel_enter_runs_module_command_and_closes() {
     let list = ListPanel::new("T", vec![String::from("r")], "echo");
     app.ui.panel = Some(Panel::List(list));
     app.ui.panel_focus = true;
-    input::panel_key(&mut app, Some(Key::new(Code::Enter, Mods::NONE)));
+    input::panel_key(&mut app, Key::new(Code::Enter, Mods::NONE));
     assert_eq!(app.ui.message, "echo r");
     assert!(app.ui.panel.is_none(), "Enter must close the list panel");
     assert!(!app.ui.panel_focus);

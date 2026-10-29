@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+pub mod feed;
 pub mod scratch;
 pub mod vault;
 pub mod watch;

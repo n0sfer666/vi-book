@@ -7,7 +7,7 @@ use common::{check, editor_at, t};
 use crossterm::event::{KeyCode, KeyEvent};
 use v_ide_editor::document::Document;
 use v_ide_engine::{Editor, Mode};
-use v_ide_keys::{Key, parse_keys};
+use v_ide_keys::{Code, Key, Mods, parse_keys};
 use v_ide_tui::actions;
 use v_ide_tui::app::App;
 use v_ide_tui::command_line;
@@ -73,7 +73,7 @@ fn app_with_file(path: &PathBuf) -> App {
 
 fn run_command(app: &mut App, command: &str) {
     app.ui.command = Some(String::from(command));
-    command_line::handle(app, KeyEvent::from(KeyCode::Enter));
+    command_line::handle(app, Key::new(Code::Enter, Mods::NONE));
 }
 
 #[test]

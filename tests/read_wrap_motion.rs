@@ -1,6 +1,6 @@
 mod common;
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use v_ide_keys::Key;
 use v_ide_tui::app::App;
 use v_ide_tui::read_view::handle_key;
 use v_ide_tui::view::View;
@@ -16,11 +16,7 @@ fn read_app(text: &str, cursor: (usize, usize)) -> App {
 
 fn press(app: &mut App, keys: &str) -> (usize, usize) {
     for c in keys.chars() {
-        handle_key(
-            app,
-            KeyEvent::new(KeyCode::Char(c), KeyModifiers::NONE),
-            WIDTH,
-        );
+        handle_key(app, Key::char(c), WIDTH);
     }
     app.ui.read.read_cursor
 }

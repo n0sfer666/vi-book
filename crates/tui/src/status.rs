@@ -3,7 +3,9 @@ use v_ide_view::{Grid, Rect, Style};
 use crate::app::App;
 use crate::disk_mark;
 use crate::view::View;
+use unicode_width::UnicodeWidthStr;
 use v_ide_engine::mode::Mode;
+use v_ide_keys::format_keys;
 
 pub(crate) fn draw_status(grid: &mut Grid, app: &App, area: Rect) {
     let doc = app.workspace.current();
@@ -30,6 +32,10 @@ pub(crate) fn draw_status(grid: &mut Grid, app: &App, area: Rect) {
     let style = Style::default().reverse();
     grid.fill(area, style);
     grid.put_str(area.x, area.y, &status, style, area.w);
+    let pending = format_keys(app.typeahead.pending());
+    let len = u16::try_from(pending.width() + 1).map_or(area.w, |len| len.min(area.w));
+    let x = area.x + area.w.saturating_sub(len);
+    grid.put_str(x, area.y, &pending, style, len);
 }
 
 pub(crate) fn draw_message(grid: &mut Grid, app: &App, area: Rect) {

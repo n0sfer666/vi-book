@@ -1,29 +1,27 @@
 use std::io::ErrorKind;
 
-use crossterm::event::KeyEvent;
-
 use crate::app::App;
 #[cfg(all(feature = "notebook", feature = "vault"))]
 use crate::panel::Panel;
-use crate::{actions, checktime, disk_message, event_map, requests};
+use crate::{actions, checktime, disk_message, requests};
 use v_ide_editor::Error;
 use v_ide_editor::disk::{DiskMark, Reaction};
 use v_ide_editor::module::Event;
-use v_ide_keys::{Code, Mods};
+use v_ide_keys::{Code, Key, Mods};
 
-pub fn handle(app: &mut App, event: KeyEvent) {
+pub fn handle(app: &mut App, key: Key) {
     let Some(command) = app.ui.command.as_mut() else {
         return;
     };
-    match event_map::to_stroke(event).map(|stroke| (stroke.key.mods(), stroke.key.code())) {
-        Some((Mods::NONE, Code::Char(c))) => command.push(c),
-        Some((Mods::NONE, Code::Backspace)) => {
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Char(c)) => command.push(c),
+        (Mods::NONE, Code::Backspace) => {
             if command.pop().is_none() {
                 app.ui.command = None;
             }
         }
-        Some((Mods::NONE, Code::Esc)) => app.ui.command = None,
-        Some((Mods::NONE, Code::Enter)) => {
+        (Mods::NONE, Code::Esc) => app.ui.command = None,
+        (Mods::NONE, Code::Enter) => {
             let command = app.ui.command.take().unwrap_or_default();
             run(app, &command);
         }
@@ -32,17 +30,25 @@ pub fn handle(app: &mut App, event: KeyEvent) {
 }
 
 pub fn run(app: &mut App, command: &str) {
+    if !execute(app, command) {
+        app.typeahead.flush_mapped();
+    }
+}
+
+fn execute(app: &mut App, command: &str) -> bool {
     match command {
-        "w" => _ = save(app, false),
-        "w!" => _ = save(app, true),
-        "e!" => reload(app),
-        "q" => quit(app, false),
-        "q!" => quit(app, true),
+        "w" => return save(app, false),
+        "w!" => return save(app, true),
+        "q" => return quit(app, false),
+        "q!" => return quit(app, true),
         "wq" => {
-            if save(app, false) {
+            let saved = save(app, false);
+            if saved {
                 app.quit = true;
             }
+            return saved;
         }
+        "e!" => reload(app),
         #[cfg(all(feature = "notebook", feature = "vault"))]
         "tree" => toggle_tree(app),
         "help" => app.ui.help = true,
@@ -62,9 +68,11 @@ pub fn run(app: &mut App, command: &str) {
                 app.open_rel(rel.trim());
             } else if !requests::command(app, other) {
                 app.ui.message = format!("not an editor command: {other}");
+                return false;
             }
         }
     }
+    true
 }
 
 #[cfg(all(feature = "notebook", feature = "vault"))]
@@ -116,10 +124,11 @@ fn save(app: &mut App, force: bool) -> bool {
     }
 }
 
-fn quit(app: &mut App, force: bool) {
+fn quit(app: &mut App, force: bool) -> bool {
     if !force && app.any_dirty() {
         app.ui.message = String::from("unsaved changes (use :q! to discard)");
-    } else {
-        app.quit = true;
+        return false;
     }
+    app.quit = true;
+    true
 }

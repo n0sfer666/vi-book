@@ -1,9 +1,7 @@
-use crossterm::event::KeyEvent;
-
 use crate::app::App;
 use crate::menu::Menu;
 use crate::view::View;
-use crate::{command_line, event_map, help, layout, read_view};
+use crate::{command_line, help, layout, read_view};
 use v_ide_editor::document::Document;
 use v_ide_keys::{Code, FKey, Key, Mods};
 
@@ -15,10 +13,7 @@ pub fn open_menu(app: &mut App) {
     ));
 }
 
-pub fn help_key(app: &mut App, event: KeyEvent) {
-    let Some(key) = event_map::to_stroke(event).map(|stroke| stroke.key) else {
-        return;
-    };
+pub fn help_key(app: &mut App, key: Key) {
     match (key.mods(), key.code()) {
         (Mods::SHIFT, Code::Enter) => open_doc(app, "developers.md", help::DEVELOPERS),
         (Mods::NONE, Code::Enter) => open_doc(app, "manual.md", help::MANUAL),
@@ -32,23 +27,23 @@ pub fn is_help_key(key: Key) -> bool {
     FKey::new(1).map(|f1| Key::new(Code::F(f1), Mods::NONE)) == Some(key)
 }
 
-pub fn menu_key(app: &mut App, mapped: Option<Key>) {
+pub fn menu_key(app: &mut App, key: Key) {
     let Some(menu) = app.ui.menu.as_mut() else {
         return;
     };
-    match mapped.map(|k| (k.mods(), k.code())) {
-        Some((Mods::NONE, Code::Down | Code::Char('j'))) => menu.move_down(),
-        Some((Mods::NONE, Code::Up | Code::Char('k'))) => menu.move_up(),
-        Some((Mods::NONE, Code::Esc)) => {
+    match (key.mods(), key.code()) {
+        (Mods::NONE, Code::Down | Code::Char('j')) => menu.move_down(),
+        (Mods::NONE, Code::Up | Code::Char('k')) => menu.move_up(),
+        (Mods::NONE, Code::Esc) => {
             if !menu.back() {
                 app.ui.menu = None;
             }
         }
-        Some((Mods::NONE, Code::Enter)) => {
+        (Mods::NONE, Code::Enter) => {
             let idx = menu.selected;
             activate(app, idx);
         }
-        Some((Mods::NONE, Code::Char(c))) => {
+        (Mods::NONE, Code::Char(c)) => {
             if let Some(idx) = menu.index_of(c) {
                 activate(app, idx);
             }

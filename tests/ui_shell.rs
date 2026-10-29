@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_markdown::render::render;
 use v_ide_tui::actions;
 use v_ide_tui::app::App;
@@ -54,7 +55,7 @@ fn f1_opens_help_and_enter_reveals_the_manual() {
     let mut app = App::new(common::named_doc("hi", "a.md"));
     app.handle(key(KeyCode::F(1)));
     assert!(app.ui.help);
-    actions::help_key(&mut app, key(KeyCode::Enter));
+    actions::help_key(&mut app, Key::new(Code::Enter, Mods::NONE));
     assert!(!app.ui.help);
     assert_eq!(app.workspace.current().editor.text(), help::MANUAL);
     assert_eq!(app.ui.read.view, View::Read);

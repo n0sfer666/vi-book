@@ -4,13 +4,13 @@ use std::path::PathBuf;
 use v_ide_view::{Color, Depth};
 
 use crate::app::App;
-use crate::command_line;
 use crate::config_path;
+use crate::map_action::MapAction;
 use crate::menu::MenuItem;
 use crate::requests;
 use crate::theme::{self, Face, Theme};
 use v_ide_editor::module::Modules;
-use v_ide_keys::parse_keys;
+use v_ide_keys::{Keymap, MapMode, Mapping, Rhs, parse_keys};
 use v_ide_lua::host::PluginHost;
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::wrap_mode::WrapMode;
@@ -40,19 +40,6 @@ pub fn load_config_from(app: &mut App, mut resolved: Option<(PathBuf, Option<&'s
     install_keymaps(app);
 }
 
-pub fn apply_keymap(app: &mut App, rhs: &str) {
-    if rhs.eq_ignore_ascii_case("<Nop>") {
-        return;
-    }
-    if let Some(cmd) = rhs.strip_prefix(':') {
-        command_line::run(app, cmd);
-    } else {
-        for key in parse_keys(rhs) {
-            app.workspace.current_mut().editor.handle_key(key);
-        }
-    }
-}
-
 fn host(modules: &Modules) -> Option<&PluginHost> {
     modules.get::<LuaModule>().and_then(LuaModule::host)
 }
@@ -61,15 +48,24 @@ fn install_keymaps(app: &mut App) {
     let Some(host) = host(&app.modules) else {
         return;
     };
-    app.normal_maps = host
-        .keymaps()
-        .into_iter()
-        .filter(|m| m.mode == "n")
-        .filter_map(|m| match parse_keys(&m.lhs)[..] {
-            [key] => Some((key, m.rhs)),
-            _ => None,
-        })
-        .collect();
+    let mut keymap = Keymap::default();
+    for map in host.keymaps().into_iter().filter(|m| m.mode == "n") {
+        if let [key] = parse_keys(&map.lhs)[..] {
+            let _ = keymap.insert(MapMode::Normal, &[key], mapping(&map.rhs));
+        }
+    }
+    app.keymap = keymap;
+}
+
+fn mapping(rhs: &str) -> Mapping<MapAction> {
+    let rhs = if rhs.eq_ignore_ascii_case("<Nop>") {
+        Rhs::Keys(Vec::new())
+    } else if let Some(command) = rhs.strip_prefix(':') {
+        Rhs::Action(MapAction::Command(command.to_string()))
+    } else {
+        Rhs::Keys(parse_keys(rhs))
+    };
+    Mapping { rhs, remap: false }
 }
 
 fn apply_opts(app: &mut App) {

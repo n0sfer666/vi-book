@@ -28,4 +28,11 @@ impl Editor {
             Some(MapMode::Insert | MapMode::Cmdline) | None => false,
         }
     }
+
+    pub fn discard_count(&mut self) {
+        match self.map_mode() {
+            Some(MapMode::OpPending) => self.pending.op_count = None,
+            _ => self.pending.count = None,
+        }
+    }
 }

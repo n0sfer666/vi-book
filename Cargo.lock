@@ -1224,6 +1224,7 @@ version = "0.1.0"
 dependencies = [
  "arboard",
  "crossterm",
+ "unicode-width",
  "v-ide-editor",
  "v-ide-engine",
  "v-ide-keys",

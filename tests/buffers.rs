@@ -3,10 +3,9 @@ mod common;
 use std::fs;
 use std::path::PathBuf;
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-
 use v_ide_editor::document::Document;
 use v_ide_editor::workspace::Workspace;
+use v_ide_keys::{Code, Key, Mods};
 use v_ide_tui::app::App;
 use v_ide_tui::view::View;
 
@@ -98,10 +97,6 @@ fn open_rel_of_active_file_is_a_noop() {
     let _ = fs::remove_dir_all(&root);
 }
 
-fn ctrl(c: char) -> KeyEvent {
-    KeyEvent::new(KeyCode::Char(c), KeyModifiers::CONTROL)
-}
-
 #[test]
 fn ctrl_o_i_navigate_through_buffers_without_reload() {
     let root = temp_vault("hist-pool");
@@ -114,7 +109,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
     let dirty = app.workspace.current().editor.text();
     assert_ne!(dirty, "B body");
 
-    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::ctrl('o')));
+    v_ide_tui::input::global_nav(&mut app, v_ide_keys::Key::ctrl('o'));
     assert_eq!(
         app.workspace.current().name,
         "a.md",
@@ -128,7 +123,7 @@ fn ctrl_o_i_navigate_through_buffers_without_reload() {
         "b.md is stashed dirty, not written or reloaded"
     );
 
-    v_ide_tui::input::global_nav(&mut app, Some(v_ide_keys::Key::ctrl('i')));
+    v_ide_tui::input::global_nav(&mut app, v_ide_keys::Key::ctrl('i'));
     assert_eq!(
         app.workspace.current().name,
         "b.md",
@@ -236,7 +231,7 @@ fn buffer_list_enter_switches_and_closes() {
     app.open_rel("a.md");
 
     v_ide_tui::command_line::run(&mut app, "buffers");
-    v_ide_tui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Enter));
+    v_ide_tui::input::buffer_list_key(&mut app, Key::new(Code::Enter, Mods::NONE));
     assert_eq!(
         app.workspace.current().name,
         "b.md",
@@ -259,7 +254,7 @@ fn buffer_list_ctrl_d_closes_buffer_and_stays_open() {
     app.open_rel("a.md");
 
     v_ide_tui::command_line::run(&mut app, "buffers");
-    v_ide_tui::input::buffer_list_key(&mut app, ctrl('d'));
+    v_ide_tui::input::buffer_list_key(&mut app, Key::ctrl('d'));
     assert!(app.ui.buffer_list.is_some(), "Ctrl-d keeps the list open");
     let entries = app.ui.buffer_list.as_ref().unwrap().filtered();
     assert!(
@@ -283,7 +278,7 @@ fn buffer_list_esc_closes() {
     app.open_rel("a.md");
 
     v_ide_tui::command_line::run(&mut app, "buffers");
-    v_ide_tui::input::buffer_list_key(&mut app, KeyEvent::from(KeyCode::Esc));
+    v_ide_tui::input::buffer_list_key(&mut app, Key::new(Code::Esc, Mods::NONE));
     assert!(app.ui.buffer_list.is_none());
 
     let _ = fs::remove_dir_all(&root);
