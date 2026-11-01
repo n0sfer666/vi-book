@@ -23,12 +23,16 @@ pub fn mapping(rhs: &'static str, remap: bool) -> Mapping<&'static str> {
         Some(action) => Rhs::Action(action),
         None => Rhs::Keys(parse_keys(rhs)),
     };
-    Mapping { rhs, remap }
+    Mapping {
+        rhs,
+        remap,
+        nowait: false,
+    }
 }
 
 pub struct Rig {
     pub map: Map,
-    pub ta: Typeahead,
+    pub ta: Typeahead<&'static str>,
     pub mode: Option<MapMode>,
     pub no_zero: bool,
     pub t0: Instant,

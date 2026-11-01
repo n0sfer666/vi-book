@@ -81,8 +81,11 @@ is no select mode), `"o"` (operator-pending, after `d`, `c`, `y`…) and `"c"`
 non-string argument (a table of modes, a function) is skipped and reported in
 the message line, unless `init.lua` itself failed: then its error is shown.
 
-The right-hand side is either a `:command` or a sequence of keys fed to the
-editor. A `:command` runs in every mode without leaving it, like nvim's
+The right-hand side can mix keys and `<Cmd>command<CR>` segments. Commands
+execute in order with the surrounding keys, without leaving the current mode.
+An unterminated `<Cmd>` skips the mapping and reports E1255. Legacy `:command`
+strings still run directly (this compatibility form will change in a later
+step). A `:command` runs in every mode without leaving it, like nvim's
 `<Cmd>…<CR>`: insert stays insert, visual stays visual, an open `:` line stays
 open. Mappings take precedence over every built-in key, `<F1>`, the leader,
 `?`, `:` and `<C-w>` included. The keys of a right-hand side are not mapped
@@ -96,6 +99,7 @@ vibook.keymap("n", "H", "0")             -- H jumps to the line start
 vibook.keymap("n", "Y", "y$")            -- Y yanks to end of line
 vibook.keymap("n", "<Leader>d", "dd")    -- leader, then d
 vibook.keymap("o", "L", "$")             -- dL deletes to end of line
+vibook.keymap("n", "Q", "j<Cmd>only<CR>k") -- keys around a command
 ```
 
 A left-hand side is one or more keys, each with or without modifiers, in vim
@@ -107,7 +111,7 @@ Names are case-insensitive; an unknown `<…>` is read as plain characters.
 Control characters in a Lua string are keys too: `"\t"` is `<Tab>`, `"\27"` is
 `<Esc>`, `"\1"` is `<C-a>`. `<Leader>` (any case) stands for `vibook.opt.leader`
 as set at the end of `init.lua`, so the order of lines does not matter. It is
-expanded on both sides, except inside a `:command`.
+expanded on both sides, except inside `:command` and `<Cmd>` command text.
 
 While a multi-key left-hand side is incomplete, the typed prefix is shown at the
 right of the status line and the editor waits up to one second for the rest.

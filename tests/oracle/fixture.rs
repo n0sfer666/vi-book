@@ -17,6 +17,7 @@ pub struct Case {
     pub keys: String,
     #[serde(default)]
     pub maps: Vec<Map>,
+    pub chunks: Option<Vec<String>>,
     pub divergence: Option<String>,
     pub expect: Snapshot,
 }
@@ -29,6 +30,8 @@ pub struct Map {
     pub lhs: String,
     pub rhs: String,
     pub noremap: bool,
+    #[serde(default)]
+    pub nowait: bool,
 }
 
 #[derive(Deserialize)]

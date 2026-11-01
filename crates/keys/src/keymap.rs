@@ -38,6 +38,10 @@ impl<A> Keymap<A> {
         self.tables.get_mut(&mode)?.remove(lhs)
     }
 
+    pub fn clear(&mut self, mode: MapMode) {
+        self.tables.remove(&mode);
+    }
+
     pub(crate) fn lookup(
         &self,
         mode: MapMode,

@@ -411,6 +411,57 @@
         "mode": "visual",
         "unnamed": ""
       }
+    },
+    {
+      "name": "nowait fires before the next input chunk",
+      "before": "abcd",
+      "cursor": [0, 0],
+      "keys": "ab",
+      "chunks": ["a", "b"],
+      "maps": [
+        { "mode": "n", "lhs": "ab", "rhs": "l", "noremap": true },
+        { "mode": "n", "lhs": "a", "rhs": "x", "noremap": true, "nowait": true }
+      ],
+      "expect": {
+        "text": "bcd",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "ordinary mapping waits for the next input chunk",
+      "before": "abcd",
+      "cursor": [0, 0],
+      "keys": "ab",
+      "chunks": ["a", "b"],
+      "maps": [
+        { "mode": "n", "lhs": "ab", "rhs": "l", "noremap": true },
+        { "mode": "n", "lhs": "a", "rhs": "x", "noremap": true, "nowait": false }
+      ],
+      "expect": {
+        "text": "abcd",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "queued longer match beats nowait prefix",
+      "before": "abcd",
+      "cursor": [0, 0],
+      "keys": "ab",
+      "chunks": ["ab"],
+      "maps": [
+        { "mode": "n", "lhs": "ab", "rhs": "l", "noremap": true },
+        { "mode": "n", "lhs": "a", "rhs": "x", "noremap": true, "nowait": true }
+      ],
+      "expect": {
+        "text": "abcd",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
     }
   ]
 }

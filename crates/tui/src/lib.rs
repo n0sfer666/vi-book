@@ -34,6 +34,7 @@ pub mod lua_bridge;
 #[cfg(feature = "lua")]
 mod lua_keymaps;
 pub mod map_action;
+mod map_exec;
 pub mod markdown_bridge;
 pub mod menu;
 pub mod overlay;

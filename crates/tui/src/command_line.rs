@@ -36,6 +36,9 @@ pub fn run(app: &mut App, command: &str) {
 }
 
 fn execute(app: &mut App, command: &str) -> bool {
+    if let Some(success) = crate::map_exec::execute(app, command) {
+        return success;
+    }
     match command {
         "w" => return save(app, false),
         "w!" => return save(app, true),

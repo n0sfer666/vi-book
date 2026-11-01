@@ -1,3 +1,5 @@
+#[path = "oracle/app_snapshot.rs"]
+mod app_snapshot;
 #[path = "oracle/fixture.rs"]
 mod fixture;
 #[path = "oracle/snapshot.rs"]
@@ -7,7 +9,11 @@ fn check(topic: &str) {
     let fixture = fixture::load(topic);
     let mut failures = Vec::new();
     for case in &fixture.cases {
-        let got = snapshot::run(case);
+        let got = if topic == "map_commands" {
+            app_snapshot::run(case)
+        } else {
+            snapshot::run(case)
+        };
         let same = got == case.expect;
         match (&case.divergence, same) {
             (None, false) => failures.push(format!(
@@ -44,6 +50,7 @@ macro_rules! oracle_topics {
 oracle_topics!(
     counts,
     insert_mode,
+    map_commands,
     mappings,
     motions,
     operators,

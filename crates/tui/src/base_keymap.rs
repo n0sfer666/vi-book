@@ -8,6 +8,7 @@ pub(crate) fn build(insert_escape: Option<&str>) -> Keymap<MapAction> {
         let mapping = Mapping {
             rhs: Rhs::Keys(parse_keys("<Esc>")),
             remap: false,
+            nowait: false,
         };
         let _ = keymap.insert(MapMode::Insert, &parse_keys(seq), mapping);
     }

@@ -68,12 +68,21 @@ fn chain(n: u32) -> Map {
     let mut map = Map::default();
     for i in 1..=n {
         let rhs = Rhs::Keys(vec![link(i + 1)]);
-        let inserted = map.insert(Normal, &[link(i)], Mapping { rhs, remap: true });
+        let inserted = map.insert(
+            Normal,
+            &[link(i)],
+            Mapping {
+                rhs,
+                remap: true,
+                nowait: false,
+            },
+        );
         assert!(inserted.is_ok());
     }
     let done = Mapping {
         rhs: Rhs::Action("ok"),
         remap: false,
+        nowait: false,
     };
     assert!(map.insert(Normal, &[link(n + 1)], done).is_ok());
     map
@@ -108,6 +117,7 @@ fn emitted_key_resets_recursion_depth() {
         Mapping {
             rhs: Rhs::Keys(vec![Key::char('丁'), Key::char('x'), Key::char('丁')]),
             remap: true,
+            nowait: false,
         },
     );
     assert!(inserted.is_ok());

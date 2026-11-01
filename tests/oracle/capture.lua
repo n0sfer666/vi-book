@@ -1,18 +1,7 @@
-local MODES = { n = "normal", i = "insert", v = "visual", V = "visual_line", ["\22"] = "visual_block" }
-local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, divergence = true, expect = true }
+local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, chunks = true, divergence = true, expect = true }
 
-local function snapshot()
-  local row, byte = unpack(vim.api.nvim_win_get_cursor(0))
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
-  local mode = vim.fn.mode(1)
-  assert(MODES[mode], "unsupported final mode " .. vim.inspect(mode))
-  return {
-    text = table.concat(lines, "\n"),
-    cursor = { row - 1, vim.fn.charidx(lines[row], byte, true) },
-    mode = MODES[mode],
-    unnamed = vim.fn.getreg('"'),
-  }
-end
+local snapshot_path = vim.fs.joinpath(vim.fs.dirname(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p")), "capture_state.lua")
+local snapshot = dofile(snapshot_path)
 
 local function fail(err)
   io.stderr:write(tostring(err), "\n")
@@ -44,7 +33,7 @@ local function run_child(case_path, out_path)
     local line = lines[case.cursor[1] + 1]
     vim.api.nvim_win_set_cursor(0, { case.cursor[1] + 1, vim.fn.byteidxcomp(line, case.cursor[2]) })
     for _, map in ipairs(case.maps or {}) do
-      vim.api.nvim_set_keymap(map.mode, map.lhs, map.rhs, { noremap = map.noremap })
+      vim.api.nvim_set_keymap(map.mode, map.lhs, map.rhs, { noremap = map.noremap, nowait = map.nowait or false })
     end
     vim.schedule(function()
       finish(true)
@@ -58,7 +47,7 @@ local function run_child(case_path, out_path)
 end
 
 local MAP_MODES = { n = true, i = true, x = true, o = true, c = true }
-local MAP_KEYS = { mode = true, lhs = true, rhs = true, noremap = true }
+local MAP_KEYS = { mode = true, lhs = true, rhs = true, noremap = true, nowait = true }
 
 local function validate_map(name, map)
   for key in pairs(map) do
@@ -68,6 +57,7 @@ local function validate_map(name, map)
   assert(type(map.lhs) == "string" and map.lhs ~= "", name .. ": map lhs must be a non-empty string")
   assert(type(map.rhs) == "string", name .. ": map rhs must be a string")
   assert(type(map.noremap) == "boolean", name .. ": map noremap must be a boolean")
+  assert(map.nowait == nil or type(map.nowait) == "boolean", name .. ": nowait must be a boolean")
 end
 
 local function validate(case, seen)
@@ -78,15 +68,24 @@ local function validate(case, seen)
   seen[case.name] = true
   assert(not case.before:find("\r", 1, true), case.name .. ": before must not contain \\r")
   assert(case.before:sub(-1) ~= "\n", case.name .. ": before must not end with \\n")
+  if case.chunks then
+    assert(#case.chunks > 0 and table.concat(case.chunks) == case.keys, case.name .. ": chunks must concatenate to keys")
+  end
   for _, map in ipairs(case.maps or {}) do
     validate_map(case.name, map)
   end
 end
 
 local function capture(script, case)
-  local case_path, out_path = vim.fn.tempname(), vim.fn.tempname()
+  if case.chunks then
+    return dofile(vim.fs.joinpath(vim.fs.dirname(script), "capture_chunks.lua"))(case, snapshot_path)
+  end
+  local root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(script)))
+  local tmp = vim.fs.joinpath(root, "target", "tmp", "oracle-capture-" .. vim.fn.getpid())
+  vim.fn.mkdir(tmp, "p")
+  local case_path, out_path = vim.fs.joinpath(tmp, "case.json"), vim.fs.joinpath(tmp, "snapshot.json")
   vim.fn.writefile({ vim.json.encode(case) }, case_path)
-  local cmd = { vim.v.progpath, "--clean", "--headless", "-l", script, "--child", case_path, out_path }
+  local cmd = { vim.v.progpath, "--clean", "--headless", "-i", "NONE", "-l", script, "--child", case_path, out_path }
   local result = vim.system(cmd, { stdin = false }):wait(10000)
   local reason = result.code == 124 and "timed out" or ("exited with " .. result.code)
   assert(result.code == 0, case.name .. ": nvim " .. reason .. "\n" .. (result.stderr or ""))
@@ -111,6 +110,9 @@ local function render_map(map)
     '"rhs": ' .. str(map.rhs),
     '"noremap": ' .. tostring(map.noremap),
   }
+  if map.nowait ~= nil then
+    table.insert(fields, '"nowait": ' .. tostring(map.nowait))
+  end
   return "        { " .. table.concat(fields, ", ") .. " }"
 end
 
@@ -123,6 +125,10 @@ local function render_case(case)
     '      "cursor": ' .. pos(case.cursor) .. ",",
     '      "keys": ' .. str(case.keys) .. ",",
   }
+  if case.chunks then
+    local chunks = vim.tbl_map(str, case.chunks)
+    table.insert(out, '      "chunks": [' .. table.concat(chunks, ", ") .. "],")
+  end
   if case.maps then
     table.insert(out, '      "maps": [')
     for i, map in ipairs(case.maps) do

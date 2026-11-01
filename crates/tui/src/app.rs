@@ -39,7 +39,7 @@ pub struct App {
     pub history: History,
     pub nesting: usize,
     pub keymap: Keymap<MapAction>,
-    pub typeahead: Typeahead,
+    pub typeahead: Typeahead<MapAction>,
     pub leader: char,
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,

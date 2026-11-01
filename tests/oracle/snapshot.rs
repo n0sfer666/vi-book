@@ -6,7 +6,7 @@ use v_ide_text::Position;
 
 use crate::fixture::{Case, Map, Snapshot};
 
-fn mode_name(mode: Mode) -> &'static str {
+pub fn mode_name(mode: Mode) -> &'static str {
     match mode {
         Mode::Normal => "normal",
         Mode::Insert => "insert",
@@ -22,6 +22,7 @@ fn keymap(maps: &[Map]) -> Keymap<()> {
         let mapping = Mapping {
             rhs: Rhs::Keys(parse_keys(&map.rhs)),
             remap: !map.noremap,
+            nowait: map.nowait,
         };
         let inserted = keymap.insert(map.mode, &parse_keys(&map.lhs), mapping);
         assert!(inserted.is_ok(), "empty lhs {:?}", map.lhs);
@@ -49,8 +50,16 @@ pub fn run(case: &Case) -> Snapshot {
     editor.set_cursor(Position::new(case.cursor[0], case.cursor[1]));
     let map = keymap(&case.maps);
     let mut typeahead = Typeahead::new(TIMEOUT);
-    for key in parse_keys(&case.keys) {
-        typeahead.feed(key);
+    let chunks = case.chunks.clone().unwrap_or_else(|| {
+        parse_keys(&case.keys)
+            .iter()
+            .map(|key| v_ide_keys::format_keys(&[*key]))
+            .collect()
+    });
+    for chunk in chunks {
+        for key in parse_keys(&chunk) {
+            typeahead.feed(key);
+        }
         let settled = drain(&mut editor, &mut typeahead, &map, false);
         assert!(settled, "{}: typeahead did not settle", case.name);
     }

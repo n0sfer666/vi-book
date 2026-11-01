@@ -1,4 +1,4 @@
-use v_ide_keys::{Key, Keymap, MapMode, Mapping, Rhs, format_keys, parse_keys};
+use v_ide_keys::{Key, Keymap, MapMode, MapRhs, Mapping, Rhs, format_keys, parse_keys};
 use v_ide_lua::config::Keymap as LuaKeymap;
 
 use crate::map_action::MapAction;
@@ -23,7 +23,7 @@ fn install_one(
     let mode = map_mode(&map.mode)
         .ok_or_else(|| format!("keymap: invalid mode \"{}\" for \"{}\"", map.mode, map.lhs))?;
     let lhs = parse_keys(&expand_leader(&map.lhs, leader));
-    let rhs = mapping(&map.rhs, leader);
+    let rhs = mapping(&map.rhs, leader)?;
     keymap
         .insert(mode, &lhs, rhs)
         .map(drop)
@@ -54,13 +54,15 @@ fn expand_leader(lhs: &str, leader: char) -> String {
     out
 }
 
-fn mapping(rhs: &str, leader: char) -> Mapping<MapAction> {
-    let rhs = if rhs.eq_ignore_ascii_case("<Nop>") {
-        Rhs::Keys(Vec::new())
-    } else if let Some(command) = rhs.strip_prefix(':') {
+fn mapping(rhs: &str, leader: char) -> Result<Mapping<MapAction>, String> {
+    let rhs = if let Some(command) = rhs.strip_prefix(':') {
         Rhs::Action(MapAction::Command(command.to_string()))
     } else {
-        Rhs::Keys(parse_keys(&expand_leader(rhs, leader)))
+        crate::map_action::rhs(MapRhs::parse(rhs, leader).map_err(|error| error.to_string())?)
     };
-    Mapping { rhs, remap: false }
+    Ok(Mapping {
+        rhs,
+        remap: false,
+        nowait: false,
+    })
 }

@@ -1,0 +1,65 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "mixed normal commands and keys",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "j<Cmd>only<CR>k<Cmd>only<CR>x", "noremap": true }
+      ],
+      "expect": {
+        "text": "ne\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "o"
+      }
+    },
+    {
+      "name": "mixed insert commands preserve mode",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "iQ<Esc>",
+      "maps": [
+        { "mode": "i", "lhs": "Q", "rhs": "A<Cmd>only<CR>B", "noremap": true }
+      ],
+      "expect": {
+        "text": "ABone\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "mixed visual command preserves selection",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "vQ",
+      "maps": [
+        { "mode": "x", "lhs": "Q", "rhs": "j<Cmd>only<CR>d", "noremap": true }
+      ],
+      "expect": {
+        "text": "wo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "one\nt"
+      }
+    },
+    {
+      "name": "cmdline command preserves search",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "/Q<CR>",
+      "maps": [
+        { "mode": "c", "lhs": "Q", "rhs": "two<Cmd>only<CR>", "noremap": true }
+      ],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    }
+  ]
+}

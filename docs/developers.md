@@ -23,13 +23,16 @@ vibook.opt.plugins = { links = false } -- toggle a default plugin off
 
 ## Key mappings — `vibook.keymap`
 
-Normal-mode mappings. The right-hand side is either a `:command` or a sequence
-of keys fed to the editor.
+Mappings accept modes `n`, `i`, `x`/`v`, `o` and `c`. The right-hand side is
+a sequence of keys, `<Cmd>command<CR>` segments, or a mixture of both.
+`<Cmd>` executes without leaving the current mode. Legacy `:command` strings
+still execute directly; they will become ordinary keys in a later step.
 
 ```lua
 vibook.keymap("n", "<C-s>", ":w")     -- Ctrl-s writes
 vibook.keymap("n", "H", "0")          -- H jumps to line start
 vibook.keymap("n", "<leader>x", "dd") -- leader, then x deletes the line
+vibook.keymap("n", "Q", "j<Cmd>only<CR>k") -- keys around a command
 ```
 
 Built-in `jj` → `<Esc>` is an insert-mode mapping from `vibook.opt.insert_escape`;

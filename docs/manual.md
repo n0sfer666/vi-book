@@ -215,6 +215,33 @@ Type `:` then a command:
 - `:new <name>` — create `<name>.md` and open it.
 - `:vsplit [file]` `:split [file]` `:only` `:close` — manage columns.
 
+## Key mappings
+
+Use `:nmap Q dd` for a recursive normal-mode mapping or `:nnoremap Q dd` to
+feed keys directly to built-ins. The `v`/`x`, `o`, `i` and `c` prefixes select
+visual, operator-pending, insert and command-line mode. `:map`/`:noremap`
+target normal, visual and operator-pending together; `:map!`/`:noremap!`
+target insert and command-line mode. Only full command names are supported.
+
+`:nunmap Q` removes a mapping; `:nmapclear` clears a mode. The same prefixes
+and `!` forms apply to `:unmap` and `:mapclear`. The built-in insert escape
+is a regular mapping: `:iunmap jj`, `:imapclear` or `:mapclear!` removes it.
+
+Both sides accept vim key notation and `<Leader>`. A right-hand side may
+mix keys with `<Cmd>command<CR>` segments, which execute without changing
+the current mode: `:nnoremap Q j<Cmd>only<CR>k`. A plain `:command<CR>` goes
+through the command line. An unterminated `<Cmd>` reports E1255; mapping
+errors discard the rest of the expansion. `<Nop>` does nothing.
+
+`<unique>` rejects an existing mapping (E227); `<silent>` and `<special>`
+are accepted without additional effects. `<nowait>` runs a complete match
+without waiting for a longer one, regardless of definition order; already
+queued keys can still select a longer complete match. This deliberately
+differs from Neovim's definition-order-dependent `<nowait>` behavior.
+`<buffer>`, `<expr>` and `<script>` are not supported. Pipes in the right-hand
+side are literal keys, not command separators. Mapping listings (`:map`,
+`:nmap Q`) currently report `mapping list: not implemented yet`.
+
 ## Configuration
 
 v-ide reads `~/.config/v-ide/init.lua` on start (no environment variables

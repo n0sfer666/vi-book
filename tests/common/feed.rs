@@ -20,7 +20,11 @@ pub fn map_command(app: &mut App, lhs: &str, command: &str) {
 }
 
 fn insert(app: &mut App, mode: MapMode, lhs: &str, rhs: Rhs<MapAction>, remap: bool) {
-    let mapping = Mapping { rhs, remap };
+    let mapping = Mapping {
+        rhs,
+        remap,
+        nowait: false,
+    };
     assert!(app.keymap.insert(mode, &parse_keys(lhs), mapping).is_ok());
 }
 
