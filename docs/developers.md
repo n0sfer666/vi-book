@@ -184,7 +184,30 @@ the host and applied when matching handles are frozen.
 `DataBuilder` stores typed payload values in an immutable flat arena with checked,
 backward-only edges. Deep values and shared children do not cause recursive drops.
 Strings and dictionary keys retain bytes; scalar numbers, nulls, arrays,
-dictionaries and opaque VM function identities have distinct variants. The VM owns
+dictionaries and opaque VM function references have distinct variants. The VM owns
 function values and must resolve and validate their runtime/function IDs while a
 payload is dispatched. Native Lua conversion and the application event/frontends
 remain integration work; this bus is currently a core library foundation.
+
+## Lua payload conversion
+
+`lua::data::Codec` converts values from its Lua instance into the core data arena
+and back. Keep the original Lua instance alive and supply handles from that same
+instance, as required by mlua. Conversion uses explicit task stacks; input table
+identities remain rooted while shared children are memoized. Exports create a
+fresh table per reference, so input aliases and arbitrary metatables are not
+retained. Empty dictionary markers are preserved, sparse arrays receive null
+holes, strings/keys retain bytes and integral floats use native integer conversion.
+Cycles, mixed/invalid keys, threads and non-null userdata are rejected.
+
+Keep the returned `Encoded` owner alive while dispatching its data. It retains Lua
+functions; the codec's lookup pool holds weak references and periodically removes
+expired entries. Function IDs from another codec runtime or an expired owner fail
+validation. A function already exported to Lua remains independently usable after
+the owner is dropped. The codec installs `NIL` and `empty_dict` on a supplied API
+table; null uses mlua's shared null sentinel. These helpers are not yet installed
+in the application's legacy host.
+
+`scripts/capture_autocmd_data.lua` generates the native Neovim 0.12.6 data cases in
+`crates/lua/tests/fixtures/data_native.rs`. Use the same isolated HOME/XDG/log setup
+as the other captures and verify that repeated capture is byte-identical.

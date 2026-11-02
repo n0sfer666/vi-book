@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 pub mod config;
+pub mod data;
 pub mod defaults;
 pub mod error;
 pub mod host;
