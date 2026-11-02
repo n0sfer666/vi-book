@@ -33,6 +33,7 @@ best rendering of code blocks and glyphs.
   and the system clipboard (so you can paste from other apps).
 - `<C-w>` is the window prefix: `<C-w> w` cycles split focus, `<C-w> p` focuses
   the side panel, `<C-w> s`/`v` splits, `<C-w> o` keeps only the active column.
+- Split windows share buffer text, undo and saved state, with independent cursors and scroll.
 - `:w :q :tree :backlinks :today :new <name>` and `:vsplit [file] :only` commands.
 - `:map` inspects mappings; `:messages` opens recent messages in a scrollable pager.
 - Code blocks are syntax-highlighted with tree-sitter grammars built by

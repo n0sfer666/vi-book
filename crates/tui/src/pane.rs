@@ -17,10 +17,16 @@ impl App {
             return;
         }
         let buf = self.make_buffer(target);
+        self.ui.read.left = self.ui.left;
+        let same = buf.id == self.workspace.current_id();
+        let view = self.ui.read.fork();
         self.stash_window();
-        self.workspace.split(buf);
-        self.ui.read = ReadState::new();
-        self.ui.read.view = self.initial_view();
+        let _ = self.workspace.split(buf);
+        self.ui.read = if same { view } else { ReadState::new() };
+        if !same {
+            self.ui.read.view = self.initial_view();
+        }
+        self.ui.left = self.ui.read.left;
     }
 
     pub fn focus_next(&mut self) {
@@ -42,6 +48,7 @@ impl App {
         }
         for window in self.workspace.only() {
             self.window_states.remove(&window.id);
+            self.read_states.retain(|(id, _), _| *id != window.id);
         }
     }
 
@@ -50,12 +57,15 @@ impl App {
             self.ui.set_message(String::from(UNSAVED));
             return;
         }
-        if self.workspace.close_window().is_some() {
+        if let Some(window) = self.workspace.close_window() {
+            self.window_states.remove(&window.id);
+            self.read_states.retain(|(id, _), _| *id != window.id);
             self.restore_window();
         }
     }
 
     fn stash_window(&mut self) {
+        self.ui.read.left = self.ui.left;
         let state = std::mem::take(&mut self.ui.read);
         self.window_states
             .insert(self.workspace.active_window(), state);
@@ -67,30 +77,21 @@ impl App {
             .remove(&self.workspace.active_window())
             .unwrap_or_default();
         self.ui.read = state;
+        self.ui.left = self.ui.read.left;
     }
 
     fn make_buffer(&mut self, target: Option<&str>) -> Buffer {
         if let Some(name) = target {
             let rel = normalize(name);
+            if let Some(id) = self.workspace.find_path(&self.workspace.absolute(&rel)) {
+                return Buffer { id };
+            }
             if let Ok(mut doc) = Document::open(self.workspace.absolute(&rel)) {
                 doc.name = rel;
                 return self.fresh_buffer(doc);
             }
         }
-        self.duplicate_active()
-    }
-
-    fn duplicate_active(&mut self) -> Buffer {
-        let current = self.workspace.current();
-        let text = current.editor.text();
-        let name = current.name.clone();
-        let mut doc = if name.is_empty() {
-            Document::new(&text)
-        } else {
-            Document::open(self.workspace.absolute(&name)).unwrap_or_else(|_| Document::new(&text))
-        };
-        doc.name = name;
-        self.fresh_buffer(doc)
+        self.workspace.current_buffer()
     }
 
     fn fresh_buffer(&mut self, doc: Document) -> Buffer {

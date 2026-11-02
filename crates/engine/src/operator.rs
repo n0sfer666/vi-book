@@ -142,7 +142,8 @@ fn lines(ed: &mut Editor, op: Operator, first: usize, last: usize) {
             } else {
                 start..content_end
             };
-            let edit = Edit::removal(range.start, ed.buffer.slice(range));
+            let edit =
+                Edit::line_removal(range.start, ed.buffer.slice(range), first, last - first + 1);
             edit.apply(&mut ed.buffer);
             let line = first.min(ed.buffer.line_count() - 1);
             ed.cursor = Position::new(line, ed.buffer.first_non_blank(line));

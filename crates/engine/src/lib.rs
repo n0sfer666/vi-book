@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+pub mod cursor_state;
 pub mod desired_col;
 pub mod editor;
 pub mod insert;
@@ -18,3 +19,4 @@ pub mod word;
 
 pub use crate::editor::Editor;
 pub use crate::mode::Mode;
+pub use cursor_state::CursorState;

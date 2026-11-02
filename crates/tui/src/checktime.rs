@@ -1,6 +1,5 @@
 use crate::app::App;
 use crate::disk_message;
-use v_ide_editor::workspace::DocId;
 
 pub fn run(app: &mut App) -> bool {
     let mut events = Vec::new();
@@ -10,7 +9,7 @@ pub fn run(app: &mut App) -> bool {
         .read_select
         .is_some()
         .then(|| app.workspace.current_id());
-    for id in ids(app) {
+    for id in app.workspace.ids() {
         if Some(id) == held {
             continue;
         }
@@ -28,28 +27,4 @@ pub fn run(app: &mut App) -> bool {
         changed = true;
     }
     changed
-}
-
-pub fn sync_twins(app: &mut App) {
-    let current = app.workspace.current_id();
-    let Some(path) = app.workspace.current().path.clone() else {
-        return;
-    };
-    for id in ids(app) {
-        let Some(doc) = app.workspace.doc_mut(id) else {
-            continue;
-        };
-        if id != current && doc.path.as_ref() == Some(&path) {
-            doc.check_disk();
-        }
-    }
-}
-
-fn ids(app: &App) -> Vec<DocId> {
-    app.workspace
-        .windows()
-        .iter()
-        .map(|w| w.buf.id)
-        .chain(app.workspace.pool().iter().map(|b| b.id))
-        .collect()
 }

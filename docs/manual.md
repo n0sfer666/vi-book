@@ -168,16 +168,20 @@ press the highlighted letter. Entries marked `→` open a submenu (e.g.
 
 ## Splits (columns)
 
-v-ide shows up to **three** independent columns side by side — each with its
-own buffer, cursor and mode. `<C-w>` is the *window prefix*:
+v-ide shows up to **three** columns side by side. Windows displaying the
+same buffer share text, undo, unsaved changes and saves. Each window keeps
+its own cursor and scroll position for every buffer it has shown. `<C-w>`
+is the *window prefix*:
 
 - `<C-w> w` — move focus to the next column.
-- `<C-w> s` / `<C-w> v` — split (duplicate the current note into a new column).
+- `<C-w> s` / `<C-w> v` — split (show the current buffer in another column).
 - `<C-w> o` — keep only the active column.
 - `<C-w> p` — focus the side panel (`:tree` / `:backlinks`); `<Esc>` returns.
 
 Or use commands: `:vsplit [file]` opens a column (optionally another note),
-`:only` collapses back to one.
+`:only` collapses back to one. Opening an existing file reuses its resident
+buffer, including unsaved edits. Save modified columns before `:close` or
+`:only`.
 
 ## Files changed outside v-ide
 

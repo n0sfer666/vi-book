@@ -32,7 +32,7 @@ pub struct App {
     pub workspace: Workspace,
     pub modules: Modules,
     pub ui: UiState,
-    pub read_states: HashMap<DocId, ReadState>,
+    pub read_states: HashMap<(WindowId, DocId), ReadState>,
     pub quit: bool,
     pub theme: Theme,
     #[cfg(feature = "notebook")]

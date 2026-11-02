@@ -98,7 +98,16 @@ pub fn open_doc(app: &mut App, label: &str, content: &str) {
     }
     let mut doc = Document::new(content);
     doc.name = label.to_string();
-    let _ = app.workspace.replace(doc);
+    app.ui.read.left = app.ui.left;
+    let previous = std::mem::take(&mut app.ui.read);
+    let old = app.workspace.replace(doc);
+    if app.workspace.forget(old.id).is_none() {
+        app.read_states
+            .insert((app.workspace.active_window(), old.id), previous);
+    } else {
+        app.read_states.retain(|(_, id), _| *id != old.id);
+    }
+    app.ui.left = 0;
     app.ui.read.view = View::Read;
     app.ui.read.read_cursor = (0, 0);
     app.ui.read.read_cache = None;

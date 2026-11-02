@@ -9,7 +9,10 @@ fn check(topic: &str) {
     let fixture = fixture::load(topic);
     let mut failures = Vec::new();
     for case in &fixture.cases {
-        let got = if matches!(topic, "map_commands" | "pager" | "lua_mappings") {
+        let got = if matches!(
+            topic,
+            "map_commands" | "pager" | "lua_mappings" | "shared_windows"
+        ) {
             app_snapshot::run(case)
         } else {
             snapshot::run(case)
@@ -57,6 +60,7 @@ oracle_topics!(
     operators,
     pager,
     registers,
+    shared_windows,
     text_objects,
     undo_redo,
     visual,

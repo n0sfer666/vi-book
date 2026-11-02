@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use v_ide_editor::disk::DiskMark;
 use v_ide_editor::document::Document;
 use v_ide_tui::app::App;
 use v_ide_tui::view::View;
@@ -25,8 +24,8 @@ fn vault(label: &str) -> (App, PathBuf) {
 
 fn twin(app: &App) -> &Document {
     let active = app.workspace.active_window();
-    let window = app.workspace.windows().iter().find(|w| w.id != active);
-    &window.unwrap().buf.doc
+    let window = app.workspace.windows().into_iter().find(|w| w.id != active);
+    window.unwrap().buf.doc
 }
 
 fn status(app: &mut App) -> String {
@@ -50,7 +49,7 @@ fn write_syncs_clean_split_of_same_file_quietly() {
 }
 
 #[test]
-fn write_marks_dirty_split_of_same_file_changed() {
+fn write_clears_shared_dirty_state_in_all_windows() {
     let (mut app, _root) = vault("twin-dirty");
     app.vsplit(None);
     app.workspace.current_mut().editor.handle_keys("Aleft<Esc>");
@@ -60,8 +59,8 @@ fn write_marks_dirty_split_of_same_file_changed() {
         .editor
         .handle_keys("Aright<Esc>");
     command_line::run(&mut app, "w");
-    assert_eq!(twin(&app).editor.text(), "alphaleft");
-    assert_eq!(twin(&app).disk_mark(), Some(DiskMark::Changed));
+    assert_eq!(twin(&app).editor.text(), "alphaleftright");
+    assert_eq!(twin(&app).disk_mark(), None);
     requests::tick(&mut app);
     assert_eq!(app.ui.message, "written");
 }

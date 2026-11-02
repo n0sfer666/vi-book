@@ -1157,6 +1157,7 @@ version = "0.1.0"
 dependencies = [
  "thiserror",
  "v-ide-engine",
+ "v-ide-text",
 ]
 
 [[package]]

@@ -49,7 +49,8 @@ fn paste_lines(ed: &mut Editor, content: &RegisterContent, before: bool, count: 
         let stripped = text[..text.len() - 1].to_string();
         (ed.buffer.len_chars(), format!("\n{stripped}"), line + 1)
     };
-    let edit = Edit::insertion(at, text);
+    let count = text.bytes().filter(|&byte| byte == b'\n').count();
+    let edit = Edit::line_insertion(at, text, target_line, count);
     edit.apply(&mut ed.buffer);
     ed.cursor = Position::new(target_line, ed.buffer.first_non_blank(target_line));
     ed.commit(vec![edit]);

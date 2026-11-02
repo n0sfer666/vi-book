@@ -51,7 +51,7 @@ fn vsplit_adds_independent_panes_up_to_three() {
 }
 
 #[test]
-fn editing_active_pane_does_not_touch_others() {
+fn editing_active_pane_updates_the_shared_buffer_in_other_windows() {
     let mut app = App::new(common::named_doc("alpha", "a.md"));
     app.vsplit(None);
     app.workspace
@@ -60,12 +60,12 @@ fn editing_active_pane_does_not_touch_others() {
         .handle_key(v_ide_keys::Key::char('x'));
     let active_text = app.workspace.current().editor.text();
     app.focus_next();
-    assert_ne!(
+    assert_eq!(
         app.workspace.current().editor.text(),
         active_text,
-        "other pane is independent"
+        "other window sees the same buffer"
     );
-    assert_eq!(app.workspace.current().editor.text(), "alpha");
+    assert_eq!(app.workspace.current().editor.text(), "lpha");
 }
 
 #[test]

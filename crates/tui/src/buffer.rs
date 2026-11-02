@@ -9,9 +9,11 @@ impl App {
         match Document::open(self.workspace.absolute(rel)) {
             Ok(mut doc) => {
                 doc.name = rel.to_string();
+                self.ui.read.left = self.ui.left;
                 if let Some(id) = self.workspace.open(doc) {
                     let state = std::mem::take(&mut self.ui.read);
-                    self.read_states.insert(id, state);
+                    self.read_states
+                        .insert((self.workspace.active_window(), id), state);
                 }
                 self.ui.read.top = 0;
                 self.ui.left = 0;
@@ -26,11 +28,11 @@ impl App {
     }
 
     pub fn open_rel(&mut self, rel: &str) {
-        if self.workspace.current().name == rel {
-            return;
-        }
-        if let Some(idx) = self.workspace.pool().iter().position(|b| b.doc.name == rel) {
-            self.switch_to_buffer(idx);
+        if let Some(id) = self.workspace.find_path(&self.workspace.absolute(rel)) {
+            if id == self.workspace.current_id() {
+                return;
+            }
+            self.switch_document(id);
             self.note_opened();
             return;
         }
@@ -87,17 +89,34 @@ impl App {
     }
 
     pub fn switch_to_buffer(&mut self, idx: usize) {
-        let Some(id) = self.workspace.switch(idx) else {
+        let target = self.workspace.pool().get(idx).map(|buffer| buffer.id);
+        if let Some(id) = target {
+            self.switch_document(id);
+        }
+    }
+
+    fn switch_document(&mut self, target: v_ide_editor::workspace::DocId) {
+        let window = self.workspace.active_window();
+        let id = self.workspace.current_id();
+        if target == id || self.workspace.doc(target).is_none() {
             return;
-        };
+        }
+        let _ = self.workspace.select(target);
+        self.ui.read.left = self.ui.left;
         let state = std::mem::take(&mut self.ui.read);
-        self.read_states.insert(id, state);
+        if self.workspace.doc(id).is_some() {
+            self.read_states.insert((window, id), state);
+        }
         let state = self
             .read_states
-            .remove(&self.workspace.current_id())
-            .unwrap_or_default();
+            .remove(&(window, self.workspace.current_id()));
+        let state = state.unwrap_or_else(|| {
+            let mut state = crate::read_state::ReadState::new();
+            state.view = self.initial_view();
+            state
+        });
         self.ui.read = state;
-        self.ui.left = 0;
+        self.ui.left = self.ui.read.left;
         #[cfg(feature = "notebook")]
         self.history.visit(&self.workspace.current().name);
     }
@@ -115,8 +134,16 @@ impl App {
                 #[cfg(feature = "vault")]
                 self.open_picker();
             } else {
+                let closing = self.workspace.current_id();
                 self.switch_to_buffer(0);
-                self.drop_buffer(0);
+                let index = self
+                    .workspace
+                    .pool()
+                    .iter()
+                    .position(|buffer| buffer.id == closing);
+                if let Some(index) = index {
+                    self.drop_buffer(index);
+                }
             }
         } else {
             self.drop_buffer(idx - 1);
@@ -124,11 +151,7 @@ impl App {
     }
 
     pub fn any_dirty(&self) -> bool {
-        self.workspace
-            .windows()
-            .iter()
-            .any(|w| w.buf.doc.is_dirty())
-            || self.workspace.pool().iter().any(|b| b.doc.is_dirty())
+        self.workspace.documents().any(|(_, doc)| doc.is_dirty())
     }
 
     fn is_buffer_dirty(&self, idx: usize) -> bool {
@@ -144,12 +167,13 @@ impl App {
 
     fn drop_buffer(&mut self, idx: usize) {
         if let Some(buf) = self.workspace.remove(idx) {
-            self.read_states.remove(&buf.id);
+            self.read_states.retain(|(_, id), _| *id != buf.id);
         }
     }
 
     fn blank_active(&mut self) {
-        let _ = self.workspace.replace(Document::new(""));
+        let old = self.workspace.replace(Document::new(""));
+        let _ = self.workspace.forget(old.id);
         self.ui.read.top = 0;
         self.ui.left = 0;
         self.ui.read.read_cursor = (0, 0);

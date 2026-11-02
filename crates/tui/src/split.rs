@@ -73,7 +73,19 @@ pub fn draw_pane(
         }
     };
     let inner = text_column(area);
+    let left = if state.view == View::Edit {
+        state.left
+    } else {
+        0
+    };
     for (row, line) in (inner.y..).zip(&lines) {
-        put_line(grid, inner.x, row, line, 0, inner.w);
+        put_line(grid, inner.x, row, line, left, inner.w);
+    }
+    if state.view == View::Edit {
+        crate::hscroll::markers(grid, inner, left, lines.len(), |row| {
+            lines
+                .get(row)
+                .map(|line| line.iter().map(|(text, _)| text.chars().count()).sum())
+        });
     }
 }

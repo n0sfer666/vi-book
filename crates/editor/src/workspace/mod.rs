@@ -1,18 +1,24 @@
 mod buffer;
+mod buffers;
 mod doc_id;
+mod identity;
+mod views;
 mod window;
 mod window_id;
+mod windows;
 
-pub use buffer::Buffer;
+pub use buffer::{Buffer, BufferRef};
 pub use doc_id::DocId;
-pub use window::Window;
+pub use window::{Window, WindowRef};
 pub use window_id::WindowId;
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::document::Document;
 
 pub struct Workspace {
+    documents: HashMap<DocId, Document>,
     windows: Vec<Window>,
     active: usize,
     pool: Vec<Buffer>,
@@ -22,11 +28,16 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    pub fn new(doc: Document) -> Self {
+    pub fn new(mut doc: Document) -> Self {
+        let id = DocId(0);
+        let mut cursors = HashMap::new();
+        cursors.insert(id, doc.editor.cursor_state());
         Self {
+            documents: HashMap::from([(id, doc)]),
             windows: vec![Window {
                 id: WindowId(0),
-                buf: Buffer { id: DocId(0), doc },
+                buf: Buffer { id },
+                cursors,
             }],
             active: 0,
             pool: Vec::new(),
@@ -39,129 +50,107 @@ impl Workspace {
     pub fn cwd(&self) -> &Path {
         &self.cwd
     }
-
     pub fn set_cwd(&mut self, cwd: PathBuf) {
         self.cwd = cwd;
     }
-
     pub fn absolute(&self, rel: &str) -> PathBuf {
-        self.cwd.join(rel)
+        identity::absolute(self.cwd.join(rel))
     }
 
     pub fn current(&self) -> &Document {
-        &self.windows[self.active].buf.doc
+        &self.documents[&self.current_id()]
     }
-
     pub fn current_mut(&mut self) -> &mut Document {
-        &mut self.windows[self.active].buf.doc
+        let id = self.current_id();
+        self.documents
+            .get_mut(&id)
+            .expect("active window references a registered document")
     }
-
     pub fn current_id(&self) -> DocId {
         self.windows[self.active].buf.id
     }
-
+    pub fn current_buffer(&self) -> Buffer {
+        self.windows[self.active].buf
+    }
+    pub fn doc(&self, id: DocId) -> Option<&Document> {
+        self.documents.get(&id)
+    }
     pub fn doc_mut(&mut self, id: DocId) -> Option<&mut Document> {
+        self.documents.get_mut(&id)
+    }
+    pub fn documents(&self) -> impl Iterator<Item = (DocId, &Document)> {
+        self.documents.iter().map(|(&id, doc)| (id, doc))
+    }
+    pub fn ids(&self) -> Vec<DocId> {
+        let mut ids = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+        for id in self
+            .windows
+            .iter()
+            .map(|window| window.buf.id)
+            .chain(self.pool.iter().map(|buf| buf.id))
+        {
+            if seen.insert(id) {
+                ids.push(id);
+            }
+        }
+        let mut remaining: Vec<_> = self
+            .documents
+            .keys()
+            .copied()
+            .filter(|id| !seen.contains(id))
+            .collect();
+        remaining.sort_by_key(|id| id.0);
+        ids.extend(remaining);
+        ids
+    }
+
+    pub fn pool(&self) -> Vec<BufferRef<'_>> {
+        self.pool
+            .iter()
+            .map(|buf| BufferRef {
+                id: buf.id,
+                doc: &self.documents[&buf.id],
+            })
+            .collect()
+    }
+    pub fn windows(&self) -> Vec<WindowRef<'_>> {
         self.windows
-            .iter_mut()
-            .map(|w| &mut w.buf)
-            .chain(self.pool.iter_mut())
-            .find(|b| b.id == id)
-            .map(|b| &mut b.doc)
+            .iter()
+            .map(|window| {
+                let doc = &self.documents[&window.buf.id];
+                let cursor = if window.id == self.active_window() {
+                    doc.editor.cursor()
+                } else {
+                    window
+                        .cursors
+                        .get(&window.buf.id)
+                        .map_or_else(|| doc.editor.cursor(), |state| state.position())
+                };
+                WindowRef {
+                    id: window.id,
+                    buf: BufferRef {
+                        id: window.buf.id,
+                        doc,
+                    },
+                    cursor,
+                }
+            })
+            .collect()
     }
-
-    pub fn pool(&self) -> &[Buffer] {
-        &self.pool
-    }
-
-    pub fn windows(&self) -> &[Window] {
-        &self.windows
-    }
-
     pub fn active_window(&self) -> WindowId {
         self.windows[self.active].id
     }
-
     pub fn active_index(&self) -> usize {
         self.active
     }
 
-    #[must_use]
-    pub fn detach(&mut self, doc: Document) -> Buffer {
-        let id = DocId(self.next);
-        self.next += 1;
-        Buffer { id, doc }
+    fn visible(&self, id: DocId) -> bool {
+        self.windows.iter().any(|window| window.buf.id == id)
     }
-
-    pub fn add(&mut self, doc: Document) -> DocId {
-        let buf = self.detach(doc);
-        let id = buf.id;
-        self.pool.push(buf);
-        id
-    }
-
-    #[must_use]
-    pub fn replace(&mut self, doc: Document) -> Buffer {
-        let buf = self.detach(doc);
-        self.put_current(buf)
-    }
-
-    #[must_use]
-    pub fn put_current(&mut self, buf: Buffer) -> Buffer {
-        std::mem::replace(&mut self.windows[self.active].buf, buf)
-    }
-
-    pub fn open(&mut self, doc: Document) -> Option<DocId> {
-        let old = self.replace(doc);
-        if old.doc.name.is_empty() {
-            return None;
+    fn park(&mut self, buffer: Buffer) {
+        if !self.visible(buffer.id) && !self.pool.iter().any(|b| b.id == buffer.id) {
+            self.pool.insert(0, buffer);
         }
-        let id = old.id;
-        self.pool.insert(0, old);
-        Some(id)
-    }
-
-    pub fn switch(&mut self, idx: usize) -> Option<DocId> {
-        if idx >= self.pool.len() {
-            return None;
-        }
-        let target = self.pool.remove(idx);
-        let old = self.put_current(target);
-        let id = old.id;
-        self.pool.insert(0, old);
-        Some(id)
-    }
-
-    #[must_use]
-    pub fn remove(&mut self, idx: usize) -> Option<Buffer> {
-        (idx < self.pool.len()).then(|| self.pool.remove(idx))
-    }
-
-    pub fn split(&mut self, buf: Buffer) -> WindowId {
-        let id = WindowId(self.next_window);
-        self.next_window += 1;
-        self.active += 1;
-        self.windows.insert(self.active, Window { id, buf });
-        id
-    }
-
-    pub fn focus_next(&mut self) {
-        self.active = (self.active + 1) % self.windows.len();
-    }
-
-    #[must_use]
-    pub fn close_window(&mut self) -> Option<Window> {
-        if self.windows.len() <= 1 {
-            return None;
-        }
-        let closed = self.windows.remove(self.active);
-        self.active = self.active.min(self.windows.len() - 1);
-        Some(closed)
-    }
-
-    #[must_use]
-    pub fn only(&mut self) -> Vec<Window> {
-        let kept = self.windows.remove(self.active);
-        self.active = 0;
-        std::mem::replace(&mut self.windows, vec![kept])
     }
 }

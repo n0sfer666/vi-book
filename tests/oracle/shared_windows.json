@@ -1,0 +1,89 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "edits are visible in the other window",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":vsplit<CR>x<C-w>w",
+      "expect": {
+        "text": "lpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "undo is shared across windows",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":vsplit<CR>x<C-w>wu",
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "a"
+      }
+    },
+    {
+      "name": "each window retains its desired end column",
+      "before": "abcdef\nxy\nabcdefghijkl",
+      "cursor": [0, 0],
+      "keys": "$:vsplit<CR>0j<C-w>wjj",
+      "expect": {
+        "text": "abcdef\nxy\nabcdefghijkl",
+        "cursor": [2, 11],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "inserting a line shifts the other window cursor",
+      "before": "alpha\nbeta\ngamma",
+      "cursor": [1, 2],
+      "keys": ":vsplit<CR>ggOnew<Esc><C-w>w",
+      "expect": {
+        "text": "new\nalpha\nbeta\ngamma",
+        "cursor": [2, 2],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "split line undo has native observer cursor behavior",
+      "before": "alpha\nbeta\ngamma",
+      "cursor": [1, 2],
+      "keys": ":vsplit<CR>0i<CR><Esc>u<C-w>w",
+      "expect": {
+        "text": "alpha\nbeta\ngamma",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "line insertion undo redo adjusts the other cursor",
+      "before": "alpha\nbeta\ngamma",
+      "cursor": [1, 2],
+      "keys": ":vsplit<CR>0O<Esc>u<C-r><C-w>w",
+      "expect": {
+        "text": "alpha\n\nbeta\ngamma",
+        "cursor": [2, 2],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "undo deleting all lines retains the dummy-line observer",
+      "before": "alpha\nbeta\ngamma",
+      "cursor": [1, 2],
+      "keys": ":vsplit<CR>gg3ddu<C-w>w",
+      "expect": {
+        "text": "alpha\nbeta\ngamma",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "alpha\nbeta\ngamma\n"
+      }
+    }
+  ]
+}

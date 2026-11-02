@@ -14,7 +14,7 @@ plugin error never crashes the editor.
 ## Options — `vibook.opt`
 
 ```lua
-vibook.opt.leader = " "          -- key that opens the menu (default: space)
+vibook.opt.leader = " "          -- sequence that opens the menu (default: space)
 vibook.opt.insert_escape = "jj"  -- type this in edit mode to leave it (default: "jj"; "" disables)
 vibook.opt.menu_position = "bottom" -- "bottom" (which-key bar) or "center" (modal)
 vibook.opt.code_editor = "nvim"  -- external editor for code links (falls back to $EDITOR)
@@ -25,8 +25,9 @@ vibook.opt.plugins = { links = false } -- toggle a default plugin off
 
 Mappings accept modes `n`, `i`, `x`/`v`, `o` and `c`. The right-hand side is
 a sequence of keys, `<Cmd>command<CR>` segments, or a mixture of both.
-`<Cmd>` executes without leaving the current mode. Legacy `:command` strings
-still execute directly; they will become ordinary keys in a later step.
+`<Cmd>` executes without leaving the current mode. A leading `:` is ordinary
+input; add `<CR>` to submit the command. Lua mappings also accept a mode list
+and boolean `remap`, `nowait`, `unique` and `silent` options.
 
 ```lua
 vibook.keymap("n", "<C-s>", "<Cmd>w<CR>")     -- Ctrl-s writes
@@ -93,3 +94,15 @@ cargo build --release        # static binary at target/release/v-ide
 ./install.sh                 # build + install to ~/.local/bin
 cargo test                   # the tests/ directory is an immutable contract
 ```
+
+
+## Buffer ownership
+
+`Workspace` owns one `Document` per `DocId`. Windows keep buffer handles and
+cursor history; the hidden-buffer pool remains global and ordered by recent
+use. `current()` and `current_mut()` access the active document. `windows()`
+and `pool()` return borrowed document projections. Closing a window preserves
+a document referenced elsewhere; `forget()` refuses visible or pooled buffers.
+Text, undo and saved-file state are shared. Cursor bookmarks retain semantic
+line adjustments through edits and undo, while desired columns stay local to
+the view. UI scroll history is keyed by window and buffer IDs.

@@ -435,7 +435,7 @@ fn switch_to_buffer_preserves_active_state_and_mru() {
     );
     assert!(stashed.doc.is_dirty(), "dirty flag preserved");
     assert_eq!(stashed.doc.editor.cursor(), cursor, "cursor preserved");
-    let state = &app.read_states[&stashed.id];
+    let state = &app.read_states[&(app.workspace.active_window(), stashed.id)];
     assert_eq!(state.view, View::Edit, "view preserved");
     assert_eq!(state.top, 7, "viewport top preserved");
 

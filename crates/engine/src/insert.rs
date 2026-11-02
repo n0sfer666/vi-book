@@ -38,7 +38,7 @@ pub fn open_below(ed: &mut Editor) {
     let line = ed.cursor.line;
     let at = ed.buffer.line_start(line) + ed.buffer.line_len(line);
     start_fresh(ed, ed.cursor);
-    push_edit(ed, Edit::insertion(at, "\n".into()));
+    push_edit(ed, Edit::line_insertion(at, "\n".into(), line + 1, 1));
     ed.cursor = Position::new(line + 1, 0);
 }
 
@@ -46,7 +46,7 @@ pub fn open_above(ed: &mut Editor) {
     let line = ed.cursor.line;
     let at = ed.buffer.line_start(line);
     start_fresh(ed, ed.cursor);
-    push_edit(ed, Edit::insertion(at, "\n".into()));
+    push_edit(ed, Edit::line_insertion(at, "\n".into(), line, 1));
     ed.cursor = Position::new(line, 0);
 }
 

@@ -7,5 +7,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+v-ide-text = { path = "../text" }
 v-ide-engine = { path = "../engine" }
 thiserror = "2"

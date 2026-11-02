@@ -3,7 +3,7 @@ use std::io::ErrorKind;
 use crate::app::App;
 #[cfg(all(feature = "notebook", feature = "vault"))]
 use crate::panel::Panel;
-use crate::{actions, checktime, disk_message, requests};
+use crate::{actions, disk_message, requests};
 use v_ide_editor::Error;
 use v_ide_editor::disk::{DiskMark, Reaction};
 use v_ide_editor::module::Event;
@@ -126,7 +126,6 @@ fn save(app: &mut App, force: bool) -> bool {
     match app.workspace.current_mut().save() {
         Ok(()) => {
             app.ui.set_message(String::from("written"));
-            checktime::sync_twins(app);
             if let Some(path) = app.workspace.current().path.clone() {
                 requests::emit(app, Event::NoteSave(path));
             }

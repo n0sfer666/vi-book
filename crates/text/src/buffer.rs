@@ -3,15 +3,18 @@ use std::ops::Range;
 use ropey::Rope;
 
 use crate::position::Position;
+use crate::tracked_position::{Positions, TrackedPosition};
 
 pub struct Buffer {
     rope: Rope,
+    positions: Positions,
 }
 
 impl Buffer {
     pub fn new(text: &str) -> Self {
         Self {
             rope: Rope::from_str(text),
+            positions: Positions::default(),
         }
     }
 
@@ -90,11 +93,34 @@ impl Buffer {
     }
 
     pub fn insert(&mut self, at: usize, text: &str) {
+        let position = self.char_to_pos(at);
         self.rope.insert(at, text);
+        self.positions
+            .split(position, text.bytes().filter(|&byte| byte == b'\n').count());
     }
 
     pub fn remove(&mut self, range: Range<usize>) {
+        let start = self.char_to_pos(range.start);
+        let end = self.char_to_pos(range.end);
         self.rope.remove(range);
+        self.positions.remove(start, end);
+    }
+
+    pub fn track_position(&mut self, position: Position) -> TrackedPosition {
+        self.positions.track(position)
+    }
+
+    pub(crate) fn replace_raw(&mut self, at: usize, removed: usize, inserted: &str) {
+        if removed > 0 {
+            self.rope.remove(at..at + removed);
+        }
+        if !inserted.is_empty() {
+            self.rope.insert(at, inserted);
+        }
+    }
+
+    pub(crate) fn adjust_lines(&mut self, at: usize, removed: usize, inserted: usize) {
+        self.positions.lines(at, removed, inserted);
     }
 
     pub fn slice(&self, range: Range<usize>) -> String {

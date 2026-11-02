@@ -124,11 +124,7 @@ impl Editor {
         if old == text {
             return;
         }
-        let edit = Edit {
-            at: 0,
-            removed: old,
-            inserted: text.to_string(),
-        };
+        let edit = Edit::replacement(0, old, text.to_string());
         edit.apply(&mut self.buffer);
         self.commit(vec![edit]);
         self.cursor = self.buffer.clamp_normal(self.cursor);
