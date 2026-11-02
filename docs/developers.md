@@ -114,3 +114,29 @@ a document referenced elsewhere; `forget()` refuses visible or pooled buffers.
 Text, undo and saved-file state are shared. Cursor bookmarks retain semantic
 line adjustments through edits and undo, while desired columns stay local to
 the view. UI scroll history is keyed by window and buffer IDs.
+
+## Autocmd pattern foundation
+
+`editor::autocmd::patterns` lazily splits comma-separated definitions, retaining
+escaped commas and nested brace groups. Compile each item with `Pattern::compile`
+and match with `matches(short_name, full_name, ignore_case)`. Patterns without a
+slash use the full name's tail; slash patterns try both supplied names. Callers
+resolve paths and freeze matching record handles before invoking callbacks.
+
+The ordinary glob grammar includes `*`, Unicode-scalar `?`, nested `{a,b}` groups,
+empty alternatives, character ranges, `[^...]`, escapes and the twelve standard
+POSIX named classes. `[!x]` contains a literal exclamation mark. An unclosed `[` is
+literal; unmatched braces and reversed ranges are errors. Vim-regexp insertions,
+control escapes, equivalence classes and Vim-specific named classes return an
+explicit unsupported-pattern error. Regexp integration belongs to S18–S19.
+The parser and finite-state matcher do not recurse or expand brace alternatives.
+
+Native reference: Neovim 0.12.6. `crates/editor/tests/autocmd/capture_glob.lua` and
+`capture_glob_unicode.lua` produce the Rust matrix fixtures. The latter exercises
+Unicode case equivalences and named classes. `scripts/capture_autocmd_unicode.lua`
+extracts scalar case-equivalence groups and lower/upper/printable ranges into
+`pattern/unicode_data.rs`; that file is generated data, not handwritten code.
+Run captures with headless Neovim (`-u NONE -i NONE -n -l`) from the repository,
+with HOME, XDG directories and NVIM_LOG_FILE isolated under its `target` directory.
+Repeat captures must produce identical files; do not edit expected data by hand.
+This library foundation is not yet connected to Lua/Ex autocmd execution.
