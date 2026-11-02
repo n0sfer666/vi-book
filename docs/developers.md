@@ -200,6 +200,15 @@ retained. Empty dictionary markers are preserved, sparse arrays receive null
 holes, strings/keys retain bytes and integral floats use native integer conversion.
 Cycles, mixed/invalid keys, threads and non-null userdata are rejected.
 
+Conversions share a budget of 1,000,000 expanded values and 64 MiB of string and
+dictionary-key bytes per outer runtime invocation, including nested callbacks.
+Containers, sparse-array null holes and every repeated subtree count toward the
+expanded cost. Checks reserve queued children and byte copies before allocation;
+exports preflight the shared arena before creating Lua values. Exceeding either
+limit returns a data-conversion error. Caught errors retain the spent budget, and
+an exceeded budget rejects further conversions until the next outer invocation.
+Each standalone codec operation outside a runtime invocation gets a fresh budget.
+
 Keep the returned `Encoded` owner alive while dispatching its data. It retains Lua
 functions; the codec's lookup pool holds weak references and periodically removes
 expired entries. Function IDs from another codec runtime or an expired owner fail

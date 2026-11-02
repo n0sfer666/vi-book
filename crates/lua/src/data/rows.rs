@@ -1,6 +1,9 @@
 use mlua::{Table, Value};
 
-use super::error;
+use super::{
+    budget::{Budget, Cost},
+    error,
+};
 
 pub(super) enum Rows {
     Array {
@@ -14,19 +17,22 @@ pub(super) enum Rows {
     },
 }
 
-pub(super) fn read(table: &Table, empty_dict: bool) -> mlua::Result<Rows> {
+pub(super) fn read(table: &Table, empty_dict: bool, budget: &Budget) -> mlua::Result<Rows> {
     let mut numeric = Vec::new();
     let mut keys = Vec::new();
     let mut strings = Vec::new();
     for entry in table.pairs::<Value, Value>() {
         let (key, value) = entry?;
+        budget.charge(Cost::VALUE)?;
         match key {
             Value::Integer(index) if index > 0 => {
                 let index =
                     usize::try_from(index).map_err(|_| error("Cannot convert given Lua table"))?;
+                budget.ensure(Cost::values(index.saturating_sub(numeric.len() + 1)))?;
                 numeric.push((index, value));
             }
             Value::String(key) => {
+                budget.charge(Cost::bytes(key.as_bytes().len()))?;
                 keys.push(key.as_bytes().to_vec());
                 strings.push(value);
             }

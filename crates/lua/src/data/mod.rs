@@ -1,4 +1,6 @@
+mod budget;
 mod functions;
+mod measure;
 mod read;
 mod rows;
 mod write;
@@ -8,6 +10,7 @@ use std::rc::Rc;
 use mlua::{Function, Lua, Table, Value, WeakLua};
 use v_ide_editor::autocmd::{Data, FunctionRef};
 
+pub(crate) use budget::{Budget, Invocation};
 use functions::Functions;
 pub(crate) use functions::StoredFunction;
 
@@ -16,6 +19,7 @@ pub struct Codec {
     lua: WeakLua,
     empty_dict: Table,
     functions: Rc<Functions>,
+    budget: Rc<Budget>,
 }
 
 pub struct Encoded {
@@ -40,6 +44,7 @@ impl Codec {
             lua: lua.weak(),
             empty_dict,
             functions: Rc::new(Functions::new()),
+            budget: Budget::for_lua(lua),
         })
     }
 

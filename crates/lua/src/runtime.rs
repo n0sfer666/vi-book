@@ -3,7 +3,10 @@ use std::rc::Rc;
 
 use mlua::{HookTriggers, Lua, LuaOptions, StdLib, VmState};
 
-use crate::error::Error;
+use crate::{
+    data::{Budget, Invocation as DataInvocation},
+    error::Error,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Capability {
@@ -18,6 +21,7 @@ pub struct Runtime {
     lua: Lua,
     steps: Rc<Cell<u64>>,
     depth: Cell<usize>,
+    data_budget: Rc<Budget>,
 }
 
 impl Runtime {
@@ -44,6 +48,7 @@ impl Runtime {
             },
         )?;
         Ok(Self {
+            data_budget: Budget::for_lua(&lua),
             lua,
             steps,
             depth: Cell::new(0),
@@ -80,7 +85,10 @@ impl Runtime {
             self.steps.set(0);
         }
         self.depth.set(self.depth.get() + 1);
-        Invocation(&self.depth)
+        Invocation {
+            depth: &self.depth,
+            _data: self.data_budget.enter(),
+        }
     }
 
     pub(crate) fn lua(&self) -> &Lua {
@@ -88,10 +96,17 @@ impl Runtime {
     }
 }
 
-pub(crate) struct Invocation<'a>(&'a Cell<usize>);
+pub(crate) struct Invocation<'a> {
+    depth: &'a Cell<usize>,
+    _data: DataInvocation,
+}
 
 impl Drop for Invocation<'_> {
     fn drop(&mut self) {
-        self.0.set(self.0.get() - 1);
+        self.depth.set(self.depth.get() - 1);
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/runtime_data_budget.rs"]
+mod data_budget_tests;

@@ -1,7 +1,7 @@
 use mlua::Value;
 use v_ide_editor::autocmd::{Data, DataNode};
 
-use super::{Codec, error};
+use super::{Codec, error, measure};
 
 enum Task<'a> {
     Node(&'a DataNode),
@@ -11,6 +11,8 @@ enum Task<'a> {
 
 impl Codec {
     pub fn decode(&self, data: &Data) -> mlua::Result<Value> {
+        let _invocation = self.budget.enter();
+        measure::charge(data, &self.budget)?;
         let lua = self.lua()?;
         let mut tasks = vec![Task::Node(data.root())];
         let mut values = Vec::new();
