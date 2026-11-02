@@ -41,6 +41,9 @@ fn execute(app: &mut App, command: &str) -> bool {
     if let Some(success) = crate::map_exec::execute(app, command) {
         return success;
     }
+    if let Some(success) = crate::set_exec::execute(app, command) {
+        return success;
+    }
     match command {
         "w" => return save(app, false),
         "w!" => return save(app, true),
@@ -123,7 +126,8 @@ fn save(app: &mut App, force: bool) -> bool {
             .set_message(disk_message::message(&doc.name, Reaction::Conflict));
         return false;
     }
-    match app.workspace.current_mut().save() {
+    let result = if force { doc.save_force() } else { doc.save() };
+    match result {
         Ok(()) => {
             app.ui.set_message(String::from("written"));
             if let Some(path) = app.workspace.current().path.clone() {

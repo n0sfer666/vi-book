@@ -22,7 +22,7 @@ return function(case, snapshot_path)
       request("nvim_get_mode")
     end
     vim.wait(1100, function() return false end)
-    return request("nvim_exec_lua", "return dofile(...)()", { snapshot_path })
+    return request("nvim_exec_lua", "local path, options = ...; return dofile(path)(options)", { snapshot_path, case.options or false })
   end)
   vim.fn.jobstop(channel)
   assert(ok, case.name .. ": " .. tostring(result))

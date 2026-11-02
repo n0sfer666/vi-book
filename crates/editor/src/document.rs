@@ -5,12 +5,14 @@ use crate::disk::{DiskMark, Reaction, Stamp};
 use crate::filetype;
 use crate::io::error::Error;
 use crate::io::file;
+use crate::options::{Name, Value, Values};
 use v_ide_engine::editor::Editor;
 
 pub struct Document {
     pub editor: Editor,
     pub path: Option<PathBuf>,
     pub name: String,
+    pub(crate) options: Values,
     saved_text: String,
     stamp: Option<Stamp>,
     mark: Option<DiskMark>,
@@ -20,6 +22,7 @@ impl Document {
     pub fn new(text: &str) -> Self {
         let editor = Editor::new(text);
         Self {
+            options: Values::default(),
             saved_text: editor.text(),
             editor,
             path: None,
@@ -38,7 +41,29 @@ impl Document {
         Ok(doc)
     }
 
+    pub fn readonly(&self) -> bool {
+        self.options.get(Name::Readonly) == Value::Bool(true)
+    }
+
     pub fn save(&mut self) -> Result<(), Error> {
+        if self.path.is_none() {
+            return Err(Error::NoPath);
+        }
+        if self.readonly() {
+            return Err(Error::Readonly);
+        }
+        self.write()
+    }
+
+    pub fn save_force(&mut self) -> Result<(), Error> {
+        if self.path.is_none() {
+            return Err(Error::NoPath);
+        }
+        self.options.set(Name::Readonly, Value::Bool(false));
+        self.write()
+    }
+
+    fn write(&mut self) -> Result<(), Error> {
         let path = self.path.as_ref().ok_or(Error::NoPath)?;
         file::write(path, &self.editor.text())?;
         self.stamp = Stamp::of(path).ok();

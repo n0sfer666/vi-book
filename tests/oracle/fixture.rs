@@ -19,6 +19,8 @@ pub struct Case {
     pub maps: Vec<Map>,
     #[serde(default)]
     pub lua: bool,
+    #[serde(default)]
+    pub options: bool,
     pub chunks: Option<Vec<String>>,
     pub screen: Option<[u16; 2]>,
     #[serde(default)]
@@ -61,6 +63,17 @@ pub struct Snapshot {
     pub cursor: [usize; 2],
     pub mode: String,
     pub unnamed: String,
+    pub options: Option<Options>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct Options {
+    pub timeoutlen: i64,
+    pub readonly: bool,
+    pub global_readonly: bool,
+    pub number: bool,
+    pub global_number: bool,
 }
 
 pub const DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/oracle");

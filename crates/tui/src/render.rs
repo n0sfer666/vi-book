@@ -1,17 +1,16 @@
-use v_ide_view::{Grid, Rect, Style as CellStyle};
+use v_ide_view::{Grid, Rect};
 
 use crate::app::App;
 use crate::frame::Frame;
 use crate::layout::{column_width, text_column};
 use crate::read_state::ReadState;
-use crate::theme::Theme;
 use crate::view::View;
 use crate::{cursor, hscroll, overlay, read_draw, split, status};
+use v_ide_editor::options::{Access, Name, Value};
 use v_ide_engine::mode::Mode;
 use v_ide_markdown::highlight::highlight;
-use v_ide_markdown::style::SourceSpan;
 
-pub(crate) type Line = Vec<(String, CellStyle)>;
+pub(crate) use crate::text_draw::{Line, put_line, styled_line};
 
 const PANEL_WIDTH: u16 = 28;
 
@@ -54,19 +53,33 @@ fn draw_editor(frame: &mut Frame, app: &mut App) {
         if window.id != active {
             let state = app.window_states.get(&window.id).unwrap_or(&fallback);
             let doc = &window.buf.doc;
-            split::draw_pane(&mut frame.grid, &app.theme, doc, state, *rect, app.wrap());
+            let rect = crate::number::draw(
+                &mut frame.grid,
+                *rect,
+                state.top,
+                doc.editor.text().split('\n').count(),
+                state.view == View::Edit && window.options.get(Name::Number) == Value::Bool(true),
+            );
+            split::draw_pane(&mut frame.grid, &app.theme, doc, state, rect, app.wrap());
         }
     }
     for rect in rects.iter().take(count.saturating_sub(1)) {
         split::draw_divider(&mut frame.grid, text_area, rect.x + rect.w);
     }
-    let active_rect = rects[app.workspace.active_index()];
+    let mut active_rect = rects[app.workspace.active_index()];
     app.ui.text_area = active_rect;
     let text = app.workspace.current().editor.text();
     if app.ui.read.view == View::Read {
         read_draw::draw(frame, app, active_rect);
     } else {
         scroll_into_view(app, active_rect);
+        active_rect = crate::number::draw(
+            &mut frame.grid,
+            active_rect,
+            app.ui.read.top,
+            text.split('\n').count(),
+            app.workspace.option(Name::Number, Access::Local) == Value::Bool(true),
+        );
         let col = app.workspace.current().editor.cursor().col;
         app.ui.left = hscroll::scroll(app.ui.left, col, column_width(active_rect));
         draw_text(&mut frame.grid, app, &text, active_rect);
@@ -145,45 +158,4 @@ fn draw_text(grid: &mut Grid, app: &App, text: &str, area: Rect) {
             .get(app.ui.read.top + row)
             .map(|line| line.chars().count())
     });
-}
-
-pub(crate) fn put_line(grid: &mut Grid, x: u16, y: u16, line: &Line, left: usize, max_w: u16) {
-    let end = x.saturating_add(max_w);
-    let mut skip = left;
-    let mut col = x;
-    for (text, style) in line {
-        let shown: String = text.chars().skip(skip).collect();
-        skip = skip.saturating_sub(text.chars().count());
-        col += grid.put_str(col, y, &shown, *style, end.saturating_sub(col));
-    }
-}
-
-pub(crate) fn styled_line(
-    line: &str,
-    spans: &[SourceSpan],
-    theme: &Theme,
-    selection: Option<&std::ops::Range<usize>>,
-) -> Line {
-    let mut parts = Line::new();
-    let mut run = String::new();
-    let mut run_style = CellStyle::default();
-    for (col, ch) in line.chars().enumerate() {
-        let mut style = spans
-            .iter()
-            .filter(|span| span.start <= col && col < span.end)
-            .min_by_key(|span| span.end - span.start)
-            .map_or_else(CellStyle::default, |span| theme.face(span.style).style());
-        if selection.is_some_and(|range| range.contains(&col)) {
-            style = style.reverse();
-        }
-        if style != run_style && !run.is_empty() {
-            parts.push((std::mem::take(&mut run), run_style));
-        }
-        run_style = style;
-        run.push(ch);
-    }
-    if !run.is_empty() {
-        parts.push((run, run_style));
-    }
-    parts
 }

@@ -204,9 +204,8 @@ from another program, `git checkout` or `$EDITOR` show up on their own. Your own
 
 The marks also appear in `:buffers`. A mark goes away when the file on disk is
 back to what you last loaded or saved. When several buffers change at once, the
-status line shows the most important event with `(+N more)`. Writing a note that
-is open in another column updates that column too (or marks it `[changed]` if it
-has unsaved edits).
+status line shows the most important event with `(+N more)`. All columns showing the same buffer share its text, undo history, saved state,
+and disk marks.
 
 ## Commands
 
@@ -218,6 +217,41 @@ Type `:` then a command:
 - `:today` `:daily-prev` `:daily-next` — daily notes.
 - `:new <name>` — create `<name>.md` and open it.
 - `:vsplit [file]` `:split [file]` `:only` `:close` — manage columns.
+
+## Editor options
+
+`:set`, `:setlocal`, and `:setglobal` support these options:
+
+| Option | Alias | Scope | Default |
+| --- | --- | --- | --- |
+| `timeoutlen` | `tm` | Global | `1000` milliseconds |
+| `readonly` | `ro` | Buffer | Off |
+| `number` | `nu` | Window and buffer view | Off |
+
+Use `:setlocal number` to show source line numbers in Edit, or
+`:setlocal nonumber` to hide them. A split copies the current view setting;
+subsequent changes are independent. Each window remembers its setting for
+each buffer. A first visit reuses the buffer's last remembered window setting,
+or the new window's own global default if no previous setting exists.
+
+`:set` changes both the effective value and its default. `:setlocal` changes
+only the current value; global-only options such as `timeoutlen` still change
+globally. `:setglobal` changes the default without changing existing local
+values. New buffers start with `readonly` off.
+
+Query with `:set number? timeoutlen?`; list changed values with `:set`, or all
+supported values with `:set all`. Scoped lists contain only local options.
+Use `invnumber` or `number!` to toggle, `number&` to reset to the default, and
+`number<` to copy the current global value. `all&` resets the supported options
+in the chosen scope. Numeric options also accept `+=`, `-=`, and `^=`.
+`timeoutlen` accepts values from `0` through `2147483647`; zero resolves mapping
+prefixes immediately. An invalid argument stops the command while preserving
+changes made by earlier arguments.
+
+`readonly` is currently set explicitly. It is shared by every window showing
+the same buffer and protects `:w` and `:wq` with E45. For a named buffer, `:w!`
+clears its local `readonly` flag before attempting the write; its global
+default is preserved. Editing and undo remain available.
 
 ## Key mappings
 

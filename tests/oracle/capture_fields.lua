@@ -14,6 +14,9 @@ local function render_map(map)
 end
 
 return function(out, case)
+  if case.options ~= nil then
+    table.insert(out, '      "options": ' .. tostring(case.options) .. ',')
+  end
   if case.lua ~= nil then
     table.insert(out, '      "lua": ' .. tostring(case.lua) .. ',')
   end

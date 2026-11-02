@@ -2,6 +2,7 @@ mod buffer;
 mod buffers;
 mod doc_id;
 mod identity;
+mod options;
 mod views;
 mod window;
 mod window_id;
@@ -16,9 +17,12 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::document::Document;
+use crate::options::{Scope, Values};
 
 pub struct Workspace {
     documents: HashMap<DocId, Document>,
+    options: Values,
+    last_options: HashMap<DocId, Values>,
     windows: Vec<Window>,
     active: usize,
     pool: Vec<Buffer>,
@@ -32,12 +36,18 @@ impl Workspace {
         let id = DocId(0);
         let mut cursors = HashMap::new();
         cursors.insert(id, doc.editor.cursor_state());
+        let options = Values::default();
+        let window_options = HashMap::from([(id, options.scoped(Scope::Window))]);
         Self {
+            last_options: HashMap::new(),
+            options: options.clone(),
             documents: HashMap::from([(id, doc)]),
             windows: vec![Window {
                 id: WindowId(0),
                 buf: Buffer { id },
                 cursors,
+                options: window_options,
+                defaults: options.scoped(Scope::Window),
             }],
             active: 0,
             pool: Vec::new(),
@@ -134,6 +144,7 @@ impl Workspace {
                         doc,
                     },
                     cursor,
+                    options: &window.options[&window.buf.id],
                 }
             })
             .collect()

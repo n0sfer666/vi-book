@@ -89,7 +89,9 @@ impl Workspace {
         }
         for window in &mut self.windows {
             window.cursors.remove(&id);
+            window.options.remove(&id);
         }
+        self.last_options.remove(&id);
         self.documents.remove(&id)
     }
 }

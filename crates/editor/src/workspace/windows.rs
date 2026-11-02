@@ -7,6 +7,12 @@ impl Workspace {
             return None;
         }
         self.save_view();
+        let source = &self.windows[self.active];
+        let mut options = HashMap::new();
+        if buffer.id == source.buf.id {
+            options.insert(buffer.id, source.options[&buffer.id].clone());
+        }
+        let defaults = source.defaults.clone();
         let id = WindowId(self.next_window);
         self.next_window += 1;
         let mut cursors = HashMap::new();
@@ -20,6 +26,8 @@ impl Workspace {
                 id,
                 buf: buffer,
                 cursors,
+                options,
+                defaults,
             },
         );
         self.pool.retain(|buf| buf.id != buffer.id);
@@ -52,6 +60,11 @@ impl Workspace {
         let kept = self.windows.remove(self.active);
         self.active = 0;
         let closed = std::mem::replace(&mut self.windows, vec![kept]);
+        for window in &closed {
+            if let Some(options) = window.options.get(&window.buf.id) {
+                self.last_options.insert(window.buf.id, options.clone());
+            }
+        }
         for window in closed.iter().rev() {
             self.park(window.buf);
         }

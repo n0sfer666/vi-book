@@ -1,0 +1,131 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "defaults",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": false, "number": false, "global_number": false }
+      }
+    },
+    {
+      "name": "set updates effective and defaults",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":set nu ro tm=37<CR>",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 37, "readonly": true, "global_readonly": true, "number": true, "global_number": true }
+      }
+    },
+    {
+      "name": "local and global values stay distinct",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":setlocal nu ro<CR>:setglobal nonu noro tm=40<CR>",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 40, "readonly": true, "global_readonly": false, "number": true, "global_number": false }
+      }
+    },
+    {
+      "name": "copy global creates a snapshot",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":setglobal nu ro<CR>:setlocal nu< ro<<CR>:setglobal nonu noro<CR>",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": true, "global_readonly": false, "number": true, "global_number": false }
+      }
+    },
+    {
+      "name": "local reset preserves defaults",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":set nu ro tm=17<CR>:setlocal all&<CR>",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": true, "number": false, "global_number": true }
+      }
+    },
+    {
+      "name": "invalid argument keeps valid prefix",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":set nu tm=7 unknown ro<CR>",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 7, "readonly": false, "global_readonly": false, "number": true, "global_number": true }
+      }
+    },
+    {
+      "name": "split local number is independent and readonly shared",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":setlocal nu ro<CR>:vsplit<CR>:setlocal nonu noro<CR><C-w>w",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": false, "number": true, "global_number": false }
+      }
+    },
+    {
+      "name": "window defaults do not leak across splits",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":vsplit<CR>:setglobal nu<CR><C-w>w",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": false, "number": false, "global_number": false }
+      }
+    },
+    {
+      "name": "arithmetic numeric and boolean toggles",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": ":set tm=0x10 tm+=3 tm^=2 tm-=1 invnu invro<CR>",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 37, "readonly": true, "global_readonly": true, "number": true, "global_number": true }
+      }
+    }
+  ]
+}

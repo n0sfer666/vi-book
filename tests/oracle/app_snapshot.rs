@@ -1,11 +1,12 @@
 use std::time::Instant;
 
 use v_ide_editor::document::Document;
+use v_ide_editor::options::{Access, Name, Value};
 use v_ide_keys::{TIMEOUT, parse_keys};
 use v_ide_text::Position;
 use v_ide_tui::{app::App, command_line};
 
-use crate::fixture::{Case, Snapshot};
+use crate::fixture::{Case, Options, Snapshot};
 
 pub fn run(case: &Case) -> Snapshot {
     let mut app = App::new(Document::new(&case.before));
@@ -95,6 +96,7 @@ pub fn run(case: &Case) -> Snapshot {
         cursor: [cursor.line, cursor.col],
         mode: super::snapshot::mode_name(editor.mode()).to_string(),
         unnamed: editor.yanked().unwrap_or_default(),
+        options: case.options.then(|| options(&app)),
     }
 }
 
@@ -114,4 +116,18 @@ fn literal(text: &str) -> String {
         equals.push('=');
     }
     format!("[{equals}[\n{text}]{equals}]")
+}
+
+fn options(app: &App) -> Options {
+    let value = |name, access| app.workspace.option(name, access);
+    let Value::Number(timeoutlen) = value(Name::Timeoutlen, Access::Global) else {
+        panic!("timeoutlen must be numeric");
+    };
+    Options {
+        timeoutlen,
+        number: value(Name::Number, Access::Local) == Value::Bool(true),
+        global_number: value(Name::Number, Access::Global) == Value::Bool(true),
+        readonly: value(Name::Readonly, Access::Local) == Value::Bool(true),
+        global_readonly: value(Name::Readonly, Access::Global) == Value::Bool(true),
+    }
 }

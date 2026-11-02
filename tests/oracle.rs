@@ -11,7 +11,7 @@ fn check(topic: &str) {
     for case in &fixture.cases {
         let got = if matches!(
             topic,
-            "map_commands" | "pager" | "lua_mappings" | "shared_windows"
+            "map_commands" | "pager" | "lua_mappings" | "shared_windows" | "options"
         ) {
             app_snapshot::run(case)
         } else {
@@ -58,6 +58,7 @@ oracle_topics!(
     mappings,
     motions,
     operators,
+    options,
     pager,
     registers,
     shared_windows,

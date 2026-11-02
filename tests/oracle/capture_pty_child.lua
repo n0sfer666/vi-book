@@ -19,7 +19,7 @@ return function(case_path, output, ready, snapshot_path)
     end
     for _, text in ipairs(case.messages or {}) do vim.api.nvim_echo({ { text } }, true, {}) end
     vim.keymap.set("n", "<F12>", function()
-      local ok, value = pcall(snapshot)
+      local ok, value = pcall(snapshot, case.options)
       vim.fn.writefile({ vim.json.encode(ok and value or { error = tostring(value) }) }, output)
       vim.cmd("qa!")
     end, { silent = true })

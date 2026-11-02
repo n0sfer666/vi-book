@@ -1,4 +1,4 @@
-local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, lua = true, chunks = true, screen = true, messages = true, divergence = true, expect = true }
+local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, lua = true, options = true, chunks = true, screen = true, messages = true, divergence = true, expect = true }
 
 local snapshot_path = vim.fs.joinpath(vim.fs.dirname(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p")), "capture_state.lua")
 local snapshot = dofile(snapshot_path)
@@ -10,6 +10,7 @@ end
 
 local function run_child(case_path, out_path)
   local done = false
+  local options = false
   local function finish(scheduled)
     if done then
       return
@@ -17,7 +18,7 @@ local function run_child(case_path, out_path)
     done = true
     local ok, err = pcall(function()
       assert(not scheduled or vim.fn.mode(1) == "i", "keys left an incomplete command")
-      vim.fn.writefile({ vim.json.encode(snapshot()) }, out_path)
+      vim.fn.writefile({ vim.json.encode(snapshot(options)) }, out_path)
     end)
     if not ok then
       fail(err)
@@ -26,6 +27,7 @@ local function run_child(case_path, out_path)
   end
   local ok, err = pcall(function()
     local case = vim.json.decode(table.concat(vim.fn.readfile(case_path), "\n"))
+    options = case.options or false
     local lines = vim.split(case.before, "\n", { plain = true })
     vim.bo.undolevels = -1
     vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
@@ -75,6 +77,7 @@ local function validate(case, seen)
   if case.chunks then
     assert(#case.chunks > 0 and table.concat(case.chunks) == case.keys, case.name .. ": chunks must concatenate to keys")
   end
+  assert(case.options == nil or type(case.options) == "boolean", case.name .. ": options must be a boolean")
   assert(case.lua == nil or type(case.lua) == "boolean", case.name .. ": lua must be a boolean")
   assert(not case.lua or (not case.chunks and not case.screen), case.name .. ": Lua cases use the headless capture path")
   for _, map in ipairs(case.maps or {}) do
@@ -135,6 +138,14 @@ local function render_case(case)
     "      }",
     "    }",
   })
+  if e.options then
+    out[#out - 2] = out[#out - 2] .. ","
+    local fields = {}
+    for _, name in ipairs({ "timeoutlen", "readonly", "global_readonly", "number", "global_number" }) do
+      table.insert(fields, str(name) .. ": " .. str(e.options[name]))
+    end
+    table.insert(out, #out - 1, '        "options": { ' .. table.concat(fields, ", ") .. ' }')
+  end
   return out
 end
 

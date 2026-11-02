@@ -71,5 +71,6 @@ pub fn run(case: &Case) -> Snapshot {
         cursor: [cursor.line, cursor.col],
         mode: mode_name(editor.mode()).to_string(),
         unnamed: editor.yanked().unwrap_or_default(),
+        options: None,
     }
 }
