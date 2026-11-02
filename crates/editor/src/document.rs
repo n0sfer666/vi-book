@@ -38,6 +38,7 @@ impl Document {
         let mut doc = Self::new(&file::read(path)?);
         doc.path = Some(path.to_path_buf());
         doc.stamp = stamp;
+        doc.detect_readonly(false);
         Ok(doc)
     }
 
@@ -84,6 +85,7 @@ impl Document {
             Err(err) => return Err(err),
         };
         self.stamp = stamp;
+        self.detect_readonly(false);
         self.take(&text);
         Ok(())
     }
@@ -95,6 +97,7 @@ impl Document {
             Err(err) if err.kind() == ErrorKind::NotFound => return self.vanish(),
             Err(_) => return None,
         };
+        let same_mode = self.stamp.is_some_and(|old| old.same_mode(stamp));
         let stale = self.mark == Some(DiskMark::Changed) && !self.is_dirty();
         if self.stamp == Some(stamp) && !stale {
             return None;
@@ -112,11 +115,15 @@ impl Document {
         };
         self.stamp = Some(stamp);
         if text == self.saved_text {
+            if !self.is_dirty() {
+                self.detect_readonly(same_mode);
+            }
             self.mark = None;
             None
         } else if self.is_dirty() {
             self.conflict()
         } else {
+            self.detect_readonly(same_mode);
             self.take(&text);
             Some(Reaction::Reload)
         }
@@ -139,6 +146,12 @@ impl Document {
             Some(path) => filetype::detect(path),
             None => filetype::detect(Path::new(&self.name)),
         }
+    }
+
+    fn detect_readonly(&mut self, keep: bool) {
+        let detected = self.path.as_deref().is_some_and(file::readonly);
+        let value = detected || (keep && self.readonly());
+        self.options.set(Name::Readonly, Value::Bool(value));
     }
 
     fn take(&mut self, text: &str) {

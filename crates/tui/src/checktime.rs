@@ -16,11 +16,11 @@ pub fn run(app: &mut App) -> bool {
         let Some(doc) = app.workspace.doc_mut(id) else {
             continue;
         };
-        let before = doc.disk_mark();
+        let before = (doc.disk_mark(), doc.readonly());
         if let Some(reaction) = doc.check_disk() {
             events.push((doc.name.clone(), reaction));
         }
-        changed |= doc.disk_mark() != before;
+        changed |= (doc.disk_mark(), doc.readonly()) != before;
     }
     if let Some(text) = disk_message::summary(&events) {
         app.ui.set_message(text);

@@ -7,6 +7,10 @@ use std::time::SystemTime;
 pub struct Stamp {
     modified: Option<SystemTime>,
     len: u64,
+    #[cfg(unix)]
+    mode: u32,
+    #[cfg(not(unix))]
+    readonly: bool,
 }
 
 impl Stamp {
@@ -15,6 +19,24 @@ impl Stamp {
         Ok(Self {
             modified: meta.modified().ok(),
             len: meta.len(),
+            #[cfg(unix)]
+            mode: {
+                use std::os::unix::fs::MetadataExt;
+                meta.mode()
+            },
+            #[cfg(not(unix))]
+            readonly: meta.permissions().readonly(),
         })
+    }
+
+    pub(crate) fn same_mode(self, other: Self) -> bool {
+        #[cfg(unix)]
+        {
+            self.mode == other.mode
+        }
+        #[cfg(not(unix))]
+        {
+            self.readonly == other.readonly
+        }
     }
 }

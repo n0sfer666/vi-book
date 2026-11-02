@@ -1155,6 +1155,7 @@ dependencies = [
 name = "v-ide-editor"
 version = "0.1.0"
 dependencies = [
+ "rustix 1.1.4",
  "thiserror",
  "v-ide-engine",
  "v-ide-text",

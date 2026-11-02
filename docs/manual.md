@@ -248,10 +248,16 @@ in the chosen scope. Numeric options also accept `+=`, `-=`, and `^=`.
 prefixes immediately. An invalid argument stops the command while preserving
 changes made by earlier arguments.
 
-`readonly` is currently set explicitly. It is shared by every window showing
-the same buffer and protects `:w` and `:wq` with E45. For a named buffer, `:w!`
+`readonly` is detected when a file is opened or explicitly reloaded with
+`:e!`. On Unix this includes write permissions, ownership and ACL access.
+You can also set it explicitly. Automatic reloads preserve an explicit
+`readonly` flag while the file mode stays unchanged; a mode change triggers
+fresh detection. It is shared by every window showing the same buffer and
+protects `:w` and `:wq` with E45. For a named buffer, `:w!`
 clears its local `readonly` flag before attempting the write; its global
-default is preserved. Editing and undo remain available.
+default is preserved. The operating system can still reject the write:
+`:w!` currently does not change file permissions. Editing and undo remain
+available.
 
 ## Key mappings
 

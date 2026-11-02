@@ -10,3 +10,6 @@ repository.workspace = true
 v-ide-text = { path = "../text" }
 v-ide-engine = { path = "../engine" }
 thiserror = "2"
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1", features = ["fs"] }
