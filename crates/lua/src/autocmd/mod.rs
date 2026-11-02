@@ -1,5 +1,6 @@
 mod callback;
 mod define;
+mod exec;
 mod filter;
 mod listing;
 mod parse;
@@ -24,7 +25,12 @@ pub(crate) struct State {
     bus: Weak<Bus>,
 }
 
-pub(crate) const BACKENDS: &[&str] = &["__autocmd_create", "__autocmd_get", "__autocmd_clear"];
+pub(crate) const BACKENDS: &[&str] = &[
+    "__autocmd_create",
+    "__autocmd_get",
+    "__autocmd_clear",
+    "__autocmd_exec",
+];
 
 impl Native {
     pub fn new(rt: Rc<Runtime>, bridge: Shared, bus: Rc<Bus>) -> mlua::Result<Self> {
@@ -111,8 +117,17 @@ impl State {
                 cx,
                 parse::table(args.pop_front().unwrap_or(Value::Nil))?,
             )?)),
-            _ => {
+            2 => {
                 self.clear(cx, parse::table(args.pop_front().unwrap_or(Value::Nil))?)?;
+                Ok(Value::Nil)
+            }
+            _ => {
+                let events = args.pop_front().unwrap_or(Value::Nil);
+                self.exec(
+                    cx,
+                    events,
+                    parse::table(args.pop_front().unwrap_or(Value::Nil))?,
+                )?;
                 Ok(Value::Nil)
             }
         }

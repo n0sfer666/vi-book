@@ -56,7 +56,14 @@ impl LuaCallback {
         arg.raw_set("id", invocation.id.map(|id| id.0))?;
         arg.raw_set("group", invocation.group.map(|id| id.0))?;
         arg.raw_set("event", occurrence.event.as_str())?;
-        arg.raw_set("match", occurrence.names.short.as_str())?;
+        arg.raw_set(
+            "match",
+            if occurrence.event.is_file_pattern() {
+                occurrence.names.full.as_str()
+            } else {
+                occurrence.names.short.as_str()
+            },
+        )?;
         arg.raw_set("file", occurrence.names.file.as_str())?;
         arg.raw_set(
             "buf",

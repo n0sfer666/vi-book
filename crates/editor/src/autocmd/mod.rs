@@ -4,6 +4,7 @@ mod data;
 mod definition;
 mod error;
 mod event;
+mod event_kind;
 mod groups;
 mod model;
 mod occurrence;

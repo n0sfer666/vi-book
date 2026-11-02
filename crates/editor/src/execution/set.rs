@@ -19,7 +19,7 @@ impl Context<'_> {
         Ok(())
     }
 
-    fn set_argument(
+    pub(super) fn set_argument(
         &self,
         access: Access,
         argument: Argument,

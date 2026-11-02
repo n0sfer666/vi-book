@@ -44,6 +44,17 @@ impl Editor {
         self.buffer.text()
     }
 
+    pub fn line_count(&self) -> usize {
+        self.buffer.line_count()
+    }
+
+    pub fn line_text(&self, line: usize) -> Option<String> {
+        (line < self.buffer.line_count()).then(|| {
+            let start = self.buffer.line_start(line);
+            self.buffer.slice(start..start + self.buffer.line_len(line))
+        })
+    }
+
     pub fn cursor(&self) -> Position {
         self.cursor
     }

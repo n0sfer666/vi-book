@@ -253,3 +253,38 @@ preserve scripts' GC running/stopped choices. Script compilation precedes backen
 publication. The native assertions in `scripts/check_autocmd_definitions.lua`
 exercise the same contract chunks used by Rust tests; run them with headless
 Neovim and isolated HOME/XDG/log paths under `target`.
+
+## Explicit Lua event execution and modelines
+
+The opt-in native host also provides `vibook.exec_autocmds(events, opts)`.
+It dispatches inline through the same bus and current context, supports group,
+pattern lists/commas, buffer/buf, modeline and typed data, and retains payload
+function owners through nested dispatch. Callback errors are diagnostics and do
+not abort subsequent records. Invalid later event names preserve the executed
+prefix and return an API error. Public calls require a live context. Explicit
+buffer execution supplies that buffer's event identity without changing the
+current buffer.
+
+`modeline` defaults to true for this API. If at least one handler ran and the
+whole event list was valid, modelines are processed once afterward, against the
+current buffer. Callback errors do not skip this step. The buffer-local
+`modeline`/`ml` option and global `modelines`/`mls` option control processing;
+defaults are on (off for root on Unix) and five lines. Zero or negative scan
+counts disable scanning. The initial count selects the first lines from top to bottom, then the last
+lines from bottom to top without duplicates. Processing cannot reenter through
+an option callback.
+
+The parser supports vi/vim/Vim/ex markers, native version comparisons against
+801 (the Neovim reference's Vim version), colon-separated settings and terminated
+`set`/`se` forms. It applies the editor's supported options with local scope and
+OptionSet notifications. Unknown options and invalid settings produce diagnostics,
+preserve the valid prefix and stop subsequent modelines. Modelines execute no Ex
+commands; list/reset-all commands are rejected. This does not implement options
+outside the current option registry or enable automatic processing on file reads.
+
+File-event callback matches use absolute names; User, FileType and the other
+native non-file events retain literal matches. `capture_exec_names.lua` captures
+all supported event classifications, and `capture_modelines.lua` captures the
+modeline matrix. `check_autocmd_exec.lua` runs the same payload/order/modeline
+assertions used by Rust tests. Run captures with the isolated headless Neovim
+setup described above; generated expectations must remain reproducible.

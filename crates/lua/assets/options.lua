@@ -1,5 +1,6 @@
 local api = vibook
-local names = { number = true, nu = true, readonly = true, ro = true, timeoutlen = true, tm = true }
+local names = { number = true, nu = true, readonly = true, ro = true, timeoutlen = true, tm = true,
+  modeline = true, ml = true, modelines = true, mls = true }
 for _, interface in ipairs({ "o", "go", "bo", "wo" }) do
   api[interface] = setmetatable({}, {
     __index = function(_, name) return api.__option_get(interface, name) end,

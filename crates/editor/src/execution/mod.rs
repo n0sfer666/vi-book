@@ -1,3 +1,5 @@
+mod modeline;
+mod names;
 mod option;
 mod set;
 
@@ -24,6 +26,7 @@ pub struct Context<'a> {
     workspace: RefCell<&'a mut Workspace>,
     observer: Option<&'a dyn Observer>,
     option_active: Cell<bool>,
+    modeline_active: Cell<bool>,
     messages: RefCell<Vec<String>>,
     errors: Cell<usize>,
     last_error: RefCell<String>,
@@ -35,6 +38,7 @@ impl<'a> Context<'a> {
             workspace: RefCell::new(workspace),
             observer: None,
             option_active: Cell::new(false),
+            modeline_active: Cell::new(false),
             messages: RefCell::new(Vec::new()),
             errors: Cell::new(0),
             last_error: RefCell::new(String::new()),

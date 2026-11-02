@@ -3,6 +3,8 @@ pub enum Name {
     Timeoutlen,
     Readonly,
     Number,
+    Modeline,
+    Modelines,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,13 +28,21 @@ pub enum Value {
 }
 
 impl Name {
-    pub const ALL: [Self; 3] = [Self::Number, Self::Readonly, Self::Timeoutlen];
+    pub const ALL: [Self; 5] = [
+        Self::Modeline,
+        Self::Modelines,
+        Self::Number,
+        Self::Readonly,
+        Self::Timeoutlen,
+    ];
 
     pub fn parse(name: &str) -> Option<Self> {
         match name {
             "timeoutlen" | "tm" => Some(Self::Timeoutlen),
             "readonly" | "ro" => Some(Self::Readonly),
             "number" | "nu" => Some(Self::Number),
+            "modeline" | "ml" => Some(Self::Modeline),
+            "modelines" | "mls" => Some(Self::Modelines),
             _ => None,
         }
     }
@@ -42,13 +52,15 @@ impl Name {
             Self::Timeoutlen => "timeoutlen",
             Self::Readonly => "readonly",
             Self::Number => "number",
+            Self::Modeline => "modeline",
+            Self::Modelines => "modelines",
         }
     }
 
     pub fn scope(self) -> Scope {
         match self {
-            Self::Timeoutlen => Scope::Global,
-            Self::Readonly => Scope::Buffer,
+            Self::Timeoutlen | Self::Modelines => Scope::Global,
+            Self::Readonly | Self::Modeline => Scope::Buffer,
             Self::Number => Scope::Window,
         }
     }
@@ -57,6 +69,8 @@ impl Name {
         match self {
             Self::Timeoutlen => Value::Number(1000),
             Self::Readonly | Self::Number => Value::Bool(false),
+            Self::Modelines => Value::Number(5),
+            Self::Modeline => Value::Bool(modeline_default()),
         }
     }
 
@@ -67,5 +81,16 @@ impl Name {
             Value::Bool(false) => format!("no{name}"),
             Value::Number(value) => format!("  {name}={value}"),
         }
+    }
+}
+
+fn modeline_default() -> bool {
+    #[cfg(unix)]
+    {
+        !rustix::process::geteuid().is_root()
+    }
+    #[cfg(not(unix))]
+    {
+        true
     }
 }

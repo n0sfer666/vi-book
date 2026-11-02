@@ -52,7 +52,9 @@ impl Change {
             {
                 return Err(self.error(ErrorKind::Invalid));
             }
-            (Value::Number(_), Value::Number(number)) if number < 0 => {
+            (Value::Number(_), Value::Number(number))
+                if number < 0 && self.name != Name::Modelines =>
+            {
                 return Err(self.error(ErrorKind::Positive));
             }
             (Value::Number(_), Value::Number(_)) => {}
