@@ -162,3 +162,29 @@ Nested VM
 entries share the outer instruction budget; a new outer invocation resets it.
 The native autocmd registry/frontends and lifecycle event wiring are subsequent
 integration steps; the current observer is the synchronous execution foundation.
+
+## Autocmd execution and payloads
+
+`editor::autocmd::Bus` owns the registry and compiled selectors. It freezes matching
+record handles before callbacks, consumes `once` before invocation and skips
+removed records. A truthy callback removes only its current expanded record.
+Automatic nested dispatch obeys `nested`; explicit dispatch bypasses that flag.
+Nesting stops at ten levels with E218. Errors become context diagnostics while
+subsequent records continue. Ex boundaries retain an already reported error without
+emitting it twice; an independent callback error still creates its own diagnostic.
+The bus also implements the context's option observer;
+explicit events inherit active option values without creating a new option frame.
+Groups, filters and listings retain the registry's native metadata rules.
+
+Registry mutations keep callback actions alive until mutable borrows are released,
+including failed definitions and group/buffer cleanup. No workspace or registry
+borrow remains across callbacks or their destructors. Case policy is supplied by
+the host and applied when matching handles are frozen.
+
+`DataBuilder` stores typed payload values in an immutable flat arena with checked,
+backward-only edges. Deep values and shared children do not cause recursive drops.
+Strings and dictionary keys retain bytes; scalar numbers, nulls, arrays,
+dictionaries and opaque VM function identities have distinct variants. The VM owns
+function values and must resolve and validate their runtime/function IDs while a
+payload is dispatched. Native Lua conversion and the application event/frontends
+remain integration work; this bus is currently a core library foundation.

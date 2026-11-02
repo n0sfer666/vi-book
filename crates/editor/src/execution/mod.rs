@@ -54,9 +54,18 @@ impl<'a> Context<'a> {
     }
 
     pub fn execute(&self, input: &str) -> Result<(), Error> {
+        if input.is_empty() {
+            return Ok(());
+        }
         let command =
             options::SetCommand::parse(input).ok_or_else(|| Error::Command(input.to_owned()))?;
         self.run_set(&command)
+    }
+
+    pub(crate) fn record_error(&self, error: String) {
+        self.errors.set(self.errors.get().saturating_add(1));
+        self.last_error.replace(error.clone());
+        self.messages.borrow_mut().push(error);
     }
 
     pub fn take_messages(&self) -> Vec<String> {

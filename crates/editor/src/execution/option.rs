@@ -63,9 +63,7 @@ impl Context<'_> {
             self.option_active.set(true);
             let _active = Active(&self.option_active);
             if let Err(error) = observer.option_set(self, &event) {
-                self.errors.set(self.errors.get().saturating_add(1));
-                self.last_error.replace(error.clone());
-                self.messages.borrow_mut().push(error);
+                self.record_error(error);
             }
         }
         Ok(Some(event.new))

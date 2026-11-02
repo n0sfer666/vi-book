@@ -55,7 +55,7 @@ impl<A> Definition<'_, A> {
 }
 
 impl<A: Clone> Definition<'_, A> {
-    pub fn push(&mut self, event: EventName, selector: Selector) {
+    pub fn push(&mut self, event: EventName, selector: Selector) -> RecordId {
         let key = RecordId(self.registry.next_record);
         self.registry.next_record += 1;
         self.registry.rows.push(Record {
@@ -66,5 +66,6 @@ impl<A: Clone> Definition<'_, A> {
             attributes: self.attributes.clone(),
             action: self.action.clone(),
         });
+        key
     }
 }
