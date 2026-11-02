@@ -38,7 +38,7 @@ fn resolve_wiki(app: &mut App, link: &Link) {
     {
         Some(Ok(found)) => found,
         Some(Err(err)) => {
-            app.ui.message = err;
+            app.ui.set_message(err);
             return;
         }
         None => return,
@@ -49,7 +49,8 @@ fn resolve_wiki(app: &mut App, link: &Link) {
             app.ui.picker = Some(crate::picker::Picker::new(paths, "e"));
         }
         Follow::Create(name) => {
-            app.ui.message = format!("note '{name}' does not exist (press : to create)");
+            app.ui
+                .set_message(format!("note '{name}' does not exist (press : to create)"));
         }
     }
 }

@@ -13,6 +13,14 @@ pub fn run(case: &Case) -> Snapshot {
         .current_mut()
         .editor
         .set_cursor(Position::new(case.cursor[0], case.cursor[1]));
+    if let Some([width, height]) = case.screen {
+        let mut frame = v_ide_tui::frame::Frame::new(width, height);
+        v_ide_tui::render::draw(&mut frame, &mut app);
+    }
+    for message in &case.messages {
+        app.ui.set_message(message.clone());
+    }
+    app.ui.message.clear();
     for map in &case.maps {
         let mode = match map.mode {
             v_ide_keys::MapMode::Normal => "n",
@@ -35,8 +43,12 @@ pub fn run(case: &Case) -> Snapshot {
         );
     }
     for key in parse_keys(&case.keys) {
-        app.typeahead.feed(key);
-        app.timeout(Instant::now());
+        if app.ui.pager.is_some() {
+            v_ide_tui::router::handle(&mut app, key);
+        } else {
+            app.typeahead.feed(key);
+            app.timeout(Instant::now());
+        }
     }
     let mut now = Instant::now();
     for _ in 0..1000 {
@@ -51,6 +63,16 @@ pub fn run(case: &Case) -> Snapshot {
         "{}: typeahead did not settle",
         case.name
     );
+    if case.screen.is_some() {
+        assert!(
+            app.ui.pager.is_none()
+                && app.ui.command.is_none()
+                && app.ui.menu.is_none()
+                && !app.ui.help,
+            "{}: input left an overlay or command line",
+            case.name
+        );
+    }
     let editor = &app.workspace.current().editor;
     let cursor = editor.cursor();
     Snapshot {

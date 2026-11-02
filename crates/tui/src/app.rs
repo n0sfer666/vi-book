@@ -129,10 +129,11 @@ impl App {
             {
                 self.handle(key);
             }
-            if self
-                .typeahead
-                .deadline()
-                .is_some_and(|deadline| Instant::now() >= deadline)
+            if self.ui.pager.is_none()
+                && self
+                    .typeahead
+                    .deadline()
+                    .is_some_and(|deadline| Instant::now() >= deadline)
             {
                 self.timeout(Instant::now());
                 stale = true;
@@ -143,8 +144,9 @@ impl App {
                 if let Some(editor) = self.external_editor() {
                     let _ = crate::external::run(term, &editor, &path);
                 } else {
-                    self.ui.message =
-                        String::from("no editor set (vibook.opt.code_editor or $EDITOR)");
+                    self.ui.set_message(String::from(
+                        "no editor set (vibook.opt.code_editor or $EDITOR)",
+                    ));
                 }
             }
             if let Some(url) = self.url_request.take() {
@@ -165,6 +167,9 @@ impl App {
     }
 
     fn poll_wait(&self) -> Duration {
+        if self.ui.pager.is_some() {
+            return TICK;
+        }
         self.typeahead.deadline().map_or(TICK, |deadline| {
             TICK.min(deadline.saturating_duration_since(Instant::now()))
         })

@@ -38,6 +38,12 @@ vibook.keymap("n", "Q", "j<Cmd>only<CR>k") -- keys around a command
 Built-in `jj` → `<Esc>` is an insert-mode mapping from `vibook.opt.insert_escape`;
 set it to `"jk"` to use that instead, or `""` to turn it off.
 
+Use `:map` and its mode-prefixed forms to inspect mappings at runtime.
+Definitions covering several modes are displayed as a group. Errors and
+other application messages are available through `:messages` (last 1000
+nonempty entries); `:messages clear` clears the history. Multiline output
+uses the message pager described in the manual.
+
 ## Custom menu entries — `vibook.menu_item`
 
 Add your own actions to the leader menu. The right-hand side is a `:command`.

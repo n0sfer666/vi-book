@@ -20,6 +20,7 @@ v-ide-syntax = { path = "../syntax", optional = true }
 crossterm = "0.28"
 arboard = "3.4.1"
 unicode-width = "=0.2.0"
+unicode-segmentation = "1.13.3"
 
 [features]
 default = ["lua", "vault", "notebook", "highlight"]

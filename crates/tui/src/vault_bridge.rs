@@ -12,7 +12,7 @@ impl App {
         match self.vault().map(VaultModule::items) {
             Some(Ok(items)) => items,
             Some(Err(err)) => {
-                self.ui.message = err;
+                self.ui.set_message(err);
                 Vec::new()
             }
             None => Vec::new(),

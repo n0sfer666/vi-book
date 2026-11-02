@@ -16,10 +16,12 @@ pub fn startup(app: &mut App) {
 }
 
 pub fn tick(app: &mut App) -> bool {
-    let requests = app.modules.tick(&app.workspace);
-    let changed = !requests.is_empty();
-    apply(app, requests);
-    checktime::run(app) || changed
+    crate::messages::batch(app, |app| {
+        let requests = app.modules.tick(&app.workspace);
+        let changed = !requests.is_empty();
+        apply(app, requests);
+        checktime::run(app) || changed
+    })
 }
 
 pub fn command(app: &mut App, line: &str) -> bool {
@@ -57,10 +59,14 @@ pub(crate) fn intercepts(app: &mut App, ev: Event) -> bool {
 }
 
 pub fn apply(app: &mut App, requests: Vec<Request>) {
+    crate::messages::batch(app, |app| apply_inner(app, requests));
+}
+
+fn apply_inner(app: &mut App, requests: Vec<Request>) {
     for request in requests {
         match request {
             Request::Open(path) => open(app, &path),
-            Request::Message(msg) => app.ui.message = msg,
+            Request::Message(msg) => app.ui.set_message(msg),
             Request::Pick { items, command } => {
                 app.ui.picker = Some(Picker::new(items, &command));
             }
@@ -82,7 +88,8 @@ pub fn apply(app: &mut App, requests: Vec<Request>) {
 
 fn nested(app: &mut App, kind: &str, name: &str, run: impl FnOnce(&mut App)) {
     if app.nesting >= MAX_DEPTH {
-        app.ui.message = format!("{kind} loop: {name} exceeded depth {MAX_DEPTH}");
+        app.ui
+            .set_message(format!("{kind} loop: {name} exceeded depth {MAX_DEPTH}"));
         return;
     }
     app.nesting += 1;
@@ -109,7 +116,7 @@ fn set_text(app: &mut App, text: &str) {
 pub(crate) fn open_external(app: &mut App, rel: &str) {
     match external::resolve(app.workspace.cwd(), rel) {
         Some(path) => app.external_request = Some(path),
-        None => app.ui.message = format!("file not found: {rel}"),
+        None => app.ui.set_message(format!("file not found: {rel}")),
     }
 }
 

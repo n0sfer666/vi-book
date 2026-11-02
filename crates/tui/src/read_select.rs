@@ -25,7 +25,7 @@ pub(crate) fn yank_selection(app: &mut App, width: usize) {
             .yank(text, mode == Mode::VisualLine);
         clip_sync::sync_out(app);
         app.ui.read_select = None;
-        app.ui.message = String::from("copied to clipboard");
+        app.ui.set_message(String::from("copied to clipboard"));
     }
 }
 
@@ -38,7 +38,7 @@ pub(crate) fn yank_line(app: &mut App, width: usize) {
             .editor
             .yank(format!("{text}\n"), true);
         clip_sync::sync_out(app);
-        app.ui.message = String::from("copied line to clipboard");
+        app.ui.set_message(String::from("copied line to clipboard"));
     }
 }
 

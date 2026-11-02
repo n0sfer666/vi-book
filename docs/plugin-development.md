@@ -121,6 +121,14 @@ pending character is drawn at the cursor but not written until it resolves.
 
 A right-hand side of exactly `<Nop>` (any case) makes the key do nothing.
 
+Inspect mappings with `:map`, `:imap`, or a prefix filter such as `:nmap Q`.
+Common definitions stay grouped; removing or replacing one mode separates it
+from the group. `:messages` shows the last 1000 nonempty application messages,
+including plugin errors and repetitions. It uses the same pager as mapping
+listings; `:messages clear` clears the history.
+Messages produced while an Ex command or search is being typed preserve
+the draft and do not require confirmation.
+
 ---
 
 ## 5. Menu, commands, events

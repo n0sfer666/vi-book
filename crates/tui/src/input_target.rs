@@ -3,6 +3,7 @@ use crate::view::View;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum InputTarget {
+    Pager,
     Help,
     BufferList,
     Picker,
@@ -16,7 +17,9 @@ pub(crate) enum InputTarget {
 
 pub(crate) fn target(app: &App) -> InputTarget {
     let ui = &app.ui;
-    if ui.help {
+    if ui.pager.is_some() {
+        InputTarget::Pager
+    } else if ui.help {
         InputTarget::Help
     } else if ui.buffer_list.is_some() {
         InputTarget::BufferList

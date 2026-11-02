@@ -50,4 +50,28 @@ impl<V> Trie<V> {
         }
         (exact, !node.children.is_empty())
     }
+
+    pub(crate) fn entries(&self, prefix: &[Key]) -> Vec<(Vec<Key>, &V)> {
+        let mut node = self;
+        for key in prefix {
+            let Some(child) = node.children.get(key) else {
+                return Vec::new();
+            };
+            node = child;
+        }
+        let mut entries = Vec::new();
+        node.collect(&mut prefix.to_vec(), &mut entries);
+        entries
+    }
+
+    fn collect<'a>(&'a self, path: &mut Vec<Key>, entries: &mut Vec<(Vec<Key>, &'a V)>) {
+        if let Some(value) = &self.value {
+            entries.push((path.clone(), value));
+        }
+        for (key, child) in &self.children {
+            path.push(*key);
+            child.collect(path, entries);
+            path.pop();
+        }
+    }
 }

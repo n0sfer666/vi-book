@@ -5,6 +5,7 @@ use v_ide_keys::{Code, Key, MapMode, Mods};
 
 pub fn handle(app: &mut App, key: Key) {
     match target(app) {
+        InputTarget::Pager => crate::message_input::handle(app, key),
         InputTarget::Help => actions::help_key(app, key),
         InputTarget::BufferList => input::buffer_list_key(app, key),
         InputTarget::Picker => input::picker_key(app, key),

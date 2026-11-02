@@ -21,7 +21,7 @@ impl App {
                 self.ui.picker = None;
                 self.ui.menu = None;
             }
-            Err(err) => self.ui.message = format!("open failed: {err}"),
+            Err(err) => self.ui.set_message(format!("open failed: {err}")),
         }
     }
 
@@ -104,7 +104,9 @@ impl App {
 
     pub fn close_buffer(&mut self, idx: usize) {
         if self.is_buffer_dirty(idx) {
-            self.ui.message = String::from("unsaved changes (write with :w or force-close)");
+            self.ui.set_message(String::from(
+                "unsaved changes (write with :w or force-close)",
+            ));
             return;
         }
         if idx == 0 {

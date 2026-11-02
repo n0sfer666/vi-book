@@ -44,7 +44,7 @@ pub(crate) fn draw_message(grid: &mut Grid, app: &App, area: Rect) {
     } else if let Some(input) = app.workspace.current().editor.search_input() {
         format!("/{input}")
     } else {
-        app.ui.message.clone()
+        crate::message_wrap::normalize(&app.ui.message)
     };
     grid.put_str(area.x, area.y, &content, Style::default(), area.w);
 }

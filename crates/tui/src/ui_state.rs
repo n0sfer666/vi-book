@@ -2,6 +2,8 @@ use v_ide_view::Rect;
 
 use crate::buffer_list::BufferList;
 use crate::menu::Menu;
+use crate::messages::Messages;
+use crate::pager::Pager;
 use crate::panel::Panel;
 use crate::picker::Picker;
 use crate::read_state::ReadState;
@@ -13,6 +15,9 @@ pub struct UiState {
     pub left: usize,
     pub command: Option<String>,
     pub message: String,
+    pub messages: Messages,
+    pub pager: Option<Pager>,
+    pub screen: Rect,
     pub text_area: Rect,
     pub picker: Option<Picker>,
     pub panel: Option<Panel>,
@@ -34,6 +39,14 @@ impl UiState {
             left: 0,
             command: None,
             message: String::new(),
+            messages: Messages::default(),
+            pager: None,
+            screen: Rect {
+                x: 0,
+                y: 0,
+                w: 80,
+                h: 24,
+            },
             text_area: Rect {
                 x: 0,
                 y: 0,
@@ -48,6 +61,30 @@ impl UiState {
             buffer_list: None,
             pending_ctrl_w: false,
             read_select: None,
+        }
+    }
+
+    pub fn set_message(&mut self, text: impl Into<String>) {
+        self.output(text.into(), true);
+    }
+
+    pub fn show_output(&mut self, text: impl Into<String>) {
+        self.output(text.into(), false);
+    }
+
+    fn output(&mut self, text: String, remember: bool) {
+        if self.messages.output(&text, remember) {
+            self.present(text.clone());
+        }
+        self.message = text;
+    }
+
+    pub(crate) fn present(&mut self, text: String) {
+        if self.pager.is_none() && self.command.is_none() && !text.is_empty() {
+            let pager = Pager::new(text, self.screen.w, self.screen.h);
+            if pager.visible().count() > 1 || pager.more() {
+                self.pager = Some(pager);
+            }
         }
     }
 }

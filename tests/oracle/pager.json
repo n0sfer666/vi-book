@@ -1,0 +1,421 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "q at more preserves mapped motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Zq",
+      "chunks": ["Z", "q"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "escape at more preserves mapped motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Z<Esc>",
+      "chunks": ["Z", "<Esc>"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "ctrl-c at more preserves mapped motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Z<C-c>",
+      "chunks": ["Z", "<C-c>"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "G then enter consumes mapped scroll motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "ZG<CR>",
+      "chunks": ["Z", "G", "<CR>"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "G then q consumes mapped scroll motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "ZGq",
+      "chunks": ["Z", "G", "q"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "space to end consumes mapped scroll motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Z   <CR>",
+      "chunks": ["Z", " ", " ", " ", "<CR>"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "small output replays mapped motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Z",
+      "chunks": ["Z"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "G replays noremap tail without remapping",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "ZG",
+      "chunks": ["Z", "G"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>l", "noremap": true },
+        { "mode": "n", "lhs": "l", "rhs": "G", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "G replays remap tail with remapping",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "ZG",
+      "chunks": ["Z", "G"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>l", "noremap": false },
+        { "mode": "n", "lhs": "l", "rhs": "G", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [2, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "G consumes scroll key before command action",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "ZGX",
+      "chunks": ["Z", "G", "X"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j<Cmd>nnoremap X l<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "colon at more receives the mapped tail",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Z:<Esc>",
+      "chunks": ["Z", ":", "<Esc>"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "invalid more key does not reach the editor",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Zxq",
+      "chunks": ["Z", "x", "q"],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "space closes hit-enter without editor input",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "ZG ",
+      "chunks": ["Z", "G", " "],
+      "maps": [
+        { "mode": "n", "lhs": "Z", "rhs": "<Cmd>messages<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "escape at more preserves insert mode",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "i<C-s><Esc>l<Esc>",
+      "chunks": ["i", "<C-s>", "<Esc>", "l", "<Esc>"],
+      "maps": [
+        { "mode": "i", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "lone\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "escape at hit-enter leaves insert mode",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "i<C-s>G<Esc>l",
+      "chunks": ["i", "<C-s>", "G", "<Esc>", "l"],
+      "maps": [
+        { "mode": "i", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "more preserves an open command line",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": ":<C-s>qonly<CR>",
+      "chunks": [":", "<C-s>", "q", "only<CR>"],
+      "maps": [
+        { "mode": "c", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "command-line output does not interrupt draft submission",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": ":nnoremap X l<C-s><CR>X",
+      "chunks": [":nnoremap X l", "<C-s>", "<CR>", "X"],
+      "maps": [
+        { "mode": "c", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "command-line colon preserves the existing draft",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": ":nnoremap X l<C-s>:<CR>X<Esc>",
+      "chunks": [":nnoremap X l", "<C-s>", ":", "<CR>", "X", "<Esc>"],
+      "maps": [
+        { "mode": "c", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "colon at more leaves insert and drops queued keys",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "i<C-s>:l<Esc>",
+      "chunks": ["i", "<C-s>", ":", "l", "<Esc>"],
+      "maps": [
+        { "mode": "i", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>j", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "colon at more drops queued command actions in insert",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "i<C-s>:X",
+      "chunks": ["i", "<C-s>", ":", "X"],
+      "maps": [
+        { "mode": "i", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>j<Cmd>nnoremap X l<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "colon at more leaves visual and drops queued commands",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "v<C-s>:l<Esc>X",
+      "chunks": ["v", "<C-s>", ":", "l", "<Esc>", "X"],
+      "maps": [
+        { "mode": "x", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>j<Cmd>nnoremap X l<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "colon at more leaves visual line and drops queued commands",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "V<C-s>:l<Esc>X",
+      "chunks": ["V", "<C-s>", ":", "l", "<Esc>", "X"],
+      "maps": [
+        { "mode": "x", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>j<Cmd>nnoremap X l<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "colon at more cancels pending operator and preserves queued commands",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "d<C-s>:<Esc>X",
+      "chunks": ["d", "<C-s>", ":", "<Esc>", "X"],
+      "maps": [
+        { "mode": "o", "lhs": "<C-s>", "rhs": "<Cmd>messages<CR>j<Cmd>nnoremap X l<CR>", "noremap": true }
+      ],
+      "screen": [40, 7],
+      "messages": ["message 0", "message 1", "message 2", "message 3", "message 4", "message 5", "message 6", "message 7", "message 8", "message 9", "message 10", "message 11", "message 12", "message 13", "message 14", "message 15", "message 16", "message 17", "message 18", "message 19"],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    }
+  ]
+}

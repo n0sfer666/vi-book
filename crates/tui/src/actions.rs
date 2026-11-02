@@ -79,7 +79,7 @@ pub fn dispatch(app: &mut App, action: &str) {
 
 pub fn toggle_view(app: &mut App) {
     if !app.readable() {
-        app.ui.message = String::from("read view: markdown only");
+        app.ui.set_message(String::from("read view: markdown only"));
         return;
     }
     let width = layout::column_width(app.ui.text_area);
@@ -92,7 +92,8 @@ pub fn toggle_view(app: &mut App) {
 
 pub fn open_doc(app: &mut App, label: &str, content: &str) {
     if app.workspace.current().is_dirty() {
-        app.ui.message = String::from("unsaved changes (write with :w or discard)");
+        app.ui
+            .set_message(String::from("unsaved changes (write with :w or discard)"));
         return;
     }
     let mut doc = Document::new(content);

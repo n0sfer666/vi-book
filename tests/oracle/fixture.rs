@@ -18,6 +18,9 @@ pub struct Case {
     #[serde(default)]
     pub maps: Vec<Map>,
     pub chunks: Option<Vec<String>>,
+    pub screen: Option<[u16; 2]>,
+    #[serde(default)]
+    pub messages: Vec<String>,
     pub divergence: Option<String>,
     pub expect: Snapshot,
 }

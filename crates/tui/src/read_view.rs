@@ -124,7 +124,8 @@ pub fn handle_key(app: &mut App, key: Key, width: usize) {
             ) {
                 app.workspace.current_mut().editor.yank(code, false);
                 clip_sync::sync_out(app);
-                app.ui.message = String::from("copied code block to clipboard");
+                app.ui
+                    .set_message(String::from("copied code block to clipboard"));
             } else {
                 crate::link_follow::follow_at_cursor(app);
             }

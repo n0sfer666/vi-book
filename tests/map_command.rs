@@ -120,11 +120,11 @@ fn mapping_error_flushes_expansion_but_keeps_typed_input() {
 }
 
 #[test]
-fn listing_placeholder_does_not_flush_expansion() {
+fn listing_does_not_flush_expansion() {
     let mut app = app(THREE);
     run(&mut app, "nnoremap Z :nmap<CR>j");
     press(&mut app, "Z");
-    assert_eq!(app.ui.message, "mapping list: not implemented yet");
+    assert!(app.ui.message.contains(":nmap<CR>j"), "{}", app.ui.message);
     assert_eq!(line(&app), 1);
 }
 

@@ -24,7 +24,7 @@ pub fn run(app: &mut App) -> bool {
         changed |= doc.disk_mark() != before;
     }
     if let Some(text) = disk_message::summary(&events) {
-        app.ui.message = text;
+        app.ui.set_message(text);
         changed = true;
     }
     changed

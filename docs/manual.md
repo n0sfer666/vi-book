@@ -239,8 +239,45 @@ without waiting for a longer one, regardless of definition order; already
 queued keys can still select a longer complete match. This deliberately
 differs from Neovim's definition-order-dependent `<nowait>` behavior.
 `<buffer>`, `<expr>` and `<script>` are not supported. Pipes in the right-hand
-side are literal keys, not command separators. Mapping listings (`:map`,
-`:nmap Q`) currently report `mapping list: not implemented yet`.
+side are literal keys, not command separators.
+
+`:map` lists mappings in its modes; `:nmap Q` filters left-hand sides by
+prefix. Rows show the modes, left-hand side, `*` for a nonrecursive mapping,
+and right-hand side. A common definition stays grouped until a mode is
+overridden or removed; independent definitions remain separate. Rows are
+sorted by left-hand-side notation, with newer definitions first for equal
+keys. `v` remains an alias of `x`: there is no select mode.
+
+## Messages
+
+`:messages` shows the last 1000 nonempty messages, including repetitions.
+`:messages clear` clears the history. Reading history does not add it again.
+One-line messages stay at the bottom; longer output wraps by display width
+and expands upward. Background messages enter history while an open pager
+keeps the text you are reading unchanged.
+
+At `-- More --`, `Enter` / `j` / Down advances one line, `d` half a screen,
+and Space / `f` / PageDown / Ctrl-f a screen. Use `k` / Up / Backspace,
+`u`, and `b` / PageUp / Ctrl-b to go back. `g` and `G` reach the beginning
+and end. `q`, Esc or Ctrl-c stops paging. In Normal mode, `:` starts a
+command line; in Insert mode, it returns to Normal and discards the
+interrupted mapping's remaining keys and commands.
+In Visual mode, `:` ends the selection, discards that mapping tail, and
+opens an Ex draft with the `'<,'>` range prefix. Ex range execution is
+not yet supported.
+While an operator is pending, `:` cancels the operator and opens Ex,
+preserving the mapping tail as in Normal mode.
+
+The end of the output shows `Press ENTER or type command to continue`.
+Enter or Space closes it; other command keys continue editing. Paging keys
+can still scroll or be consumed at this prompt, as in Vim. Mappings pause
+at `-- More --`; the remaining keys and commands continue according to the
+prompt they reach, retaining their remap settings. Pager navigation itself
+does not use mappings.
+
+Output produced while typing an Ex command or search does not open a
+prompt: the draft stays intact and Enter submits it. Messages still enter
+history.
 
 ## Configuration
 

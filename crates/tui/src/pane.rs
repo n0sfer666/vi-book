@@ -13,7 +13,7 @@ impl App {
 
     pub fn vsplit(&mut self, target: Option<&str>) {
         if self.pane_count() >= MAX_PANES {
-            self.ui.message = format!("max {MAX_PANES} columns");
+            self.ui.set_message(format!("max {MAX_PANES} columns"));
             return;
         }
         let buf = self.make_buffer(target);
@@ -37,7 +37,7 @@ impl App {
             .iter()
             .any(|w| w.id != active && w.buf.doc.is_dirty());
         if others_dirty {
-            self.ui.message = String::from(UNSAVED);
+            self.ui.set_message(String::from(UNSAVED));
             return;
         }
         for window in self.workspace.only() {
@@ -47,7 +47,7 @@ impl App {
 
     pub fn close_active(&mut self) {
         if self.pane_count() > 1 && self.workspace.current().is_dirty() {
-            self.ui.message = String::from(UNSAVED);
+            self.ui.set_message(String::from(UNSAVED));
             return;
         }
         if self.workspace.close_window().is_some() {

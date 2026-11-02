@@ -30,9 +30,11 @@ pub fn handle(app: &mut App, key: Key) {
 }
 
 pub fn run(app: &mut App, command: &str) {
-    if !execute(app, command) {
-        app.typeahead.flush_mapped();
-    }
+    crate::messages::batch(app, |app| {
+        if !execute(app, command) {
+            app.typeahead.flush_mapped();
+        }
+    });
 }
 
 fn execute(app: &mut App, command: &str) -> bool {
@@ -55,6 +57,14 @@ fn execute(app: &mut App, command: &str) -> bool {
         #[cfg(all(feature = "notebook", feature = "vault"))]
         "tree" => toggle_tree(app),
         "help" => app.ui.help = true,
+        "messages" => {
+            let text = app.ui.messages.history().collect::<Vec<_>>().join("\n");
+            app.ui.show_output(text);
+        }
+        "messages clear" => {
+            app.ui.messages.clear();
+            app.ui.show_output("");
+        }
         "buffers" => app.open_buffer_list(),
         "toggle-view" => actions::toggle_view(app),
         "vsplit" | "vsp" | "split" | "sp" => app.vsplit(None),
@@ -70,7 +80,8 @@ fn execute(app: &mut App, command: &str) -> bool {
             } else if let Some(rel) = other.strip_prefix("e ") {
                 app.open_rel(rel.trim());
             } else if !requests::command(app, other) {
-                app.ui.message = format!("not an editor command: {other}");
+                app.ui
+                    .set_message(format!("not an editor command: {other}"));
                 return false;
             }
         }
@@ -92,14 +103,14 @@ fn toggle_tree(app: &mut App) {
 
 fn reload(app: &mut App) {
     let doc = app.workspace.current_mut();
-    app.ui.message = match doc.reload() {
+    app.ui.set_message(match doc.reload() {
         Ok(()) => disk_message::message(&doc.name, Reaction::Reload),
         Err(Error::Io(err)) if err.kind() == ErrorKind::NotFound => match doc.disk_mark() {
             Some(DiskMark::Deleted) => disk_message::message(&doc.name, Reaction::Vanished),
             _ => disk_message::missing(&doc.name),
         },
         Err(err) => format!("reload failed: {err}"),
-    };
+    });
 }
 
 fn save(app: &mut App, force: bool) -> bool {
@@ -108,12 +119,13 @@ fn save(app: &mut App, force: bool) -> bool {
         doc.check_disk();
     }
     if !force && doc.disk_mark() == Some(DiskMark::Changed) {
-        app.ui.message = disk_message::message(&doc.name, Reaction::Conflict);
+        app.ui
+            .set_message(disk_message::message(&doc.name, Reaction::Conflict));
         return false;
     }
     match app.workspace.current_mut().save() {
         Ok(()) => {
-            app.ui.message = String::from("written");
+            app.ui.set_message(String::from("written"));
             checktime::sync_twins(app);
             if let Some(path) = app.workspace.current().path.clone() {
                 requests::emit(app, Event::NoteSave(path));
@@ -121,7 +133,7 @@ fn save(app: &mut App, force: bool) -> bool {
             true
         }
         Err(err) => {
-            app.ui.message = format!("save failed: {err}");
+            app.ui.set_message(format!("save failed: {err}"));
             false
         }
     }
@@ -129,7 +141,8 @@ fn save(app: &mut App, force: bool) -> bool {
 
 fn quit(app: &mut App, force: bool) -> bool {
     if !force && app.any_dirty() {
-        app.ui.message = String::from("unsaved changes (use :q! to discard)");
+        app.ui
+            .set_message(String::from("unsaved changes (use :q! to discard)"));
         return false;
     }
     app.quit = true;

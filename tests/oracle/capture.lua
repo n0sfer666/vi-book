@@ -1,4 +1,4 @@
-local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, chunks = true, divergence = true, expect = true }
+local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, chunks = true, screen = true, messages = true, divergence = true, expect = true }
 
 local snapshot_path = vim.fs.joinpath(vim.fs.dirname(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p")), "capture_state.lua")
 local snapshot = dofile(snapshot_path)
@@ -77,12 +77,15 @@ local function validate(case, seen)
 end
 
 local function capture(script, case)
-  if case.chunks then
+  if case.chunks and not case.screen then
     return dofile(vim.fs.joinpath(vim.fs.dirname(script), "capture_chunks.lua"))(case, snapshot_path)
   end
   local root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(script)))
   local tmp = vim.fs.joinpath(root, "target", "tmp", "oracle-capture-" .. vim.fn.getpid())
   vim.fn.mkdir(tmp, "p")
+  if case.screen then
+    return dofile(vim.fs.joinpath(vim.fs.dirname(script), "capture_pty.lua"))(case, snapshot_path, tmp)
+  end
   local case_path, out_path = vim.fs.joinpath(tmp, "case.json"), vim.fs.joinpath(tmp, "snapshot.json")
   vim.fn.writefile({ vim.json.encode(case) }, case_path)
   local cmd = { vim.v.progpath, "--clean", "--headless", "-i", "NONE", "-l", script, "--child", case_path, out_path }
@@ -103,18 +106,6 @@ local function pos(value)
   return "[" .. value[1] .. ", " .. value[2] .. "]"
 end
 
-local function render_map(map)
-  local fields = {
-    '"mode": ' .. str(map.mode),
-    '"lhs": ' .. str(map.lhs),
-    '"rhs": ' .. str(map.rhs),
-    '"noremap": ' .. tostring(map.noremap),
-  }
-  if map.nowait ~= nil then
-    table.insert(fields, '"nowait": ' .. tostring(map.nowait))
-  end
-  return "        { " .. table.concat(fields, ", ") .. " }"
-end
 
 local function render_case(case)
   local e = case.expect
@@ -125,17 +116,7 @@ local function render_case(case)
     '      "cursor": ' .. pos(case.cursor) .. ",",
     '      "keys": ' .. str(case.keys) .. ",",
   }
-  if case.chunks then
-    local chunks = vim.tbl_map(str, case.chunks)
-    table.insert(out, '      "chunks": [' .. table.concat(chunks, ", ") .. "],")
-  end
-  if case.maps then
-    table.insert(out, '      "maps": [')
-    for i, map in ipairs(case.maps) do
-      table.insert(out, render_map(map) .. (i < #case.maps and "," or ""))
-    end
-    table.insert(out, "      ],")
-  end
+  dofile(vim.fs.joinpath(vim.fs.dirname(snapshot_path), "capture_fields.lua"))(out, case)
   if case.divergence then
     table.insert(out, '      "divergence": ' .. str(case.divergence) .. ",")
   end

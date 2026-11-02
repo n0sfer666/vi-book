@@ -37,6 +37,16 @@ impl<A: Clone> Typeahead<A> {
         self.deadline
     }
 
+    pub fn feed_front(&mut self, key: Key) {
+        self.queue.feed_front(key);
+        self.deadline = None;
+    }
+
+    pub fn replay(&mut self, key: Key) {
+        self.queue.replay(key);
+        self.deadline = None;
+    }
+
     pub fn flush_mapped(&mut self) {
         self.depth = 0;
         if self.queue.flush_mapped() {

@@ -12,7 +12,7 @@ pub(crate) fn execute(app: &mut App, input: &str) -> Option<bool> {
     match result {
         Ok(()) => Some(true),
         Err(error) => {
-            app.ui.message = error.to_string();
+            app.ui.set_message(error.to_string());
             Some(false)
         }
     }
@@ -30,28 +30,12 @@ fn apply(app: &mut App, command: MapCommand) -> Result<(), MapError> {
         } => {
             let rhs = map_action::rhs(rhs);
             let mapping = Mapping { rhs, remap, nowait };
-            let mut replaced = Vec::new();
-            for mode in modes {
-                let old = app
-                    .keymap
-                    .insert(mode, &lhs, mapping.clone())
-                    .map_err(|_| MapError::InvalidArgument)?;
-                let collision = unique && old.is_some();
-                replaced.push((mode, old));
-                if collision {
-                    for (mode, old) in replaced {
-                        match old {
-                            Some(old) => {
-                                let _ = app.keymap.insert(mode, &lhs, old);
-                            }
-                            None => {
-                                app.keymap.remove(mode, &lhs);
-                            }
-                        }
-                    }
-                    return Err(MapError::AlreadyExists(format_keys(&lhs)));
-                }
+            if unique && modes.iter().any(|&mode| app.keymap.contains(mode, &lhs)) {
+                return Err(MapError::AlreadyExists(format_keys(&lhs)));
             }
+            app.keymap
+                .insert_modes(&modes, &lhs, mapping)
+                .map_err(|_| MapError::InvalidArgument)?;
         }
         MapCommand::Unmap { modes, lhs } => {
             let mut removed = false;
@@ -67,8 +51,8 @@ fn apply(app: &mut App, command: MapCommand) -> Result<(), MapError> {
                 app.keymap.clear(mode);
             }
         }
-        MapCommand::List { .. } => {
-            app.ui.message = String::from("mapping list: not implemented yet");
+        MapCommand::List { modes, lhs } => {
+            crate::map_listing::output(app, &modes, &lhs);
         }
     }
     Ok(())

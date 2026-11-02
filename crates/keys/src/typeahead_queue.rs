@@ -7,6 +7,7 @@ pub(crate) struct Queue<A> {
     pub(crate) keys: Vec<Key>,
     origins: Vec<Origin>,
     actions: VecDeque<(usize, A)>,
+    last_origin: Origin,
 }
 
 impl<A> Default for Queue<A> {
@@ -15,6 +16,7 @@ impl<A> Default for Queue<A> {
             keys: Vec::new(),
             origins: Vec::new(),
             actions: VecDeque::new(),
+            last_origin: Origin::Typed,
         }
     }
 }
@@ -23,6 +25,25 @@ impl<A> Queue<A> {
     pub(crate) fn feed(&mut self, key: Key) {
         self.keys.push(key);
         self.origins.push(Origin::Typed);
+    }
+
+    pub(crate) fn feed_front(&mut self, key: Key) {
+        self.front(key, Origin::Typed);
+    }
+
+    pub(crate) fn replay(&mut self, key: Key) {
+        self.front(key, self.last_origin);
+    }
+
+    fn front(&mut self, key: Key, mut origin: Origin) {
+        if origin == Origin::Typed && self.has_mapped() {
+            origin = Origin::Remap;
+        }
+        self.keys.insert(0, key);
+        self.origins.insert(0, origin);
+        for (at, _) in &mut self.actions {
+            *at += 1;
+        }
     }
 
     pub(crate) fn action(&mut self) -> Option<A> {
@@ -44,6 +65,10 @@ impl<A> Queue<A> {
         window == self.keys.len() && self.actions.is_empty()
     }
 
+    pub(crate) fn has_mapped(&self) -> bool {
+        !self.actions.is_empty() || self.origins.first().is_some_and(|o| *o != Origin::Typed)
+    }
+
     pub(crate) fn consume(&mut self, len: usize) -> Vec<Key> {
         let keys = self.keys.drain(..len).collect();
         self.origins.drain(..len);
@@ -55,7 +80,7 @@ impl<A> Queue<A> {
 
     pub(crate) fn pop_key(&mut self) -> Key {
         let key = self.keys.remove(0);
-        self.origins.remove(0);
+        self.last_origin = self.origins.remove(0);
         for (at, _) in &mut self.actions {
             *at -= 1;
         }

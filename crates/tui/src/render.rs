@@ -16,7 +16,13 @@ pub(crate) type Line = Vec<(String, CellStyle)>;
 const PANEL_WIDTH: u16 = 28;
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
+    draw_editor(frame, app);
+    crate::message_draw::draw(frame, app);
+}
+
+fn draw_editor(frame: &mut Frame, app: &mut App) {
     let area = frame.grid.area();
+    app.ui.screen = area;
     let body_h = area.h.saturating_sub(2);
     let body = Rect { h: body_h, ..area };
     let status_area = Rect {

@@ -20,7 +20,11 @@ pub fn load_config(app: &mut App) {
     load_config_from(app, resolved);
 }
 
-pub fn load_config_from(app: &mut App, mut resolved: Option<(PathBuf, Option<&'static str>)>) {
+pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'static str>)>) {
+    crate::messages::batch(app, |app| load_config_inner(app, resolved));
+}
+
+fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'static str>)>) {
     if resolved.is_some() {
         let activated = app.modules.activate(&app.workspace, "lua");
         requests::apply(app, activated);
@@ -31,11 +35,11 @@ pub fn load_config_from(app: &mut App, mut resolved: Option<(PathBuf, Option<&'s
     let warning = resolved.as_mut().and_then(|(_, warning)| warning.take());
     let errors = lua.load_config(resolved);
     if let Some(warning) = warning.filter(|_| app.ui.message.is_empty()) {
-        app.ui.message = warning.to_string();
+        app.ui.set_message(warning.to_string());
     }
     let failed = !errors.is_empty();
     if let Some(error) = errors.into_iter().next_back() {
-        app.ui.message = error;
+        app.ui.set_message(error);
     }
     apply_opts(app);
     install_keymaps(app, failed);
@@ -52,7 +56,7 @@ fn install_keymaps(app: &mut App, failed: bool) {
     let mut keymap = base_keymap::build(app.insert_escape.as_deref());
     let installed = lua_keymaps::install(&mut keymap, &host.keymaps(), app.leader);
     if let Some(error) = installed.or(host.keymap_errors().pop()).filter(|_| !failed) {
-        app.ui.message = error;
+        app.ui.set_message(error);
     }
     app.keymap = keymap;
 }
