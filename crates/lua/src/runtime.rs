@@ -17,6 +17,7 @@ const BUDGET: u64 = 50_000_000;
 pub struct Runtime {
     lua: Lua,
     steps: Rc<Cell<u64>>,
+    depth: Cell<usize>,
 }
 
 impl Runtime {
@@ -42,7 +43,11 @@ impl Runtime {
                 }
             },
         )?;
-        Ok(Self { lua, steps })
+        Ok(Self {
+            lua,
+            steps,
+            depth: Cell::new(0),
+        })
     }
 
     pub fn grant(&self, cap: Capability) -> Result<(), Error> {
@@ -55,26 +60,38 @@ impl Runtime {
     }
 
     pub fn exec(&self, script: &str) -> Result<(), Error> {
-        self.reset_budget();
+        let _invocation = self.enter();
         self.lua.load(script).exec()?;
         Ok(())
     }
 
     pub fn eval_bool(&self, expr: &str) -> Result<bool, Error> {
-        self.reset_budget();
+        let _invocation = self.enter();
         Ok(self.lua.load(expr).eval()?)
     }
 
     pub fn eval_string(&self, expr: &str) -> Result<String, Error> {
-        self.reset_budget();
+        let _invocation = self.enter();
         Ok(self.lua.load(expr).eval()?)
     }
 
-    pub(crate) fn reset_budget(&self) {
-        self.steps.set(0);
+    pub(crate) fn enter(&self) -> Invocation<'_> {
+        if self.depth.get() == 0 {
+            self.steps.set(0);
+        }
+        self.depth.set(self.depth.get() + 1);
+        Invocation(&self.depth)
     }
 
     pub(crate) fn lua(&self) -> &Lua {
         &self.lua
+    }
+}
+
+pub(crate) struct Invocation<'a>(&'a Cell<usize>);
+
+impl Drop for Invocation<'_> {
+    fn drop(&mut self) {
+        self.0.set(self.0.get() - 1);
     }
 }

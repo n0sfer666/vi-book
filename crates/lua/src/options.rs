@@ -28,20 +28,7 @@ pub(crate) fn install(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
         "__option_set",
         lua.create_function(
             move |_, (interface, text, value): (String, String, LuaValue)| {
-                let (name, access) = resolve(&interface, &text)?;
-                let value = convert(value)?;
-                let change = Change {
-                    name,
-                    operation: Operation::Set(value),
-                    text: format!(
-                        "{}={}",
-                        name.as_str(),
-                        match value {
-                            Value::Bool(value) => value.to_string(),
-                            Value::Number(value) => value.to_string(),
-                        }
-                    ),
-                };
+                let (access, change) = change(&interface, &text, value)?;
                 let mut state = set.borrow_mut();
                 state
                     .options
@@ -57,7 +44,7 @@ pub(crate) fn install(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
     Ok(())
 }
 
-fn resolve(interface: &str, text: &str) -> mlua::Result<(Name, Access)> {
+pub(crate) fn resolve(interface: &str, text: &str) -> mlua::Result<(Name, Access)> {
     let name = Name::parse(text).ok_or_else(|| failure(format!("Unknown option: {text}")))?;
     let access = match interface {
         "o" | "opt" => Access::Effective,
@@ -87,6 +74,28 @@ fn convert(value: LuaValue) -> mlua::Result<Value> {
     }
 }
 
-fn failure(message: impl std::fmt::Display) -> mlua::Error {
+pub(crate) fn failure(message: impl std::fmt::Display) -> mlua::Error {
     mlua::Error::RuntimeError(message.to_string())
+}
+
+pub(crate) fn change(
+    interface: &str,
+    text: &str,
+    value: LuaValue,
+) -> mlua::Result<(Access, Change)> {
+    let (name, access) = resolve(interface, text)?;
+    let value = convert(value)?;
+    let change = Change {
+        name,
+        operation: Operation::Set(value),
+        text: format!(
+            "{}={}",
+            name.as_str(),
+            match value {
+                Value::Bool(value) => value.to_string(),
+                Value::Number(value) => value.to_string(),
+            }
+        ),
+    };
+    Ok((access, change))
 }

@@ -3,6 +3,7 @@
 pub mod autocmd;
 pub mod disk;
 pub mod document;
+pub mod execution;
 pub mod filetype;
 pub mod io;
 pub mod module;

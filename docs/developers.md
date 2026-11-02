@@ -140,3 +140,25 @@ Run captures with headless Neovim (`-u NONE -i NONE -n -l`) from the repository,
 with HOME, XDG directories and NVIM_LOG_FILE isolated under its `target` directory.
 Repeat captures must produce identical files; do not edit expected data by hand.
 This library foundation is not yet connected to Lua/Ex autocmd execution.
+
+## Synchronous editor context
+
+`editor::execution::Context` borrows the canonical workspace for one execution.
+Its option accessors release the workspace borrow before invoking an `Observer`;
+a callback can read current values and execute a nested `set` command inline.
+Option notifications are nonrecursive, include old local/global values and fire
+for same-value writes. Queries, invalid writes and `set all&` do not notify.
+Autocmd errors preserve applied writes: direct option setters report them through
+context messages, while Ex execution also returns an error after processing valid
+arguments. The TUI `set` adapter delegates parsing and mutation to this context.
+
+`PluginHost::load_with_context` temporarily connects existing Lua option accessors
+to the live context. Public accessor objects remain stable; captured option values
+remain snapshots. Backends are restored after success or error, and legacy host
+calls outside a context retain their snapshot/pending-write behavior. A caller must
+apply legacy pending option writes to their original target before entering a live
+context; entry rejects unflushed writes without changing the workspace or queue.
+Nested VM
+entries share the outer instruction budget; a new outer invocation resets it.
+The native autocmd registry/frontends and lifecycle event wiring are subsequent
+integration steps; the current observer is the synchronous execution foundation.

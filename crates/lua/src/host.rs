@@ -1,4 +1,5 @@
 mod keymaps;
+mod scoped;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -139,7 +140,7 @@ impl PluginHost {
         let Some(func) = commands.get::<Option<Function>>(name)? else {
             return Ok(false);
         };
-        self.rt.reset_budget();
+        let _invocation = self.rt.enter();
         func.call::<()>(())?;
         Ok(true)
     }
@@ -148,7 +149,7 @@ impl PluginHost {
         let handlers = self.vibook_field("__handlers")?;
         if let Some(list) = handlers.get::<Option<Table>>(event)? {
             for func in list.sequence_values::<Function>() {
-                self.rt.reset_budget();
+                let _invocation = self.rt.enter();
                 func?.call::<()>(())?;
             }
         }
@@ -159,7 +160,7 @@ impl PluginHost {
         let handlers = self.vibook_field("__handlers")?;
         if let Some(list) = handlers.get::<Option<Table>>(event)? {
             for func in list.sequence_values::<Function>() {
-                self.rt.reset_budget();
+                let _invocation = self.rt.enter();
                 func?.call::<()>(arg.to_string())?;
             }
         }
