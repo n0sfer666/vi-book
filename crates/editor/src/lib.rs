@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+pub mod autocmd;
 pub mod disk;
 pub mod document;
 pub mod filetype;
