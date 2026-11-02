@@ -12,4 +12,6 @@ pub enum Error {
     GroupName(String),
     #[error("Invalid autocmd id: {0}")]
     AutocmdId(AutocmdId),
+    #[error("Invalid buffer number: {0}")]
+    Buffer(u64),
 }

@@ -1,5 +1,5 @@
 mod keymaps;
-mod scoped;
+pub(crate) mod scoped;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -13,20 +13,35 @@ use crate::install::{install_buf, install_open, install_vault};
 use crate::runtime::Runtime;
 
 pub struct PluginHost {
-    rt: Runtime,
+    rt: Rc<Runtime>,
     bridge: Shared,
+    native: Option<crate::autocmd::Native>,
 }
 
 impl PluginHost {
+    pub fn new_with_bus(bus: Rc<v_ide_editor::autocmd::Bus>) -> Result<Self, Error> {
+        let mut host = Self::new()?;
+        host.native = Some(crate::autocmd::Native::new(
+            host.rt.clone(),
+            host.bridge.clone(),
+            bus,
+        )?);
+        Ok(host)
+    }
+
     pub fn new() -> Result<Self, Error> {
-        let rt = Runtime::new()?;
+        let rt = Rc::new(Runtime::new()?);
         rt.exec(PRELUDE)?;
         let bridge: Shared = Rc::new(RefCell::new(Bridge::default()));
         crate::options::install(&rt, &bridge)?;
         install_buf(&rt, &bridge)?;
         install_vault(&rt, &bridge)?;
         install_open(&rt, &bridge)?;
-        Ok(Self { rt, bridge })
+        Ok(Self {
+            rt,
+            bridge,
+            native: None,
+        })
     }
 
     pub fn load(&self, script: &str) -> Result<(), Error> {

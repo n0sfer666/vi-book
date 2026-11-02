@@ -10,6 +10,10 @@ pub trait Callback {
     fn function(&self) -> Option<FunctionRef> {
         None
     }
+
+    fn name(&self) -> Option<&str> {
+        None
+    }
 }
 
 impl<F> Callback for F

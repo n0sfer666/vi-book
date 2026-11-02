@@ -13,8 +13,27 @@ impl Bus {
         events: &[&str],
         selectors: &[Selector],
     ) -> Result<AutocmdId, Error> {
-        self.install(attributes, action, events, selectors, true)
+        self.install(attributes, action, events, selectors.iter().map(Ok), true)
             .map(|id| id.unwrap())
+    }
+
+    pub fn define_checked(
+        &self,
+        attributes: Attributes,
+        action: Action,
+        events: &[&str],
+        selectors: &[Result<Selector, Error>],
+    ) -> Result<AutocmdId, Error> {
+        self.install(
+            attributes,
+            action,
+            events,
+            selectors
+                .iter()
+                .map(|selector| selector.as_ref().map_err(Clone::clone)),
+            true,
+        )
+        .map(|id| id.unwrap())
     }
 
     pub fn define_ex(
@@ -24,16 +43,16 @@ impl Bus {
         events: &[&str],
         selectors: &[Selector],
     ) -> Result<(), Error> {
-        self.install(attributes, action, events, selectors, false)
+        self.install(attributes, action, events, selectors.iter().map(Ok), false)
             .map(|_| ())
     }
 
-    fn install(
+    fn install<'a>(
         &self,
         attributes: Attributes,
         action: Action,
         events: &[&str],
-        selectors: &[Selector],
+        selectors: impl Clone + Iterator<Item = Result<&'a Selector, Error>>,
         api: bool,
     ) -> Result<Option<AutocmdId>, Error> {
         let _keepalive = action.clone();
@@ -48,7 +67,8 @@ impl Bus {
         let mut cache = HashMap::new();
         for source in events {
             let event = EventName::parse(source)?;
-            for selector in selectors {
+            for selector in selectors.clone() {
+                let selector = selector?;
                 match selector {
                     Selector::Buffer(_) => {
                         definition.push(event, selector.clone());

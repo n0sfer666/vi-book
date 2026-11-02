@@ -66,6 +66,13 @@ impl Codec {
         self.functions.keep(function)
     }
 
+    pub(crate) fn is_empty_dictionary(&self, table: &Table) -> bool {
+        table.is_empty()
+            && table
+                .metatable()
+                .is_some_and(|marker| marker.to_pointer() == self.empty_dict.to_pointer())
+    }
+
     pub(crate) fn function(&self, reference: FunctionRef) -> mlua::Result<Function> {
         let stored = self.functions.get(reference)?;
         Ok(stored.value.clone())

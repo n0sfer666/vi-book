@@ -9,6 +9,7 @@ use std::{
 };
 
 use crate::execution::OptionSet;
+use crate::workspace::DocId;
 
 use super::{Action, Pattern, RecordId, Registry};
 
@@ -27,6 +28,7 @@ struct State {
 struct Frame {
     nested: bool,
     option: Option<OptionSet>,
+    buffer: Option<DocId>,
 }
 
 impl Bus {
@@ -52,5 +54,9 @@ impl Bus {
             .iter()
             .rev()
             .find_map(|frame| frame.option.clone())
+    }
+
+    pub fn event_buffer(&self) -> Option<DocId> {
+        self.frames.borrow().last().and_then(|frame| frame.buffer)
     }
 }

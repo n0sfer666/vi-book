@@ -88,6 +88,7 @@ impl Bus {
             self.frames.borrow_mut().push(Frame {
                 nested: row.attributes.nested,
                 option: occurrence.option.clone(),
+                buffer: occurrence.buffer,
             });
             let _active = Active(&self.frames);
             called += 1;

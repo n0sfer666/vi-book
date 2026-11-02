@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod autocmd;
 pub mod config;
 pub mod data;
 pub mod defaults;

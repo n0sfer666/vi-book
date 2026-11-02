@@ -220,3 +220,36 @@ in the application's legacy host.
 `scripts/capture_autocmd_data.lua` generates the native Neovim 0.12.6 data cases in
 `crates/lua/tests/fixtures/data_native.rs`. Use the same isolated HOME/XDG/log setup
 as the other captures and verify that repeated capture is byte-identical.
+
+## Native Lua autocmd bridge
+
+`PluginHost::new_with_bus(Rc<editor::autocmd::Bus>)` enables the direct
+`vibook.create_autocmd`, `del_autocmd`, `create_augroup`, `del_augroup_by_id`,
+`del_augroup_by_name`, `get_autocmds` and `clear_autocmds` APIs. The default host
+constructor retains the legacy API. The application module still uses that
+constructor; application events and the native Ex frontend are not connected yet.
+`exec_autocmds` is a subsequent integration step.
+
+Definitions accept native event strings/lists, groups, patterns or a buffer,
+commands or Lua/named callbacks, and once/nested/description attributes. Listings
+preserve callback identity and native metadata, including buffer aliases. Filters
+retain the native differences between omitted groups in get and clear, empty
+arrays, literal query patterns and comma-separated definition patterns. A failed
+registration retains its valid prefix. Unsupported regexp insertions still fail
+explicitly.
+
+Buffer addressing and buffer-local listings require `load_with_context`; the bus
+callback adapter establishes this context automatically. Public wrappers remain usable across scopes.
+Callbacks receive id/group/event/match/file/buf/data, copy typed payloads, preserve
+Lua function identity, and complete option writes before the caller continues.
+Named `v:lua` callbacks resolve globals at invocation, receive no arguments and ignore their return;
+other Vimscript names report E117 at invocation. A Lua callback's truthy return
+removes its current expanded record.
+
+The host owns the bus and API state; bus callbacks own the state, whose bus link
+is weak. VM functions capture weak state/bus links. Scope setup and rollback pause
+GC while replacing backends, enter the shared budgets before Lua allocation, and
+preserve scripts' GC running/stopped choices. Script compilation precedes backend
+publication. The native assertions in `scripts/check_autocmd_definitions.lua`
+exercise the same contract chunks used by Rust tests; run them with headless
+Neovim and isolated HOME/XDG/log paths under `target`.
