@@ -37,6 +37,14 @@ impl<A: Clone> Typeahead<A> {
         self.deadline
     }
 
+    pub fn set_timeout(&mut self, timeout: Duration) {
+        self.deadline = self
+            .deadline
+            .and_then(|deadline| deadline.checked_sub(self.timeout))
+            .and_then(|start| start.checked_add(timeout));
+        self.timeout = timeout;
+    }
+
     pub fn feed_front(&mut self, key: Key) {
         self.queue.feed_front(key);
         self.deadline = None;
@@ -101,7 +109,12 @@ impl<A: Clone> Typeahead<A> {
             };
             let timed_out = self.deadline.is_some_and(|deadline| now >= deadline);
             let nowait = exact.is_some_and(|(_, mapping)| mapping.nowait);
-            if partial && self.queue.can_wait(window) && !timed_out && !nowait {
+            if partial
+                && self.queue.can_wait(window)
+                && !timed_out
+                && !nowait
+                && !self.timeout.is_zero()
+            {
                 self.deadline.get_or_insert(now + self.timeout);
                 return Step::Wait;
             }
@@ -117,7 +130,11 @@ impl<A: Clone> Typeahead<A> {
                         self.depth = 0;
                         return Step::Action(action.clone());
                     }
-                    if keys.starts_with(pending) && self.queue.can_wait(window) && !timed_out {
+                    if keys.starts_with(pending)
+                        && self.queue.can_wait(window)
+                        && !timed_out
+                        && !self.timeout.is_zero()
+                    {
                         self.deadline.get_or_insert(now + self.timeout);
                         return Step::Wait;
                     }

@@ -5,6 +5,7 @@ pub mod document;
 pub mod filetype;
 pub mod io;
 pub mod module;
+pub mod options;
 pub mod path;
 pub mod workspace;
 
