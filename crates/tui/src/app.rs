@@ -16,7 +16,7 @@ use v_ide_editor::Error;
 use v_ide_editor::document::Document;
 use v_ide_editor::module::Modules;
 use v_ide_editor::workspace::{DocId, WindowId, Workspace};
-use v_ide_keys::{Keymap, TIMEOUT, Typeahead};
+use v_ide_keys::{Key, Keymap, TIMEOUT, Typeahead};
 #[cfg(feature = "lua")]
 use v_ide_lua::module::LuaModule;
 use v_ide_markdown::module::MarkdownModule;
@@ -40,7 +40,7 @@ pub struct App {
     pub nesting: usize,
     pub keymap: Keymap<MapAction>,
     pub typeahead: Typeahead<MapAction>,
-    pub leader: char,
+    pub leader: Vec<Key>,
     pub menu_center: bool,
     pub menu_extra: Vec<MenuItem>,
     pub insert_escape: Option<String>,
@@ -95,7 +95,7 @@ impl App {
             nesting: 0,
             keymap: base_keymap::build(Some(INSERT_ESCAPE)),
             typeahead: Typeahead::new(TIMEOUT),
-            leader: ' ',
+            leader: vec![Key::char(' ')],
             menu_center: false,
             menu_extra: Vec::new(),
             insert_escape: Some(String::from(INSERT_ESCAPE)),

@@ -1,0 +1,88 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "recursive Lua mapping expands another Lua mapping",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "lua": true,
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": "Z", "noremap": false },
+        { "mode": "n", "lhs": "Z", "rhs": "j", "noremap": true }
+      ],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "nonrecursive Lua mapping uses builtin motion",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "lua": true,
+      "maps": [
+        { "mode": "n", "lhs": "j", "rhs": "G", "noremap": true },
+        { "mode": "n", "lhs": "Q", "rhs": "j", "noremap": true }
+      ],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Lua colon rhs opens and submits Ex command",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "Q",
+      "lua": true,
+      "maps": [
+        { "mode": "n", "lhs": "Q", "rhs": ":nnoremap X l<CR>X", "noremap": true }
+      ],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Lua mixed command rhs keeps insert mode",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "i<C-s><Esc>",
+      "lua": true,
+      "maps": [
+        { "mode": "i", "lhs": "<C-s>", "rhs": "a<Cmd>nnoremap X l<CR>b", "noremap": true }
+      ],
+      "expect": {
+        "text": "abone\ntwo\nthree",
+        "cursor": [0, 1],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    },
+    {
+      "name": "Lua nowait resolves a prefix immediately",
+      "before": "one\ntwo\nthree",
+      "cursor": [0, 0],
+      "keys": "a",
+      "lua": true,
+      "maps": [
+        { "mode": "n", "lhs": "ab", "rhs": "G", "noremap": true },
+        { "mode": "n", "lhs": "a", "rhs": "j", "noremap": true, "nowait": true }
+      ],
+      "expect": {
+        "text": "one\ntwo\nthree",
+        "cursor": [1, 0],
+        "mode": "normal",
+        "unnamed": ""
+      }
+    }
+  ]
+}

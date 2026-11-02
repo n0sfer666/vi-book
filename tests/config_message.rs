@@ -50,7 +50,7 @@ fn config_without_startup_activates_lua() {
     let mut app = App::new(common::named_doc("x", "a.md"));
     let path = common::config_file("nostart", "vibook.opt.leader = ','");
     lua_bridge::load_config_from(&mut app, Some((path, Some("config: old"))));
-    assert_eq!(app.leader, ',');
+    assert_eq!(app.leader, v_ide_keys::parse_keys(","));
     assert_eq!(app.ui.message, "config: old");
 }
 

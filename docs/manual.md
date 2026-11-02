@@ -155,7 +155,7 @@ spot, so the document still feels like one buffer.
 
 ## The menu (leader key)
 
-Press `<Space>` (the *leader* key) to open the menu — a quick list of common
+Press `<Space>` (the default *leader*) to open the menu — a quick list of common
 actions: find a note, create one, toggle the tree, jump to today's daily note,
 write, quit, open help. Pick an entry with the arrow keys and `<CR>`, or just
 press the highlighted letter. Entries marked `→` open a submenu (e.g.
@@ -247,6 +247,12 @@ and right-hand side. A common definition stays grouped until a mode is
 overridden or removed; independent definitions remain separate. Rows are
 sorted by left-hand-side notation, with newer definitions first for equal
 keys. `v` remains an alias of `x`: there is no select mode.
+
+The leader can be a key sequence in Vim notation, for example
+`vibook.opt.leader = "<C-a>x"`. Type the whole sequence to open the menu;
+longer mappings take priority and may wait up to one second. An incomplete
+or mismatched sequence returns its keys to normal editing. Empty leader
+values report an error and preserve the previous sequence.
 
 ## Messages
 

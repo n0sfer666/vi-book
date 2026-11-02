@@ -34,7 +34,7 @@ pub use crate::map_group::MapGroup;
 pub use crate::map_mode::MapMode;
 pub use crate::mapping::{Mapping, Rhs};
 pub use crate::mods::Mods;
-pub use crate::parse::parse_keys;
+pub use crate::parse::{parse_keys, parse_keys_with_leader};
 pub use crate::step::Step;
 pub use crate::stroke::Stroke;
 pub use crate::typeahead::{TIMEOUT, Typeahead};

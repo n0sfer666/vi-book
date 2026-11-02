@@ -1,4 +1,4 @@
-use crate::{Key, MapError, format_keys};
+use crate::MapError;
 
 #[derive(Default)]
 pub(crate) struct MapArgs {
@@ -33,17 +33,4 @@ pub(crate) fn take_word(input: &str) -> (&str, &str) {
     let input = input.trim_start_matches([' ', '\t']);
     let end = input.find([' ', '\t']).unwrap_or(input.len());
     (&input[..end], input[end..].trim_start_matches([' ', '\t']))
-}
-
-pub(crate) fn expand_leader(input: &str, leader: char) -> String {
-    let mut rest = input;
-    let mut out = String::new();
-    let leader = format_keys(&[Key::char(leader)]);
-    while let Some(at) = rest.to_ascii_lowercase().find("<leader>") {
-        out.push_str(&rest[..at]);
-        out.push_str(&leader);
-        rest = &rest[at + "<leader>".len()..];
-    }
-    out.push_str(rest);
-    out
 }

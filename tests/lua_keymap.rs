@@ -15,7 +15,7 @@ fn normal_keymap_runs_plugin_command() {
         common::named_doc("hi", "a.md"),
         "keymap-cmd",
         "vibook.command('shout', function() vibook.buf.set_text('SHOUTED') end)\n\
-         vibook.keymap('n', '<C-s>', ':shout')",
+         vibook.keymap('n', '<C-s>', '<Cmd>shout<CR>')",
     );
     app.handle(ctrl('s'));
     assert_eq!(app.workspace.current().editor.text(), "SHOUTED");

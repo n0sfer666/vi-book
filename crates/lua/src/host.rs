@@ -90,9 +90,18 @@ impl PluginHost {
             .filter_map(Result::ok)
             .filter_map(|t| {
                 Some(Keymap {
-                    mode: t.get("mode").ok()?,
+                    mode: match t.get::<mlua::Value>("mode").ok()? {
+                        mlua::Value::String(mode) => vec![mode.to_str().ok()?.to_string()],
+                        mlua::Value::Table(modes) => {
+                            modes.sequence_values().collect::<Result<_, _>>().ok()?
+                        }
+                        _ => return None,
+                    },
                     lhs: t.get("lhs").ok()?,
                     rhs: t.get("rhs").ok()?,
+                    remap: t.get("remap").unwrap_or(false),
+                    nowait: t.get("nowait").unwrap_or(false),
+                    unique: t.get("unique").unwrap_or(false),
                 })
             })
             .collect()

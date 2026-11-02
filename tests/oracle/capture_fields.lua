@@ -14,6 +14,9 @@ local function render_map(map)
 end
 
 return function(out, case)
+  if case.lua ~= nil then
+    table.insert(out, '      "lua": ' .. tostring(case.lua) .. ',')
+  end
   if case.chunks then
     local chunks = vim.tbl_map(str, case.chunks)
     table.insert(out, '      "chunks": [' .. table.concat(chunks, ", ") .. "],")

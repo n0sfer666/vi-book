@@ -61,7 +61,7 @@ fn keymaps_are_collected() {
     host.load("vibook.keymap('n', '<C-s>', ':w')").unwrap();
     let maps = host.keymaps();
     assert_eq!(maps.len(), 1);
-    assert_eq!(maps[0].mode, "n");
+    assert_eq!(maps[0].mode, vec!["n"]);
     assert_eq!(maps[0].lhs, "<C-s>");
     assert_eq!(maps[0].rhs, ":w");
 }

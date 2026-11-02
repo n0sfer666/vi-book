@@ -41,7 +41,7 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
     if let Some(error) = errors.into_iter().next_back() {
         app.ui.set_message(error);
     }
-    apply_opts(app);
+    apply_opts(app, failed);
     install_keymaps(app, failed);
 }
 
@@ -54,20 +54,25 @@ fn install_keymaps(app: &mut App, failed: bool) {
         return;
     };
     let mut keymap = base_keymap::build(app.insert_escape.as_deref());
-    let installed = lua_keymaps::install(&mut keymap, &host.keymaps(), app.leader);
+    let installed = lua_keymaps::install(&mut keymap, &host.keymaps(), &app.leader);
     if let Some(error) = installed.or(host.keymap_errors().pop()).filter(|_| !failed) {
         app.ui.set_message(error);
     }
     app.keymap = keymap;
 }
 
-fn apply_opts(app: &mut App) {
+fn apply_opts(app: &mut App, failed: bool) {
     let Some(host) = host(&app.modules) else {
         return;
     };
     let wrap = host.opt_string("wrap").and_then(|s| WrapMode::parse(&s));
-    if let Some(leader) = host.opt_string("leader").and_then(|s| s.chars().next()) {
-        app.leader = leader;
+    if let Some(leader) = host.opt_string("leader") {
+        let keys = v_ide_keys::parse_keys(&leader);
+        if !keys.is_empty() {
+            app.leader = keys;
+        } else if !failed {
+            app.ui.set_message("leader: empty sequence");
+        }
     }
     if let Some(seq) = host.opt_string("insert_escape") {
         app.insert_escape = Some(seq).filter(|s| !s.is_empty());

@@ -1,14 +1,14 @@
-use v_ide_keys::{Key, Keymap, MapMode, MapRhs, Mapping, Rhs, format_keys, parse_keys};
+use v_ide_keys::{
+    Key, Keymap, MapError, MapMode, MapRhs, Mapping, format_keys, parse_keys_with_leader,
+};
 use v_ide_lua::config::Keymap as LuaKeymap;
 
 use crate::map_action::MapAction;
 
-const LEADER: &str = "<leader>";
-
 pub(crate) fn install(
     keymap: &mut Keymap<MapAction>,
     maps: &[LuaKeymap],
-    leader: char,
+    leader: &[Key],
 ) -> Option<String> {
     maps.iter().fold(None, |last, map| {
         install_one(keymap, map, leader).err().or(last)
@@ -18,16 +18,27 @@ pub(crate) fn install(
 fn install_one(
     keymap: &mut Keymap<MapAction>,
     map: &LuaKeymap,
-    leader: char,
+    leader: &[Key],
 ) -> Result<(), String> {
-    let mode = map_mode(&map.mode)
-        .ok_or_else(|| format!("keymap: invalid mode \"{}\" for \"{}\"", map.mode, map.lhs))?;
-    let lhs = parse_keys(&expand_leader(&map.lhs, leader));
-    let rhs = mapping(&map.rhs, leader)?;
-    keymap
-        .insert(mode, &lhs, rhs)
-        .map(drop)
-        .map_err(|_| String::from("keymap: empty lhs"))
+    for name in &map.mode {
+        let mode = map_mode(name)
+            .ok_or_else(|| format!("keymap: invalid mode \"{name}\" for \"{}\"", map.lhs))?;
+        let lhs = parse_keys_with_leader(&map.lhs, leader);
+        let rhs = Mapping {
+            rhs: crate::map_action::rhs(
+                MapRhs::parse_with_leader(&map.rhs, leader).map_err(|error| error.to_string())?,
+            ),
+            remap: map.remap,
+            nowait: map.nowait,
+        };
+        if map.unique && keymap.contains(mode, &lhs) {
+            return Err(MapError::AlreadyExists(format_keys(&lhs)).to_string());
+        }
+        keymap
+            .insert(mode, &lhs, rhs)
+            .map_err(|_| String::from("keymap: empty lhs"))?;
+    }
+    Ok(())
 }
 
 fn map_mode(mode: &str) -> Option<MapMode> {
@@ -39,30 +50,4 @@ fn map_mode(mode: &str) -> Option<MapMode> {
         "c" => Some(MapMode::Cmdline),
         _ => None,
     }
-}
-
-fn expand_leader(lhs: &str, leader: char) -> String {
-    let leader = format_keys(&[Key::char(leader)]);
-    let mut out = String::new();
-    let mut rest = lhs;
-    while let Some(at) = rest.to_ascii_lowercase().find(LEADER) {
-        out.push_str(&rest[..at]);
-        out.push_str(&leader);
-        rest = &rest[at + LEADER.len()..];
-    }
-    out.push_str(rest);
-    out
-}
-
-fn mapping(rhs: &str, leader: char) -> Result<Mapping<MapAction>, String> {
-    let rhs = if let Some(command) = rhs.strip_prefix(':') {
-        Rhs::Action(MapAction::Command(command.to_string()))
-    } else {
-        crate::map_action::rhs(MapRhs::parse(rhs, leader).map_err(|error| error.to_string())?)
-    };
-    Ok(Mapping {
-        rhs,
-        remap: false,
-        nowait: false,
-    })
 }

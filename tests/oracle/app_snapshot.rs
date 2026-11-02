@@ -9,6 +9,24 @@ use crate::fixture::{Case, Snapshot};
 
 pub fn run(case: &Case) -> Snapshot {
     let mut app = App::new(Document::new(&case.before));
+    if case.lua {
+        let script = case
+            .maps
+            .iter()
+            .map(|map| {
+                format!(
+                    "vibook.keymap({:?}, {}, {}, {{ remap = {}, nowait = {} }})",
+                    mode_name(map.mode),
+                    literal(&map.lhs),
+                    literal(&map.rhs),
+                    !map.noremap,
+                    map.nowait
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        crate::common::load_lua(&mut app, "oracle-lua", &script);
+    }
     app.workspace
         .current_mut()
         .editor
@@ -22,13 +40,10 @@ pub fn run(case: &Case) -> Snapshot {
     }
     app.ui.message.clear();
     for map in &case.maps {
-        let mode = match map.mode {
-            v_ide_keys::MapMode::Normal => "n",
-            v_ide_keys::MapMode::Insert => "i",
-            v_ide_keys::MapMode::Visual => "x",
-            v_ide_keys::MapMode::OpPending => "o",
-            v_ide_keys::MapMode::Cmdline => "c",
-        };
+        if case.lua {
+            break;
+        }
+        let mode = mode_name(map.mode);
         let command = if map.noremap { "noremap" } else { "map" };
         let flags = if map.nowait { "<nowait> " } else { "" };
         command_line::run(
@@ -81,4 +96,22 @@ pub fn run(case: &Case) -> Snapshot {
         mode: super::snapshot::mode_name(editor.mode()).to_string(),
         unnamed: editor.yanked().unwrap_or_default(),
     }
+}
+
+fn mode_name(mode: v_ide_keys::MapMode) -> &'static str {
+    match mode {
+        v_ide_keys::MapMode::Normal => "n",
+        v_ide_keys::MapMode::Insert => "i",
+        v_ide_keys::MapMode::Visual => "x",
+        v_ide_keys::MapMode::OpPending => "o",
+        v_ide_keys::MapMode::Cmdline => "c",
+    }
+}
+
+fn literal(text: &str) -> String {
+    let mut equals = String::new();
+    while text.contains(&format!("]{equals}]")) {
+        equals.push('=');
+    }
+    format!("[{equals}[\n{text}]{equals}]")
 }

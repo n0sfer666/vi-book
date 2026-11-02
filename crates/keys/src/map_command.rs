@@ -1,5 +1,5 @@
-use crate::map_args::{MapArgs, expand_leader, take_word};
-use crate::{Key, MapError, MapMode, parse_keys};
+use crate::map_args::{MapArgs, take_word};
+use crate::{Key, MapError, MapMode, parse_keys_with_leader};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MapRhs {
@@ -10,6 +10,10 @@ pub enum MapRhs {
 
 impl MapRhs {
     pub fn parse(input: &str, leader: char) -> Result<Self, MapError> {
+        Self::parse_with_leader(input, &[Key::char(leader)])
+    }
+
+    pub fn parse_with_leader(input: &str, leader: &[Key]) -> Result<Self, MapError> {
         let mut rest = input;
         let mut parts = Vec::new();
         while let Some(at) = rest.to_ascii_lowercase().find("<cmd>") {
@@ -36,11 +40,11 @@ impl MapRhs {
         Ok(Self::Sequence(parts))
     }
 
-    fn keys(input: &str, leader: char) -> Self {
+    fn keys(input: &str, leader: &[Key]) -> Self {
         let keys = if input.eq_ignore_ascii_case("<nop>") {
             Vec::new()
         } else {
-            parse_keys(&expand_leader(input, leader))
+            parse_keys_with_leader(input, leader)
         };
         Self::Keys(keys)
     }
@@ -77,13 +81,17 @@ enum Operation {
 
 impl MapCommand {
     pub fn parse(input: &str, leader: char) -> Result<Option<Self>, MapError> {
+        Self::parse_with_leader(input, &[Key::char(leader)])
+    }
+
+    pub fn parse_with_leader(input: &str, leader: &[Key]) -> Result<Option<Self>, MapError> {
         let (name, rest) = take_word(input);
         let Some((modes, operation)) = command(name) else {
             return Ok(None);
         };
         let (args, rest) = MapArgs::parse(rest)?;
         let (lhs, rhs) = take_word(rest);
-        let lhs = parse_keys(&expand_leader(lhs, leader));
+        let lhs = parse_keys_with_leader(lhs, leader);
         let result = match operation {
             Operation::Clear if lhs.is_empty() && rhs.is_empty() => Self::Clear { modes },
             Operation::Clear => return Err(MapError::InvalidArgument),
@@ -93,7 +101,7 @@ impl MapCommand {
             Operation::Map(remap) => Self::Map {
                 modes,
                 lhs,
-                rhs: MapRhs::parse(rhs, leader)?,
+                rhs: MapRhs::parse_with_leader(rhs, leader)?,
                 remap,
                 nowait: args.nowait,
                 unique: args.unique,

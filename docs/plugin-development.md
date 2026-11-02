@@ -57,7 +57,7 @@ If a future capability needs the filesystem or a process, v-ide exposes a
 
 | Option | Type | Default | Meaning |
 |--------|------|---------|---------|
-| `leader` | string | `" "` | Key that opens the which-key menu. |
+| `leader` | string | `" "` | Key sequence in Vim notation that opens the which-key menu. An empty value reports an error and preserves the previous sequence. |
 | `insert_escape` | string | `"jj"` | Insert-mode mapping to `<Esc>`; `""` disables. An explicit `vibook.keymap("i", …)` with the same keys wins. |
 | `menu_position` | string | `"bottom"` | `"bottom"` bar or `"center"` modal. |
 | `code_editor` | string | `""` | External editor for code links; falls back to `$EDITOR`. |
@@ -73,33 +73,42 @@ vibook.opt.plugins = { links = true }
 
 ---
 
-## 4. Key mappings — `vibook.keymap(mode, lhs, rhs)`
+## 4. Key mappings — `vibook.keymap(mode, lhs, rhs, opts)`
 
-`mode` is one of `"n"` (normal), `"i"` (insert), `"x"` or `"v"` (visual, there
-is no select mode), `"o"` (operator-pending, after `d`, `c`, `y`…) and `"c"`
-(the `:` line and `/` search). Any other mode, an empty left-hand side, or a
-non-string argument (a table of modes, a function) is skipped and reported in
-the message line, unless `init.lua` itself failed: then its error is shown.
+`mode` is `"n"` (normal), `"i"` (insert), `"x"` or `"v"` (visual; no select
+mode), `"o"` (operator-pending) or `"c"` (command line and search), or a list
+such as `{ "n", "x" }`. Each mode gets a separate definition, as with
+`vim.keymap.set`. An invalid mode stops that list without undoing earlier
+entries; later keymap calls still work. A malformed mode list (for example,
+a non-string element) skips the whole definition. Invalid arguments, unsupported options
+and an empty left-hand side report an error. An `init.lua` error takes priority.
+
+The optional fourth argument accepts boolean `remap`, `nowait`, `unique` and
+`silent`. Mappings are nonrecursive by default; `remap = true` allows their
+keys to expand other mappings. `nowait = true` resolves a complete mapping
+without waiting for a longer match. `unique = true` reports E227 instead of
+replacing an existing mapping. `silent` is accepted as a no-op.
 
 The right-hand side can mix keys and `<Cmd>command<CR>` segments. Commands
-execute in order with the surrounding keys, without leaving the current mode.
-An unterminated `<Cmd>` skips the mapping and reports E1255. Legacy `:command`
-strings still run directly (this compatibility form will change in a later
-step). A `:command` runs in every mode without leaving it, like nvim's
-`<Cmd>…<CR>`: insert stays insert, visual stays visual, an open `:` line stays
-open. Mappings take precedence over every built-in key, `<F1>`, the leader,
-`?`, `:` and `<C-w>` included. The keys of a right-hand side are not mapped
-again, but they still reach built-ins: `vibook.keymap("n", "Q", "?")` opens
-help. Mappings do not apply in read view, panels and pop-ups.
+execute in order without leaving the current mode; an unterminated `<Cmd>`
+reports E1255. A leading `:` is ordinary input: `:w` types a draft and
+`:w<CR>` submits it in Normal mode. Use `<Cmd>w<CR>` to save while preserving
+Insert, Visual or an existing command-line draft.
+
+Mappings take precedence over built-ins, including the leader sequence,
+`<F1>`, `?`, `:` and `<C-w>`. Nonrecursive keys still reach built-ins:
+`vibook.keymap("n", "Q", "?")` opens help. Mappings do not apply in read
+view, panels or pop-ups.
 
 ```lua
-vibook.keymap("n", "<C-s>", ":w")        -- Ctrl-s writes
-vibook.keymap("i", "<C-s>", ":w")        -- ...and in insert, staying there
+vibook.keymap("n", "<C-s>", "<Cmd>w<CR>")        -- Ctrl-s writes
+vibook.keymap("i", "<C-s>", "<Cmd>w<CR>")        -- ...and in insert, staying there
 vibook.keymap("n", "H", "0")             -- H jumps to the line start
 vibook.keymap("n", "Y", "y$")            -- Y yanks to end of line
 vibook.keymap("n", "<Leader>d", "dd")    -- leader, then d
 vibook.keymap("o", "L", "$")             -- dL deletes to end of line
 vibook.keymap("n", "Q", "j<Cmd>only<CR>k") -- keys around a command
+vibook.keymap({ "n", "x" }, "J", "j", { remap = true })
 ```
 
 A left-hand side is one or more keys, each with or without modifiers, in vim
@@ -111,12 +120,15 @@ Names are case-insensitive; an unknown `<…>` is read as plain characters.
 Control characters in a Lua string are keys too: `"\t"` is `<Tab>`, `"\27"` is
 `<Esc>`, `"\1"` is `<C-a>`. `<Leader>` (any case) stands for `vibook.opt.leader`
 as set at the end of `init.lua`, so the order of lines does not matter. It is
-expanded on both sides, except inside `:command` and `<Cmd>` command text.
+expanded on both sides, except inside `<Cmd>` command text. The leader can
+contain several keys, for example `vibook.opt.leader = "<C-a>x"`.
 
 While a multi-key left-hand side is incomplete, the typed prefix is shown at the
 right of the status line and the editor waits up to one second for the rest.
-After that the prefix runs as plain keys: a lone leader opens the menu after the
-pause when `<Leader>…` mappings exist, and at once otherwise. In insert mode the
+After that the prefix runs as plain keys. A complete leader opens the menu
+after the pause when a longer mapping is possible, and at once otherwise.
+An incomplete or mismatched leader returns its keys to ordinary editing.
+The menu trigger is built in: it is absent from `:map` and survives `:mapclear`. In insert mode the
 pending character is drawn at the cursor but not written until it resolves.
 
 A right-hand side of exactly `<Nop>` (any case) makes the key do nothing.

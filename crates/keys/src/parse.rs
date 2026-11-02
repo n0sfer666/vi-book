@@ -3,6 +3,19 @@ use crate::key::Key;
 use crate::mods::Mods;
 use crate::names::code_by_name;
 
+pub fn parse_keys_with_leader(notation: &str, leader: &[Key]) -> Vec<Key> {
+    let leader = crate::format_keys(leader);
+    let mut rest = notation;
+    let mut expanded = String::new();
+    while let Some(at) = rest.to_ascii_lowercase().find("<leader>") {
+        expanded.push_str(&rest[..at]);
+        expanded.push_str(&leader);
+        rest = &rest[at + "<leader>".len()..];
+    }
+    expanded.push_str(rest);
+    parse_keys(&expanded)
+}
+
 pub fn parse_keys(notation: &str) -> Vec<Key> {
     let chars: Vec<char> = notation.chars().collect();
     let mut keys = Vec::new();

@@ -42,7 +42,13 @@ fn settle(app: &mut App, now: Instant) -> bool {
             return true;
         }
         let (mode, no_zero) = map_mode(app);
-        match app.typeahead.next(&app.keymap, mode, no_zero, now) {
+        let builtin = (target(app) == InputTarget::Editor
+            && app.workspace.current().editor.idle_normal())
+        .then_some((app.leader.as_slice(), MapAction::Menu));
+        match app
+            .typeahead
+            .next_with_builtin(&app.keymap, mode, no_zero, now, builtin)
+        {
             Step::Key(key) if app.ui.pager.is_some() => {
                 if let crate::pager::PagerInput::Replay(key) = crate::message_input::apply(app, key)
                 {
@@ -50,6 +56,7 @@ fn settle(app: &mut App, now: Instant) -> bool {
                 }
             }
             Step::Key(key) => router::handle(app, key),
+            Step::Action(MapAction::Menu) => crate::actions::open_menu(app),
             Step::Action(MapAction::Command(command)) => {
                 if app.ui.pager.take().is_some() {
                     app.ui.message.clear();

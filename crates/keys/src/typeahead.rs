@@ -68,6 +68,17 @@ impl<A: Clone> Typeahead<A> {
         no_zero: bool,
         now: Instant,
     ) -> Step<A> {
+        self.next_with_builtin(map, mode, no_zero, now, None)
+    }
+
+    pub fn next_with_builtin(
+        &mut self,
+        map: &Keymap<A>,
+        mode: Option<MapMode>,
+        no_zero: bool,
+        now: Instant,
+        builtin: Option<(&[Key], A)>,
+    ) -> Step<A> {
         loop {
             if let Some(action) = self.queue.action() {
                 self.deadline = None;
@@ -94,11 +105,28 @@ impl<A: Clone> Typeahead<A> {
                 self.deadline.get_or_insert(now + self.timeout);
                 return Step::Wait;
             }
-            self.deadline = None;
             let Some((len, mapping)) = exact else {
+                if let Some((keys, action)) = &builtin
+                    && !keys.is_empty()
+                {
+                    let window = self.queue.plain_window();
+                    let pending = &self.queue.keys[..window];
+                    if pending.starts_with(keys) {
+                        self.queue.consume(keys.len());
+                        self.deadline = None;
+                        self.depth = 0;
+                        return Step::Action(action.clone());
+                    }
+                    if keys.starts_with(pending) && self.queue.can_wait(window) && !timed_out {
+                        self.deadline.get_or_insert(now + self.timeout);
+                        return Step::Wait;
+                    }
+                }
+                self.deadline = None;
                 self.depth = 0;
                 return Step::Key(self.queue.pop_key());
             };
+            self.deadline = None;
             if let Some(step) = self.expand(len, mapping) {
                 return step;
             }

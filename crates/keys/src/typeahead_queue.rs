@@ -61,6 +61,10 @@ impl<A> Queue<A> {
             .map_or(remappable, |(at, _)| remappable.min(*at))
     }
 
+    pub(crate) fn plain_window(&self) -> usize {
+        self.actions.front().map_or(self.keys.len(), |(at, _)| *at)
+    }
+
     pub(crate) fn can_wait(&self, window: usize) -> bool {
         window == self.keys.len() && self.actions.is_empty()
     }

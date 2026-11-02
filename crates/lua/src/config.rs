@@ -5,9 +5,12 @@ use v_ide_editor::module::VaultQuery;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Keymap {
-    pub mode: String,
+    pub mode: Vec<String>,
     pub lhs: String,
     pub rhs: String,
+    pub remap: bool,
+    pub nowait: bool,
+    pub unique: bool,
 }
 
 #[derive(Default)]
@@ -52,11 +55,44 @@ function vibook.on(event, fn)
   vibook.__handlers[event] = vibook.__handlers[event] or {}
   table.insert(vibook.__handlers[event], fn)
 end
-function vibook.keymap(mode, lhs, rhs)
-  if type(mode) ~= "string" or type(lhs) ~= "string" or type(rhs) ~= "string" then
-    table.insert(vibook.__keymap_errors, "keymap: mode, lhs and rhs must be strings")
+local function keymap_error(message)
+  table.insert(vibook.__keymap_errors, "keymap: " .. message)
+end
+function vibook.keymap(mode, lhs, rhs, opts)
+  if (type(mode) ~= "string" and type(mode) ~= "table") or type(lhs) ~= "string" or type(rhs) ~= "string" then
+    keymap_error("mode must be a string or list; lhs and rhs must be strings")
     return
   end
-  table.insert(vibook.__keymaps, { mode = mode, lhs = lhs, rhs = rhs })
+  if type(mode) == "table" then
+    for index, value in pairs(mode) do
+      if type(index) ~= "number" or index % 1 ~= 0 or index < 1 or index > #mode or type(value) ~= "string" then
+        keymap_error("mode must be a string or list of strings")
+        return
+      end
+    end
+    local snapshot = {}
+    for index, value in ipairs(mode) do snapshot[index] = value end
+    mode = snapshot
+  end
+  if opts ~= nil and type(opts) ~= "table" then
+    keymap_error("opts must be a table")
+    return
+  end
+  opts = opts or {}
+  local supported = { remap = true, nowait = true, unique = true, silent = true }
+  for name, value in pairs(opts) do
+    if not supported[name] then
+      keymap_error("unsupported option " .. tostring(name))
+      return
+    end
+    if type(value) ~= "boolean" then
+      keymap_error(tostring(name) .. " must be a boolean")
+      return
+    end
+  end
+  table.insert(vibook.__keymaps, {
+    mode = mode, lhs = lhs, rhs = rhs,
+    remap = opts.remap or false, nowait = opts.nowait or false, unique = opts.unique or false,
+  })
 end
 "#;

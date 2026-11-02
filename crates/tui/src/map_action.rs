@@ -1,6 +1,7 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MapAction {
     Command(String),
+    Menu,
 }
 
 pub(crate) fn rhs(value: v_ide_keys::MapRhs) -> v_ide_keys::Rhs<MapAction> {

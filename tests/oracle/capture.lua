@@ -1,4 +1,4 @@
-local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, chunks = true, screen = true, messages = true, divergence = true, expect = true }
+local INPUT_KEYS = { name = true, before = true, cursor = true, keys = true, maps = true, lua = true, chunks = true, screen = true, messages = true, divergence = true, expect = true }
 
 local snapshot_path = vim.fs.joinpath(vim.fs.dirname(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p")), "capture_state.lua")
 local snapshot = dofile(snapshot_path)
@@ -33,7 +33,11 @@ local function run_child(case_path, out_path)
     local line = lines[case.cursor[1] + 1]
     vim.api.nvim_win_set_cursor(0, { case.cursor[1] + 1, vim.fn.byteidxcomp(line, case.cursor[2]) })
     for _, map in ipairs(case.maps or {}) do
-      vim.api.nvim_set_keymap(map.mode, map.lhs, map.rhs, { noremap = map.noremap, nowait = map.nowait or false })
+      if case.lua then
+        vim.keymap.set(map.mode, map.lhs, map.rhs, { remap = not map.noremap, nowait = map.nowait or false })
+      else
+        vim.api.nvim_set_keymap(map.mode, map.lhs, map.rhs, { noremap = map.noremap, nowait = map.nowait or false })
+      end
     end
     vim.schedule(function()
       finish(true)
@@ -71,6 +75,8 @@ local function validate(case, seen)
   if case.chunks then
     assert(#case.chunks > 0 and table.concat(case.chunks) == case.keys, case.name .. ": chunks must concatenate to keys")
   end
+  assert(case.lua == nil or type(case.lua) == "boolean", case.name .. ": lua must be a boolean")
+  assert(not case.lua or (not case.chunks and not case.screen), case.name .. ": Lua cases use the headless capture path")
   for _, map in ipairs(case.maps or {}) do
     validate_map(case.name, map)
   end

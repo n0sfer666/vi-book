@@ -88,7 +88,7 @@ fn lone_leader_waits_for_timeout_then_opens_menu() {
 
 #[test]
 fn command_rhs_in_insert_keeps_insert_mode() {
-    let script = format!("{SHOUT}vibook.keymap('i', '<C-s>', ':shout')");
+    let script = format!("{SHOUT}vibook.keymap('i', '<C-s>', '<Cmd>shout<CR>')");
     let mut app = lua("hi", "km-cmd-i", &script);
     press(&mut app, "i");
     ctrl(&mut app, 's');
@@ -98,7 +98,7 @@ fn command_rhs_in_insert_keeps_insert_mode() {
 
 #[test]
 fn command_rhs_in_cmdline_keeps_command_line_open() {
-    let script = format!("{SHOUT}vibook.keymap('c', '<C-s>', ':shout')");
+    let script = format!("{SHOUT}vibook.keymap('c', '<C-s>', '<Cmd>shout<CR>')");
     let mut app = lua("hi", "km-cmd-c", &script);
     press(&mut app, ":ab");
     ctrl(&mut app, 's');
@@ -133,11 +133,11 @@ fn leader_in_rhs_is_expanded() {
 }
 
 #[test]
-fn table_mode_is_reported_and_skipped() {
+fn table_mode_installs_normal_mapping() {
     let mut app = lua(THREE, "km-table-mode", "vibook.keymap({ 'n' }, 'Q', 'dd')");
-    assert!(app.ui.message.contains("keymap"), "{}", app.ui.message);
+    assert!(app.ui.message.is_empty(), "{}", app.ui.message);
     press(&mut app, "Q");
-    assert_eq!(text(&app), THREE);
+    assert_eq!(text(&app), "two\nthree");
 }
 
 #[test]

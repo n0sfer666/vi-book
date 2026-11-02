@@ -54,6 +54,7 @@ fn rhs(value: &Rhs<MapAction>) -> String {
     let text = match value {
         Rhs::Keys(keys) => format_keys(keys),
         Rhs::Action(MapAction::Command(command)) => format!("<Cmd>{command}<CR>"),
+        Rhs::Action(MapAction::Menu) => String::from("<Menu>"),
         Rhs::Sequence(parts) => parts
             .iter()
             .map(rhs)

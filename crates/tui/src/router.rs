@@ -45,9 +45,7 @@ fn editor_key(app: &mut App, key: Key) {
 }
 
 fn idle_key(app: &mut App, key: Key) -> bool {
-    if key == Key::char(app.leader) {
-        actions::open_menu(app);
-    } else if key == Key::char('?') {
+    if key == Key::char('?') {
         app.ui.help = true;
     } else if key == Key::ctrl('w') {
         app.ui.pending_ctrl_w = true;

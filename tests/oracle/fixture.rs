@@ -17,6 +17,8 @@ pub struct Case {
     pub keys: String,
     #[serde(default)]
     pub maps: Vec<Map>,
+    #[serde(default)]
+    pub lua: bool,
     pub chunks: Option<Vec<String>>,
     pub screen: Option<[u16; 2]>,
     #[serde(default)]

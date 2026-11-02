@@ -4,7 +4,7 @@ use crate::app::App;
 use crate::map_action;
 
 pub(crate) fn execute(app: &mut App, input: &str) -> Option<bool> {
-    let result = match MapCommand::parse(input, app.leader) {
+    let result = match MapCommand::parse_with_leader(input, &app.leader) {
         Ok(Some(command)) => apply(app, command),
         Ok(None) => return None,
         Err(error) => Err(error),

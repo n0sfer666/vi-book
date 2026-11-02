@@ -29,7 +29,7 @@ a sequence of keys, `<Cmd>command<CR>` segments, or a mixture of both.
 still execute directly; they will become ordinary keys in a later step.
 
 ```lua
-vibook.keymap("n", "<C-s>", ":w")     -- Ctrl-s writes
+vibook.keymap("n", "<C-s>", "<Cmd>w<CR>")     -- Ctrl-s writes
 vibook.keymap("n", "H", "0")          -- H jumps to line start
 vibook.keymap("n", "<leader>x", "dd") -- leader, then x deletes the line
 vibook.keymap("n", "Q", "j<Cmd>only<CR>k") -- keys around a command

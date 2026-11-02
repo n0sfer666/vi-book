@@ -9,7 +9,7 @@ fn check(topic: &str) {
     let fixture = fixture::load(topic);
     let mut failures = Vec::new();
     for case in &fixture.cases {
-        let got = if matches!(topic, "map_commands" | "pager") {
+        let got = if matches!(topic, "map_commands" | "pager" | "lua_mappings") {
             app_snapshot::run(case)
         } else {
             snapshot::run(case)
@@ -50,6 +50,7 @@ macro_rules! oracle_topics {
 oracle_topics!(
     counts,
     insert_mode,
+    lua_mappings,
     map_commands,
     mappings,
     motions,
@@ -81,3 +82,4 @@ fn every_fixture_is_wired() {
     wired.sort();
     assert_eq!(found, wired, "tests/oracle/*.json vs oracle_topics!");
 }
+mod common;
