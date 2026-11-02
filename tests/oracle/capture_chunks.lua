@@ -13,6 +13,7 @@ return function(case, snapshot_path)
     for _, map in ipairs(case.maps or {}) do
       request("nvim_set_keymap", map.mode, map.lhs, map.rhs, { noremap = map.noremap, nowait = map.nowait or false })
     end
+    if case.setup then request("nvim_exec_lua", "local vibook = vim\n" .. case.setup, {}) end
     local chunks = vim.tbl_map(function(chunk)
       return request("nvim_replace_termcodes", chunk, true, false, true)
     end, case.chunks)

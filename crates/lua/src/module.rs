@@ -61,8 +61,12 @@ impl LuaModule {
         }
         let before = cx.text();
         host.set_buffer(&before, cx.cursor());
+        host.set_options(cx.options());
         let result = run(host);
         let (creates, opens, externals) = take(host);
+        for (access, change) in host.take_option_changes() {
+            cx.set_option(access, change);
+        }
         result.map_err(|err| format!("plugin error: {err}"))?;
         let after = host.buffer_text();
         if after != before {

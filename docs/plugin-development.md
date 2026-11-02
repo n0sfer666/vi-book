@@ -61,6 +61,7 @@ If a future capability needs the filesystem or a process, v-ide exposes a
 | `insert_escape` | string | `"jj"` | Insert-mode mapping to `<Esc>`; `""` disables. An explicit `vibook.keymap("i", …)` with the same keys wins. |
 | `menu_position` | string | `"bottom"` | `"bottom"` bar or `"center"` modal. |
 | `code_editor` | string | `""` | External editor for code links; falls back to `$EDITOR`. |
+| `read_number` | boolean | `false` | Number rendered Read rows independently of Edit. |
 | `plugins` | table | `{}` | Per-plugin toggles, e.g. `{ links = false }`. |
 
 ```lua
@@ -70,6 +71,36 @@ vibook.opt.menu_position = "center"
 vibook.opt.code_editor = "nvim"
 vibook.opt.plugins = { links = true }
 ```
+
+### Core editor options
+
+`timeoutlen`, `readonly`, and `number` also have Neovim-style accessors.
+`o` reads/writes the effective value; `go` addresses its global value.
+`bo` addresses the current buffer and `wo` the current window. `bo` accepts
+buffer options and changes only their local value. `wo` accepts window options
+and changes both their local value and the current window's global default.
+
+```lua
+vibook.o.timeoutlen = 400
+vibook.bo.readonly = true
+vibook.wo.number = false
+vibook.opt_local.number = true
+local show_numbers = vibook.opt.number:get()
+```
+
+Core fields in `opt`, `opt_local`, and `opt_global` return option objects;
+existing application settings such as `leader`, `wrap`, and `read_number`
+remain scalar values. Option objects capture their value when read. Numeric
+objects support `+`, `-`, `:append()`, and `:remove()`; numeric `^` and
+`:prepend()` are unsupported, as in Neovim. Assignment accepts an object
+from the same accessor and with the same name, or its scalar `:get()` value.
+
+The application's initial configuration enables Edit `number` and disables
+`read_number`. Set `vibook.opt.number = false` or
+`vibook.opt.read_number = true` to choose independently. Reloading configuration
+preserves runtime choices unless the script explicitly assigns them.
+Core values are refreshed before each command/event callback, and successful
+option writes before a later Lua error are kept.
 
 ---
 

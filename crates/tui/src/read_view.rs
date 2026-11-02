@@ -4,16 +4,17 @@ use crate::view::View;
 use crate::{clip_sync, read_motion};
 use v_ide_engine::mode::Mode;
 use v_ide_keys::{Code, Key, Mods};
-use v_ide_markdown::render::render_with;
 use v_ide_markdown::rendered::Rendered;
 
 pub fn cached_render(app: &mut App, width: usize) -> Rendered {
     let text = app.workspace.current().editor.text();
     let wrap = app.wrap();
-    let hit = matches!(&app.ui.read.read_cache, Some((t, w, m, _)) if t == &text && *w == width && *m == wrap);
+    let hit = matches!(&app.ui.read.read_cache, Some((t, w, m, rendered)) if t == &text && *w == crate::number::content_width(width, rendered.lines.len(), app.read_number) && *m == wrap);
     if !hit {
-        let rendered = render_with(&text, width, wrap);
-        app.ui.read.read_cache = Some((text, width, wrap, rendered));
+        let rendered = crate::number::render(&text, width, wrap, app.read_number);
+        let actual_width =
+            crate::number::content_width(width, rendered.lines.len(), app.read_number);
+        app.ui.read.read_cache = Some((text, actual_width, wrap, rendered));
     }
     app.ui
         .read

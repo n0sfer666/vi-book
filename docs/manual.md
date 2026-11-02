@@ -225,8 +225,13 @@ Type `:` then a command:
 | Option | Alias | Scope | Default |
 | --- | --- | --- | --- |
 | `timeoutlen` | `tm` | Global | `1000` milliseconds |
-| `readonly` | `ro` | Buffer | Off |
-| `number` | `nu` | Window and buffer view | Off |
+| `readonly` | `ro` | Buffer | Detected from the file |
+| `number` | `nu` | Window and buffer view | On in initial configuration |
+
+The initial configuration enables numbers in Edit and hides them in Read.
+Set `vibook.opt.number` and `vibook.opt.read_number` independently in Lua.
+Read numbers count rendered rows, including wrapped continuations.
+`:set number&` resets the core Vim default to off.
 
 Use `:setlocal number` to show source line numbers in Edit, or
 `:setlocal nonumber` to hide them. A split copies the current view setting;
@@ -237,7 +242,8 @@ or the new window's own global default if no previous setting exists.
 `:set` changes both the effective value and its default. `:setlocal` changes
 only the current value; global-only options such as `timeoutlen` still change
 globally. `:setglobal` changes the default without changing existing local
-values. New buffers start with `readonly` off.
+values. New buffers detect `readonly` from their file rather than inheriting
+the global flag.
 
 Query with `:set number? timeoutlen?`; list changed values with `:set`, or all
 supported values with `:set all`. Scoped lists contain only local options.

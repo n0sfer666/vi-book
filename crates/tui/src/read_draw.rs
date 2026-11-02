@@ -73,8 +73,7 @@ fn rendered_line(line: &RenderedLine, theme: &Theme, sel: Option<&Range<usize>>)
 }
 
 pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
-    let width = column_width(area);
-    let rendered = cached_render(app, width);
+    let rendered = cached_render(app, column_width(area));
     app.ui.read.read_cursor = clamp(
         &rendered,
         app.ui.read.read_cursor.0,
@@ -87,8 +86,15 @@ pub fn draw(frame: &mut Frame, app: &mut App, area: Rect) {
     if app.ui.read.read_cursor.0 >= app.ui.read.top + height {
         app.ui.read.top = app.ui.read.read_cursor.0 + 1 - height;
     }
-    app.ui.left = hscroll::scroll(app.ui.left, app.ui.read.read_cursor.1, width);
-    let inner = text_column(area);
+    let inner = crate::number::draw(
+        &mut frame.grid,
+        area,
+        app.ui.read.top,
+        rendered.lines.len(),
+        app.read_number,
+    );
+    let inner = text_column(inner);
+    app.ui.left = hscroll::scroll(app.ui.left, app.ui.read.read_cursor.1, column_width(inner));
     let select = app
         .ui
         .read_select

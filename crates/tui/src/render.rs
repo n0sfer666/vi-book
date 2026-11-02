@@ -60,7 +60,15 @@ fn draw_editor(frame: &mut Frame, app: &mut App) {
                 doc.editor.text().split('\n').count(),
                 state.view == View::Edit && window.options.get(Name::Number) == Value::Bool(true),
             );
-            split::draw_pane(&mut frame.grid, &app.theme, doc, state, rect, app.wrap());
+            split::draw_pane_with_numbers(
+                &mut frame.grid,
+                &app.theme,
+                doc,
+                state,
+                rect,
+                app.wrap(),
+                app.read_number,
+            );
         }
     }
     for rect in rects.iter().take(count.saturating_sub(1)) {

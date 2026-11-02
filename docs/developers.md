@@ -19,7 +19,15 @@ vibook.opt.insert_escape = "jj"  -- type this in edit mode to leave it (default:
 vibook.opt.menu_position = "bottom" -- "bottom" (which-key bar) or "center" (modal)
 vibook.opt.code_editor = "nvim"  -- external editor for code links (falls back to $EDITOR)
 vibook.opt.plugins = { links = false } -- toggle a default plugin off
+vibook.opt.number = true
+vibook.opt.read_number = false
+vibook.o.timeoutlen = 400
+local number = vibook.opt.number:get()
 ```
+
+Core options also have current-context scalar `o/go/bo/wo` and object
+`opt/opt_local/opt_global` accessors. The default configuration shows numbers
+in Edit and hides them in Read; the two settings are independent.
 
 ## Key mappings — `vibook.keymap`
 

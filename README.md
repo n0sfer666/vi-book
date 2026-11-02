@@ -35,7 +35,8 @@ best rendering of code blocks and glyphs.
   the side panel, `<C-w> s`/`v` splits, `<C-w> o` keeps only the active column.
 - Split windows share buffer text, undo and saved state, with independent cursors and scroll.
 - `:w :q :tree :backlinks :today :new <name>` and `:vsplit [file] :only` commands.
-- `:set`, `:setlocal`, and `:setglobal` configure `timeoutlen`, `readonly`, and `number`.
+- `:set`, `:setlocal`, and `:setglobal` configure `timeoutlen`, `readonly`, and `number`; Lua supports scalar and object accessors.
+- Line numbers default to on in Edit and off in Read, configured independently.
 - `:map` inspects mappings; `:messages` opens recent messages in a scrollable pager.
 - Code blocks are syntax-highlighted with tree-sitter grammars built by
   `v-ide grammar fetch` + `v-ide grammar build` (`install.sh` runs both); the palette is

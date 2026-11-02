@@ -6,4 +6,5 @@ pub mod error;
 pub mod host;
 pub mod install;
 pub mod module;
+mod options;
 pub mod runtime;

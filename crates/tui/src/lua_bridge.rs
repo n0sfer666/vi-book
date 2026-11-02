@@ -21,6 +21,7 @@ pub fn load_config(app: &mut App) {
 }
 
 pub fn load_config_from(app: &mut App, resolved: Option<(PathBuf, Option<&'static str>)>) {
+    app.configure_options();
     crate::messages::batch(app, |app| load_config_inner(app, resolved));
 }
 
@@ -33,7 +34,20 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
         return;
     };
     let warning = resolved.as_mut().and_then(|(_, warning)| warning.take());
+    if let Some(host) = lua.host() {
+        host.set_options(v_ide_editor::options::Snapshot::capture(&app.workspace));
+    }
     let errors = lua.load_config(resolved);
+    let changes = lua
+        .host()
+        .map(PluginHost::take_option_changes)
+        .unwrap_or_default();
+    for (access, change) in changes {
+        match app.workspace.apply_option(access, &change) {
+            Ok(_) => app.sync_timeout(),
+            Err(error) => app.ui.set_message(error.to_string()),
+        }
+    }
     if let Some(warning) = warning.filter(|_| app.ui.message.is_empty()) {
         app.ui.set_message(warning.to_string());
     }
@@ -79,6 +93,9 @@ fn apply_opts(app: &mut App, failed: bool) {
     }
     if let Some(pos) = host.opt_string("menu_position") {
         app.menu_center = pos == "center";
+    }
+    if let Some(number) = host.opt_bool("read_number") {
+        app.read_number = number;
     }
     app.code_editor = host.opt_string("code_editor");
     if let Some(value) = host.opt_string("color_depth") {

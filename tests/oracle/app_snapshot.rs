@@ -8,8 +8,11 @@ use v_ide_tui::{app::App, command_line};
 
 use crate::fixture::{Case, Options, Snapshot};
 
-pub fn run(case: &Case) -> Snapshot {
+pub fn run(case: &Case, topic: &str) -> Snapshot {
     let mut app = App::new(Document::new(&case.before));
+    if let Some(script) = &case.setup {
+        crate::common::load_lua(&mut app, &format!("oracle-{topic}-setup"), script);
+    }
     if case.lua {
         let script = case
             .maps
@@ -26,7 +29,7 @@ pub fn run(case: &Case) -> Snapshot {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        crate::common::load_lua(&mut app, "oracle-lua", &script);
+        crate::common::load_lua(&mut app, &format!("oracle-{topic}-maps"), &script);
     }
     app.workspace
         .current_mut()

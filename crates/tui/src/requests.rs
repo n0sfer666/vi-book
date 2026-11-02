@@ -77,6 +77,15 @@ fn apply_inner(app: &mut App, requests: Vec<Request>) {
             } => list(app, &title, rows, &command),
             Request::Emit(ev) => emit(app, ev),
             Request::SetText(text) => set_text(app, &text),
+            Request::SetOption {
+                doc,
+                window,
+                access,
+                change,
+            } => match app.workspace.apply_option_at(doc, window, access, &change) {
+                Ok(_) => app.sync_timeout(),
+                Err(error) => app.ui.set_message(error.to_string()),
+            },
             Request::OpenExternal(rel) => open_external(app, &rel),
             Request::Command(line) => {
                 let name = line.split(' ').next().unwrap_or_default().to_owned();

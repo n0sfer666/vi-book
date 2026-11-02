@@ -61,6 +61,7 @@ vibook.command("hello", function() vibook.buf.set_text("hello!\n") end)
 | `insert_escape` | string | `"jj"` | Insert-маппинг на `<Esc>`; `""` отключает. Явный `vibook.keymap("i", …)` с теми же клавишами важнее. |
 | `menu_position` | string | `"bottom"` | Нижняя панель `"bottom"` или модалка `"center"`. |
 | `code_editor` | string | `""` | Внешний редактор для код-ссылок; fallback `$EDITOR`. |
+| `read_number` | boolean | `false` | Нумерация отображаемых строк Read независимо от Edit. |
 | `plugins` | table | `{}` | Тогглы плагинов, напр. `{ links = false }`. |
 
 ```lua
@@ -70,6 +71,32 @@ vibook.opt.menu_position = "center"
 vibook.opt.code_editor = "nvim"
 vibook.opt.plugins = { links = true }
 ```
+
+### Опции ядра
+
+Для `timeoutlen`, `readonly`, `number` доступны скалярные `vibook.o/go/bo/wo`
+и объекты `vibook.opt/opt_local/opt_global` с `:get()`. `bo` обращается к
+текущему буферу и меняет только local; `wo` — к текущему окну и меняет local
+и default этого окна. `o` меняет effective и global, `go` — только global.
+Прежние настройки приложения (`leader`, `wrap`, `read_number`) остаются
+скалярами в `opt`.
+
+```lua
+vibook.o.timeoutlen = 400
+vibook.opt_local.number = true
+local show_numbers = vibook.opt.number:get()
+vibook.opt.read_number = true
+```
+
+Объект хранит снимок значения на момент чтения. Числовые объекты поддерживают
+`+`, `-`, `:append()`, `:remove()`; `^` и `:prepend()` для чисел не поддержаны,
+как в Neovim. Присвоить объект можно тому же accessor с тем же именем; между
+разными accessor используйте скаляр `:get()`.
+
+При начальной конфигурации Edit numbers включены, Read numbers выключены.
+Перезагрузка конфига сохраняет runtime-выбор, если скрипт явно его не меняет.
+Значения обновляются перед command/event callback; успешные записи до
+последующей Lua-ошибки сохраняются.
 
 ---
 

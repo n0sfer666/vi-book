@@ -1,10 +1,12 @@
+mod keymaps;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use mlua::{Function, Table};
 use v_ide_editor::module::VaultQuery;
 
-use crate::config::{Bridge, ColorSpec, Keymap, PRELUDE, Shared};
+use crate::config::{Bridge, ColorSpec, PRELUDE, Shared};
 use crate::error::Error;
 use crate::install::{install_buf, install_open, install_vault};
 use crate::runtime::Runtime;
@@ -19,6 +21,7 @@ impl PluginHost {
         let rt = Runtime::new()?;
         rt.exec(PRELUDE)?;
         let bridge: Shared = Rc::new(RefCell::new(Bridge::default()));
+        crate::options::install(&rt, &bridge)?;
         install_buf(&rt, &bridge)?;
         install_vault(&rt, &bridge)?;
         install_open(&rt, &bridge)?;
@@ -27,6 +30,18 @@ impl PluginHost {
 
     pub fn load(&self, script: &str) -> Result<(), Error> {
         self.rt.exec(script)
+    }
+
+    pub fn set_options(&self, snapshot: v_ide_editor::options::Snapshot) {
+        let mut state = self.bridge.borrow_mut();
+        state.options.current = snapshot;
+        state.options.pending.clear();
+    }
+
+    pub fn take_option_changes(
+        &self,
+    ) -> Vec<(v_ide_editor::options::Access, v_ide_editor::options::Change)> {
+        std::mem::take(&mut self.bridge.borrow_mut().options.pending)
     }
 
     pub fn set_buffer(&self, text: &str, cursor: usize) {
@@ -80,37 +95,6 @@ impl PluginHost {
             .filter_map(Result::ok)
             .map(|(name, _)| name)
             .collect()
-    }
-
-    pub fn keymaps(&self) -> Vec<Keymap> {
-        let Ok(maps) = self.vibook_field("__keymaps") else {
-            return Vec::new();
-        };
-        maps.sequence_values::<Table>()
-            .filter_map(Result::ok)
-            .filter_map(|t| {
-                Some(Keymap {
-                    mode: match t.get::<mlua::Value>("mode").ok()? {
-                        mlua::Value::String(mode) => vec![mode.to_str().ok()?.to_string()],
-                        mlua::Value::Table(modes) => {
-                            modes.sequence_values().collect::<Result<_, _>>().ok()?
-                        }
-                        _ => return None,
-                    },
-                    lhs: t.get("lhs").ok()?,
-                    rhs: t.get("rhs").ok()?,
-                    remap: t.get("remap").unwrap_or(false),
-                    nowait: t.get("nowait").unwrap_or(false),
-                    unique: t.get("unique").unwrap_or(false),
-                })
-            })
-            .collect()
-    }
-
-    pub fn keymap_errors(&self) -> Vec<String> {
-        self.vibook_field("__keymap_errors")
-            .map(|list| list.sequence_values().filter_map(Result::ok).collect())
-            .unwrap_or_default()
     }
 
     pub fn menu_items(&self) -> Vec<(String, String, String)> {

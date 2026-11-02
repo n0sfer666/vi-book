@@ -17,6 +17,7 @@ return function(case_path, output, ready, snapshot_path)
     for _, map in ipairs(case.maps or {}) do
       vim.api.nvim_set_keymap(map.mode, map.lhs, map.rhs, { noremap = map.noremap, nowait = map.nowait or false })
     end
+    if case.setup then assert(loadstring("local vibook = vim\n" .. case.setup))() end
     for _, text in ipairs(case.messages or {}) do vim.api.nvim_echo({ { text } }, true, {}) end
     vim.keymap.set("n", "<F12>", function()
       local ok, value = pcall(snapshot, case.options)

@@ -43,6 +43,7 @@ mod message_input;
 mod message_wrap;
 pub mod messages;
 mod number;
+mod options;
 pub mod overlay;
 pub mod pager;
 pub mod pane;

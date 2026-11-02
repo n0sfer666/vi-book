@@ -15,6 +15,7 @@ pub struct Keymap {
 
 #[derive(Default)]
 pub struct Bridge {
+    pub options: crate::options::Options,
     pub buf_text: String,
     pub buf_cursor: usize,
     pub vault: Option<Rc<dyn VaultQuery>>,
@@ -37,7 +38,7 @@ pub struct ColorSpec {
 
 pub const PRELUDE: &str = r#"
 vibook = vibook or {}
-vibook.opt = {}
+vibook.opt = { read_number = false }
 vibook.__commands = {}
 vibook.__handlers = {}
 vibook.__keymaps = {}

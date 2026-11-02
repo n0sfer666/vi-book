@@ -37,7 +37,7 @@ fn apply(
                         .format(app.workspace.option(change.name, access)),
                 );
             }
-            sync_timeout(app);
+            app.sync_timeout();
         }
         Argument::ResetAll => {
             for name in Name::ALL {
@@ -50,7 +50,7 @@ fn apply(
                     },
                 )?;
             }
-            sync_timeout(app);
+            app.sync_timeout();
         }
         Argument::List { all } => {
             let header = match access {
@@ -71,14 +71,4 @@ fn apply(
         }
     }
     Ok(())
-}
-
-fn sync_timeout(app: &mut App) {
-    if let v_ide_editor::options::Value::Number(value) =
-        app.workspace.option(Name::Timeoutlen, Access::Global)
-        && let Ok(millis) = u64::try_from(value)
-    {
-        app.typeahead
-            .set_timeout(std::time::Duration::from_millis(millis));
-    }
 }

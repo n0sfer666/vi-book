@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
 use crate::module::Event;
+use crate::options::{Access, Change};
+use crate::workspace::{DocId, WindowId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
@@ -17,6 +19,12 @@ pub enum Request {
     },
     Emit(Event),
     SetText(String),
+    SetOption {
+        doc: DocId,
+        window: WindowId,
+        access: Access,
+        change: Change,
+    },
     OpenExternal(String),
     Command(String),
 }

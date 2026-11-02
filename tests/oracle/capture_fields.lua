@@ -14,6 +14,7 @@ local function render_map(map)
 end
 
 return function(out, case)
+  if case.setup then table.insert(out, '      "setup": ' .. str(case.setup) .. ",") end
   if case.options ~= nil then
     table.insert(out, '      "options": ' .. tostring(case.options) .. ',')
   end

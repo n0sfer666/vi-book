@@ -45,6 +45,8 @@ pub struct App {
     pub menu_extra: Vec<MenuItem>,
     pub insert_escape: Option<String>,
     pub window_states: HashMap<WindowId, ReadState>,
+    pub read_number: bool,
+    pub(crate) defaults_applied: bool,
     pub code_editor: Option<String>,
     pub external_request: Option<std::path::PathBuf>,
     pub url_request: Option<String>,
@@ -100,6 +102,8 @@ impl App {
             menu_extra: Vec::new(),
             insert_escape: Some(String::from(INSERT_ESCAPE)),
             window_states: HashMap::new(),
+            read_number: false,
+            defaults_applied: false,
             code_editor: None,
             external_request: None,
             url_request: None,
@@ -109,6 +113,7 @@ impl App {
     }
 
     pub fn load_config(&mut self) {
+        self.configure_options();
         #[cfg(feature = "lua")]
         crate::lua_bridge::load_config(self);
     }

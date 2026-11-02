@@ -1,0 +1,125 @@
+{
+  "nvim_version": "0.12.6",
+  "cases": [
+    {
+      "name": "scalar window and buffer scopes",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; vibook.wo.number=true; vibook.bo.readonly=true",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": true, "global_readonly": false, "number": true, "global_number": true }
+      }
+    },
+    {
+      "name": "local and global objects are distinct",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; vibook.opt_local.number=true; vibook.go.number=false; vibook.opt_global.readonly=true; vibook.opt_local.readonly=false",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": true, "number": true, "global_number": false }
+      }
+    },
+    {
+      "name": "object mutations use captured value",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; local tm=vibook.opt.tm; vibook.opt.tm=40; tm:append(7); vibook.opt.tm=vibook.opt.tm+2",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1009, "readonly": false, "global_readonly": false, "number": false, "global_number": false }
+      }
+    },
+    {
+      "name": "arithmetic snapshots allow out of range values",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; local tm=vibook.opt.tm-2000; assert(tm:get()==-1000); assert(not pcall(function() vibook.opt.tm=tm end))",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": false, "number": false, "global_number": false }
+      }
+    },
+    {
+      "name": "scope and option name restrict object assignments",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; vibook.go.readonly=true; assert(not pcall(function() vibook.opt_local.readonly=vibook.opt.readonly end)); assert(not pcall(function() vibook.opt.timeoutlen=vibook.opt.tm end))",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": true, "number": false, "global_number": false }
+      }
+    },
+    {
+      "name": "aliases route to the same core option",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; vibook.opt.tm=27; vibook.opt_local.ro=true; vibook.go.nu=false; vibook.opt_local.nu=true",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 27, "readonly": true, "global_readonly": false, "number": true, "global_number": false }
+      }
+    },
+    {
+      "name": "fractional object value fails only on assignment",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; local tm=vibook.opt.timeoutlen+0.5; assert(tm:get()==1000.5); assert(not pcall(function() vibook.opt.timeoutlen=tm end))",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": false, "number": false, "global_number": false }
+      }
+    },
+    {
+      "name": "numeric prepend is unsupported while remove keeps failed snapshot",
+      "before": "alpha",
+      "cursor": [0, 0],
+      "keys": "",
+      "setup": "vibook.opt.number=false; assert(not pcall(function() vibook.opt.tm:prepend(2) end)); local tm=vibook.opt.tm; assert(not pcall(function() tm:remove(2000) end)); assert(tm:get()==-1000)",
+      "options": true,
+      "expect": {
+        "text": "alpha",
+        "cursor": [0, 0],
+        "mode": "normal",
+        "unnamed": "",
+        "options": { "timeoutlen": 1000, "readonly": false, "global_readonly": false, "number": false, "global_number": false }
+      }
+    }
+  ]
+}

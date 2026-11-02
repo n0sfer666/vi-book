@@ -15,6 +15,7 @@ pub struct Case {
     pub before: String,
     pub cursor: [usize; 2],
     pub keys: String,
+    pub setup: Option<String>,
     #[serde(default)]
     pub maps: Vec<Map>,
     #[serde(default)]

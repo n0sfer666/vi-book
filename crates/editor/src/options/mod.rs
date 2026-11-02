@@ -12,3 +12,6 @@ pub use name::{Access, Name, Scope, Value};
 mod values;
 
 pub use values::Values;
+
+mod snapshot;
+pub use snapshot::Snapshot;

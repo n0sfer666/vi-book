@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use crate::module::{Event, Request, VaultQuery};
+use crate::options::{Access, Change, Snapshot};
 use crate::workspace::Workspace;
 
 pub struct Cx<'a> {
@@ -45,6 +46,19 @@ impl<'a> Cx<'a> {
 
     pub fn cursor(&self) -> usize {
         self.ws.current().editor.text_index()
+    }
+
+    pub fn options(&self) -> Snapshot {
+        Snapshot::capture(self.ws)
+    }
+
+    pub fn set_option(&mut self, access: Access, change: Change) {
+        self.requests.push(Request::SetOption {
+            doc: self.ws.current_id(),
+            window: self.ws.active_window(),
+            access,
+            change,
+        });
     }
 
     pub fn set_text(&mut self, text: String) {
