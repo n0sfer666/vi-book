@@ -70,7 +70,9 @@ fn apply_inner(app: &mut App, requests: Vec<Request>) -> bool {
                 open(app, &path);
             }
             Request::Execute(action) => {
-                let requests = crate::core_exec::with_context(app, |cx| action.run(cx));
+                let (requests, navigated) =
+                    crate::core_exec::with_navigation(app, |cx| action.run(cx));
+                opened |= navigated;
                 opened |= apply_inner(app, requests);
             }
             Request::Message(msg) => app.ui.set_message(msg),

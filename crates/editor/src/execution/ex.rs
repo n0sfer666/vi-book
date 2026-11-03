@@ -26,6 +26,9 @@ impl Context<'_> {
         let _active = Active(&self.ex_depth);
         while let Some((command, rest)) = lex::take(input) {
             self.ex_command(&command)?;
+            if matches!(command.kind, Kind::Edit | Kind::Enew | Kind::Buffer) {
+                self.navigated.set(true);
+            }
             input = rest;
         }
         Ok(())

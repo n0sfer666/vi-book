@@ -333,7 +333,11 @@ unless forced. `edit!` preserves a loaded hidden buffer and reloads only the cur
 buffer. IO completes before the next Lua statement. Filename expansions, writing a different named buffer's contents to
 another path, ranges and a full Vimscript command language remain S11 work;
 unsupported forms fail explicitly. Force-write filesystem limitations described
-above remain unchanged. The application runs configuration, plugin commands and legacy hooks with owned
+above remain unchanged. Synchronous buffer navigation from a legacy `follow_link` hook counts as handling
+the link, including reopening the current buffer. The builtin resolver then keeps
+the hook's navigation result.
+
+The application runs configuration, plugin commands and legacy hooks with owned
 Lua hosts and a live context. Explicit events and OptionSet share its native bus.
 The application Ex adapter accepts these frontends, and current-buffer changes
 restore the window view. Standalone module callers retain their request-based

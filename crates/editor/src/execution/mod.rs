@@ -35,6 +35,7 @@ pub enum Error {
 
 pub struct Context<'a> {
     diagnostic_context: u64,
+    navigated: Cell<bool>,
     workspace: RefCell<&'a mut Workspace>,
     observer: Option<&'a dyn Observer>,
     option_active: Cell<bool>,
@@ -49,6 +50,7 @@ impl<'a> Context<'a> {
     pub fn new(workspace: &'a mut Workspace) -> Self {
         Self {
             diagnostic_context: diagnostics::new_context(),
+            navigated: Cell::new(false),
             workspace: RefCell::new(workspace),
             observer: None,
             option_active: Cell::new(false),
@@ -91,6 +93,10 @@ impl<'a> Context<'a> {
 
     pub fn execute(&self, input: &str) -> Result<(), Error> {
         self.execute_ex(input)
+    }
+
+    pub fn navigated(&self) -> bool {
+        self.navigated.get()
     }
 
     pub fn diagnostic_checkpoint(&self) -> DiagnosticCheckpoint {

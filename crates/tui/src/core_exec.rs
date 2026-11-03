@@ -23,18 +23,22 @@ pub(crate) fn execute(app: &mut App, input: &str) -> Option<bool> {
 }
 
 pub(crate) fn with_context<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T) -> T {
+    with_navigation(app, run).0
+}
+
+pub(crate) fn with_navigation<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T) -> (T, bool) {
     let old = app.workspace.current_id();
     let bus = app.modules.autocmd_bus();
-    let (result, messages) = {
+    let (result, messages, navigated) = {
         let cx = Context::with_observer(&mut app.workspace, bus.as_ref());
-        (run(&cx), cx.take_messages())
+        (run(&cx), cx.take_messages(), cx.navigated())
     };
     reconcile(app, old);
     app.sync_timeout();
     for message in messages {
         app.ui.set_message(message);
     }
-    result
+    (result, navigated || old != app.workspace.current_id())
 }
 
 fn reconcile(app: &mut App, old: v_ide_editor::workspace::DocId) {
