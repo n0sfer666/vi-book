@@ -16,6 +16,7 @@ impl LuaModule {
             if let Some(vault) = &vault {
                 host.set_vault(vault.clone());
             }
+            let checkpoint = context.diagnostic_checkpoint();
             let result = host.call_with_context(context, |host| match &call {
                 Call::Initialize => {
                     for (_, source) in crate::defaults::ALL {
@@ -31,7 +32,7 @@ impl LuaModule {
             let mut opens = host.take_opens();
             let mut externals = host.take_external_opens();
             if let Err(error) = result {
-                if error.is_reported() {
+                if error.is_reported_since(checkpoint) {
                     return Vec::new();
                 }
                 return vec![Request::Message(format!("plugin error: {error}"))];

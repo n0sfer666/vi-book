@@ -36,7 +36,12 @@ pub(super) fn install<'scope, 'env>(
                 return Err(failure("command must be a string"));
             };
             cx.execute(&input.to_str()?).map_err(|error| match error {
-                v_ide_editor::execution::Error::Autocmd(_) => mlua::Error::external(error),
+                v_ide_editor::execution::Error::Autocmd(_) => {
+                    mlua::Error::external(crate::error::Reported {
+                        checkpoint: cx.diagnostic_checkpoint(),
+                        error,
+                    })
+                }
                 error => failure(error),
             })
         })?,

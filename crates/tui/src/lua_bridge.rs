@@ -43,10 +43,18 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
     if let Some((path, _)) = resolved
         && let Ok(script) = std::fs::read_to_string(path)
     {
-        let result = crate::core_exec::with_context(app, |cx| host.load_with_context(cx, &script));
+        let (result, reported) = crate::core_exec::with_context(app, |cx| {
+            let checkpoint = cx.diagnostic_checkpoint();
+            let result = host.load_with_context(cx, &script);
+            let reported = result
+                .as_ref()
+                .err()
+                .is_some_and(|error| error.is_reported_since(checkpoint));
+            (result, reported)
+        });
         failed = result.is_err();
         if let Err(error) = result
-            && !error.is_reported()
+            && !reported
         {
             errors.push(format!("config error: {error}"));
         }

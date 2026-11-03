@@ -104,8 +104,9 @@ impl Callback for LuaCallback {
         cx: &Context<'_>,
         invocation: &Invocation<'_>,
     ) -> Result<bool, v_ide_editor::autocmd::Failure> {
+        let checkpoint = cx.diagnostic_checkpoint();
         self.call(cx, invocation).map_err(|error| {
-            if error.is_reported() {
+            if error.is_reported_since(checkpoint) {
                 v_ide_editor::autocmd::Failure::Reported
             } else {
                 v_ide_editor::autocmd::Failure::Message(error.to_string())

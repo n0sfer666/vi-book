@@ -1,4 +1,6 @@
 mod core;
+mod diagnostics;
+pub use diagnostics::DiagnosticCheckpoint;
 mod ex;
 mod io;
 mod modeline;
@@ -32,6 +34,7 @@ pub enum Error {
 }
 
 pub struct Context<'a> {
+    diagnostic_context: u64,
     workspace: RefCell<&'a mut Workspace>,
     observer: Option<&'a dyn Observer>,
     option_active: Cell<bool>,
@@ -45,6 +48,7 @@ pub struct Context<'a> {
 impl<'a> Context<'a> {
     pub fn new(workspace: &'a mut Workspace) -> Self {
         Self {
+            diagnostic_context: diagnostics::new_context(),
             workspace: RefCell::new(workspace),
             observer: None,
             option_active: Cell::new(false),
@@ -87,6 +91,13 @@ impl<'a> Context<'a> {
 
     pub fn execute(&self, input: &str) -> Result<(), Error> {
         self.execute_ex(input)
+    }
+
+    pub fn diagnostic_checkpoint(&self) -> DiagnosticCheckpoint {
+        DiagnosticCheckpoint {
+            context: self.diagnostic_context,
+            serial: self.errors.get(),
+        }
     }
 
     pub(crate) fn error_count(&self) -> usize {

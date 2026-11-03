@@ -173,6 +173,10 @@ Automatic nested dispatch obeys `nested`; explicit dispatch bypasses that flag.
 Nesting stops at ten levels with E218. Errors become context diagnostics; API
 dispatch continues, while Ex dispatch stops at the first failing handler. Ex boundaries retain an already reported error without
 emitting it twice; an independent callback error still creates its own diagnostic.
+Already reported errors carry their context identity and diagnostic sequence.
+Nested boundaries suppress only diagnostics produced since their checkpoint. A
+saved error thrown in a later context or call is reported again; unrelated new
+diagnostics do not hide it.
 The bus also implements the context's option observer;
 explicit events inherit active option values without creating a new option frame.
 Groups, filters and listings retain the registry's native metadata rules.

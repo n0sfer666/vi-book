@@ -61,3 +61,40 @@ fn all_diagnostics_from_one_legacy_event_are_presented_together() {
         "{output}"
     );
 }
+
+#[test]
+fn saved_errors_are_visible_in_later_plugin_commands_and_config_loads() {
+    let mut app = App::new(Document::new("seed"));
+    common::load_lua(
+        &mut app,
+        "saved-error-first",
+        r#"
+   vibook.create_autocmd('User',{callback=function()error('saved config marker')end})
+   local ok;ok,saved_error=pcall(vibook.cmd,'doautocmd <nomodeline> User');assert(not ok)
+   vibook.command('Rethrow',function()error(saved_error)end)
+ "#,
+    );
+    v_ide_tui::command_line::run(&mut app, "Rethrow");
+    let history = app.ui.messages.history().collect::<Vec<_>>().join("\n");
+    assert_eq!(
+        history.matches("saved config marker").count(),
+        2,
+        "{history}"
+    );
+    common::load_lua(
+        &mut app,
+        "saved-error-next",
+        "vibook.opt.leader='';error(saved_error)",
+    );
+    let history = app.ui.messages.history().collect::<Vec<_>>().join("\n");
+    assert_eq!(
+        history.matches("saved config marker").count(),
+        3,
+        "{history}"
+    );
+    assert!(
+        app.ui.message.contains("saved config marker"),
+        "{}",
+        app.ui.message
+    );
+}
