@@ -1,28 +1,31 @@
 mod definitions;
 mod dispatch;
 mod edit;
+mod ex_groups;
 
 use std::{
     cell::{Cell, RefCell},
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     rc::Rc,
 };
 
 use crate::execution::OptionSet;
 use crate::workspace::DocId;
 
-use super::{Action, Pattern, RecordId, Registry};
+use super::{Action, GroupId, Pattern, RecordId, Registry};
 
 pub struct Bus {
     state: RefCell<State>,
     frames: RefCell<Vec<Frame>>,
     depth: Cell<usize>,
     ignore_case: Cell<bool>,
+    current_group: Cell<Option<GroupId>>,
 }
 
 struct State {
     registry: Registry<Action>,
     compiled: HashMap<RecordId, Rc<Pattern>>,
+    retired: HashSet<GroupId>,
 }
 
 struct Frame {
@@ -37,10 +40,12 @@ impl Bus {
             state: RefCell::new(State {
                 registry: Registry::new(),
                 compiled: HashMap::new(),
+                retired: HashSet::new(),
             }),
             frames: RefCell::new(Vec::new()),
             depth: Cell::new(0),
             ignore_case: Cell::new(ignore_case),
+            current_group: Cell::new(None),
         }
     }
 

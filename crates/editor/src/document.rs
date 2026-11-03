@@ -1,3 +1,5 @@
+mod ex_io;
+
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
@@ -13,6 +15,7 @@ pub struct Document {
     pub path: Option<PathBuf>,
     pub name: String,
     pub(crate) options: Values,
+    pub(crate) new_name: bool,
     saved_text: String,
     stamp: Option<Stamp>,
     mark: Option<DiskMark>,
@@ -27,6 +30,7 @@ impl Document {
             editor,
             path: None,
             name: String::new(),
+            new_name: false,
             stamp: None,
             mark: None,
         }
@@ -53,7 +57,11 @@ impl Document {
         if self.readonly() {
             return Err(Error::Readonly);
         }
-        self.write()
+        if self.new_name {
+            self.create_new_target()
+        } else {
+            self.write()
+        }
     }
 
     pub fn save_force(&mut self) -> Result<(), Error> {
@@ -69,6 +77,7 @@ impl Document {
         file::write(path, &self.editor.text())?;
         self.stamp = Stamp::of(path).ok();
         self.mark = None;
+        self.new_name = false;
         self.mark_saved();
         Ok(())
     }
@@ -155,6 +164,7 @@ impl Document {
     }
 
     fn take(&mut self, text: &str) {
+        self.new_name = false;
         self.editor.replace_all(text);
         self.mark = None;
         self.mark_saved();

@@ -8,25 +8,35 @@ use crate::runtime::Runtime;
 pub fn install_buf(rt: &Runtime, bridge: &Shared) -> Result<(), Error> {
     let lua = rt.lua();
     let buf = lua.create_table()?;
+    let api = lua.globals().get::<Table>("vibook")?;
     let get = bridge.clone();
-    buf.set(
-        "get_text",
+    api.set(
+        "__buffer_get",
         lua.create_function(move |_, ()| Ok(get.borrow().buf_text.clone()))?,
     )?;
     let set = bridge.clone();
-    buf.set(
-        "set_text",
+    api.set(
+        "__buffer_set",
         lua.create_function(move |_, text: String| {
-            set.borrow_mut().buf_text = text;
+            let mut state = set.borrow_mut();
+            state.buf_text = text;
+            state.buffer_pending = true;
             Ok(())
         })?,
     )?;
     let cur = bridge.clone();
-    buf.set(
-        "get_cursor",
+    api.set(
+        "__buffer_cursor",
         lua.create_function(move |_, ()| Ok(cur.borrow().buf_cursor))?,
     )?;
-    lua.globals().get::<Table>("vibook")?.set("buf", buf)?;
+    api.set("buf", buf)?;
+    api.set(
+        "__command",
+        lua.create_function(|_, _: mlua::Value| -> mlua::Result<()> {
+            Err(crate::options::failure("command requires a live context"))
+        })?,
+    )?;
+    rt.exec(include_str!("../assets/core.lua"))?;
     Ok(())
 }
 

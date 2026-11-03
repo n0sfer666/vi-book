@@ -5,6 +5,10 @@ use std::cmp::Ordering;
 pub struct EventName(&'static str);
 
 impl EventName {
+    pub fn all() -> impl Iterator<Item = Self> {
+        NAMES.iter().copied().map(Self)
+    }
+
     pub fn parse(name: &str) -> Result<Self, Error> {
         let canonical = ALIASES
             .iter()

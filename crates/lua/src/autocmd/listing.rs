@@ -23,7 +23,7 @@ impl State {
                 let group_name = record
                     .attributes
                     .group
-                    .and_then(|group| bus.group_name(group));
+                    .and_then(|group| bus.group_display_name(group));
                 let buffer = match &record.selector {
                     Selector::File(_) => None,
                     Selector::Buffer(id) => {

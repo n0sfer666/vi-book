@@ -18,6 +18,7 @@ pub struct Bridge {
     pub options: crate::options::Options,
     pub buf_text: String,
     pub buf_cursor: usize,
+    pub buffer_pending: bool,
     pub vault: Option<Rc<dyn VaultQuery>>,
     pub creates: Vec<String>,
     pub opens: Vec<String>,

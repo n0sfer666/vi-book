@@ -16,6 +16,10 @@ pub struct OptionSet {
 
 pub trait Observer {
     fn option_set(&self, cx: &Context<'_>, event: &OptionSet) -> Result<(), String>;
+
+    fn autocmd_bus(&self) -> Option<&crate::autocmd::Bus> {
+        None
+    }
 }
 
 impl<F> Observer for F

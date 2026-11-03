@@ -1,0 +1,33 @@
+local api=vibook
+local group=api.create_augroup('ExContract',{})
+api.cmd('augroup ExContract\nautocmd User One ++once ++nested set number | set readonly\naugroup END')
+local rows=api.get_autocmds({group=group})
+assert(#rows == 1 and rows[1].id == nil and rows[1].once)
+assert(rows[1].command == 'set number | set readonly')
+api.cmd('doautocmd <nomodeline> ExContract User One')
+assert(api.o.number and api.bo.readonly)
+assert(#api.get_autocmds({group=group}) == 0)
+api.cmd('augroup ExContract\nau User Two set nonumber\nau! User Two set noreadonly\naugroup END')
+assert(#api.get_autocmds({group=group}) == 1)
+assert(not pcall(api.cmd,'autocmd! ExContract User,Invalid *'))
+assert(#api.get_autocmds({group=group}) == 1)
+api.cmd('do ExContract User Two')
+assert(not api.bo.readonly)
+api.cmd('augroup ExContract\nau!\naugroup END')
+assert(#api.get_autocmds({group=group}) == 0)
+local once=0
+api.create_autocmd('User',{group=group,pattern='Lua',callback=function(a)
+  once=once+1
+  api.cmd('enew')
+  api.buf.set_text('inner')
+  assert(api.buf.get_text() == 'inner')
+end})
+api.cmd('doautocmd <nomodeline> ExContract User Lua')
+assert(once == 1 and api.buf.get_text() == 'inner')
+api.cmd('buffer 1')
+assert(api.buf.get_text() == 'seed')
+api.cmd('augroup ExContract\nau User <buffer> set nonumber\naugroup END')
+local found=false
+for _,row in ipairs(api.get_autocmds({group=group})) do if row.buflocal then assert(row.buffer == 1);found=true end end
+assert(found)
+api.del_augroup_by_id(group)

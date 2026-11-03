@@ -35,11 +35,17 @@ impl Bus {
     }
 
     pub fn delete_group(&self, id: GroupId) -> Result<(), Error> {
+        if self.current_group.get() == Some(id) {
+            return Err(Error::CurrentGroup);
+        }
         self.change(|registry| registry.delete_group(id))
     }
 
     pub fn delete_group_by_name(&self, name: &str) -> Result<(), Error> {
-        self.change(|registry| registry.delete_group_by_name(name))
+        let id = self
+            .group(name)
+            .ok_or_else(|| Error::GroupName(name.into()))?;
+        self.delete_group(id)
     }
 
     pub fn group(&self, name: &str) -> Option<GroupId> {

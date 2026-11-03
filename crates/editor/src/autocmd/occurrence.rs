@@ -56,4 +56,15 @@ pub struct Invocation<'a> {
 pub enum Source {
     Automatic,
     Explicit,
+    Ex,
+    AutomaticEx,
+}
+
+impl Source {
+    pub(super) fn automatic(self) -> bool {
+        matches!(self, Self::Automatic | Self::AutomaticEx)
+    }
+    pub(super) fn stops_on_error(self) -> bool {
+        matches!(self, Self::Ex | Self::AutomaticEx)
+    }
 }

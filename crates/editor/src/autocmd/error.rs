@@ -2,6 +2,8 @@ use super::{AutocmdId, GroupId};
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
+    #[error("E936: Cannot delete the current group")]
+    CurrentGroup,
     #[error(transparent)]
     Pattern(#[from] super::PatternError),
     #[error("Invalid event: {0}")]

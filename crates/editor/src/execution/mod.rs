@@ -1,3 +1,6 @@
+mod core;
+mod ex;
+mod io;
 mod modeline;
 mod names;
 mod option;
@@ -15,6 +18,12 @@ pub use option::{Observer, OptionSet};
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
+    File(#[from] crate::Error),
+    #[error(transparent)]
+    Registry(#[from] crate::autocmd::Error),
+    #[error("{0}")]
+    Ex(String),
+    #[error(transparent)]
     Option(#[from] options::Error),
     #[error("not an editor command: {0}")]
     Command(String),
@@ -27,6 +36,7 @@ pub struct Context<'a> {
     observer: Option<&'a dyn Observer>,
     option_active: Cell<bool>,
     modeline_active: Cell<bool>,
+    ex_depth: Cell<usize>,
     messages: RefCell<Vec<String>>,
     errors: Cell<usize>,
     last_error: RefCell<String>,
@@ -39,6 +49,7 @@ impl<'a> Context<'a> {
             observer: None,
             option_active: Cell::new(false),
             modeline_active: Cell::new(false),
+            ex_depth: Cell::new(0),
             messages: RefCell::new(Vec::new()),
             errors: Cell::new(0),
             last_error: RefCell::new(String::new()),
@@ -75,12 +86,11 @@ impl<'a> Context<'a> {
     }
 
     pub fn execute(&self, input: &str) -> Result<(), Error> {
-        if input.is_empty() {
-            return Ok(());
-        }
-        let command =
-            options::SetCommand::parse(input).ok_or_else(|| Error::Command(input.to_owned()))?;
-        self.run_set(&command)
+        self.execute_ex(input)
+    }
+
+    pub(crate) fn error_count(&self) -> usize {
+        self.errors.get()
     }
 
     pub(crate) fn record_error(&self, error: String) {

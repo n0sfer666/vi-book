@@ -47,6 +47,25 @@ impl Bus {
             .map(|_| ())
     }
 
+    pub fn define_ex_checked(
+        &self,
+        attributes: Attributes,
+        action: Action,
+        events: &[&str],
+        selectors: &[Result<Selector, Error>],
+    ) -> Result<(), Error> {
+        self.install(
+            attributes,
+            action,
+            events,
+            selectors
+                .iter()
+                .map(|selector| selector.as_ref().map_err(Clone::clone)),
+            false,
+        )
+        .map(|_| ())
+    }
+
     fn install<'a>(
         &self,
         attributes: Attributes,
@@ -57,7 +76,9 @@ impl Bus {
     ) -> Result<Option<AutocmdId>, Error> {
         let _keepalive = action.clone();
         let mut state = self.state.borrow_mut();
-        let State { registry, compiled } = &mut *state;
+        let State {
+            registry, compiled, ..
+        } = &mut *state;
         let mut definition = if api {
             registry.define(attributes, action)?
         } else {

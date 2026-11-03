@@ -3,7 +3,7 @@ use std::rc::Rc;
 use mlua::{Lua, Table, Value};
 use v_ide_editor::{execution::Context, options::Value as OptionValue};
 
-use super::PluginHost;
+use super::{PluginHost, services};
 use crate::{
     autocmd::{self, State},
     config::Shared,
@@ -92,6 +92,12 @@ pub(crate) fn with_context<R>(
         )
         .into());
     }
+    if bridge.borrow().buffer_pending {
+        return Err(options::failure(
+            "pending buffer changes must be applied before entering a live context",
+        )
+        .into());
+    }
     let lua = rt.lua();
     let mut gc = GcPause::new(lua);
     let api: Table = lua.globals().raw_get("vibook")?;
@@ -101,11 +107,15 @@ pub(crate) fn with_context<R>(
             api,
             fields: Vec::new(),
         };
-        for name in ["__option_get", "__option_set"].into_iter().chain(
-            native
-                .into_iter()
-                .flat_map(|_| autocmd::BACKENDS.iter().copied()),
-        ) {
+        for name in ["__option_get", "__option_set"]
+            .into_iter()
+            .chain(services::BACKENDS.iter().copied())
+            .chain(
+                native
+                    .into_iter()
+                    .flat_map(|_| autocmd::BACKENDS.iter().copied()),
+            )
+        {
             restore.fields.push((name, restore.api.raw_get(name)?));
         }
         restore.api.raw_set(
@@ -126,6 +136,7 @@ pub(crate) fn with_context<R>(
                 Ok(())
             })?,
         )?;
+        services::install(scope, &restore.api, cx)?;
         if let Some(native) = native {
             native.install_scoped(scope, &restore.api, cx)?;
         }
@@ -141,5 +152,10 @@ pub(crate) fn with_context<R>(
 }
 
 fn snapshot(bridge: &Shared, cx: &Context<'_>) {
-    bridge.borrow_mut().options.current = cx.snapshot();
+    let mut state = bridge.borrow_mut();
+    state.options.current = cx.snapshot();
+    if !state.buffer_pending {
+        state.buf_text = cx.text();
+        state.buf_cursor = cx.cursor();
+    }
 }

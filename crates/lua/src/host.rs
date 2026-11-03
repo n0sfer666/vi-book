@@ -1,5 +1,6 @@
 mod keymaps;
 pub(crate) mod scoped;
+mod services;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -64,6 +65,7 @@ impl PluginHost {
         let mut b = self.bridge.borrow_mut();
         b.buf_text = text.to_string();
         b.buf_cursor = cursor;
+        b.buffer_pending = false;
     }
 
     pub fn buffer_text(&self) -> String {

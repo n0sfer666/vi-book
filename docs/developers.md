@@ -139,7 +139,8 @@ extracts scalar case-equivalence groups and lower/upper/printable ranges into
 Run captures with headless Neovim (`-u NONE -i NONE -n -l`) from the repository,
 with HOME, XDG directories and NVIM_LOG_FILE isolated under its `target` directory.
 Repeat captures must produce identical files; do not edit expected data by hand.
-This library foundation is not yet connected to Lua/Ex autocmd execution.
+The native Lua host and synchronous Ex context share these selectors; application
+event integration remains pending.
 
 ## Synchronous editor context
 
@@ -160,8 +161,8 @@ apply legacy pending option writes to their original target before entering a li
 context; entry rejects unflushed writes without changing the workspace or queue.
 Nested VM
 entries share the outer instruction budget; a new outer invocation resets it.
-The native autocmd registry/frontends and lifecycle event wiring are subsequent
-integration steps; the current observer is the synchronous execution foundation.
+The native autocmd frontends share this context; connecting the application
+driver and lifecycle events remains a subsequent integration step.
 
 ## Autocmd execution and payloads
 
@@ -169,8 +170,8 @@ integration steps; the current observer is the synchronous execution foundation.
 record handles before callbacks, consumes `once` before invocation and skips
 removed records. A truthy callback removes only its current expanded record.
 Automatic nested dispatch obeys `nested`; explicit dispatch bypasses that flag.
-Nesting stops at ten levels with E218. Errors become context diagnostics while
-subsequent records continue. Ex boundaries retain an already reported error without
+Nesting stops at ten levels with E218. Errors become context diagnostics; API
+dispatch continues, while Ex dispatch stops at the first failing handler. Ex boundaries retain an already reported error without
 emitting it twice; an independent callback error still creates its own diagnostic.
 The bus also implements the context's option observer;
 explicit events inherit active option values without creating a new option frame.
@@ -186,8 +187,8 @@ backward-only edges. Deep values and shared children do not cause recursive drop
 Strings and dictionary keys retain bytes; scalar numbers, nulls, arrays,
 dictionaries and opaque VM function references have distinct variants. The VM owns
 function values and must resolve and validate their runtime/function IDs while a
-payload is dispatched. Native Lua conversion and the application event/frontends
-remain integration work; this bus is currently a core library foundation.
+payload is dispatched. The native Lua host retains these owners through dispatch;
+application event integration remains pending.
 
 ## Lua payload conversion
 
@@ -225,10 +226,9 @@ as the other captures and verify that repeated capture is byte-identical.
 
 `PluginHost::new_with_bus(Rc<editor::autocmd::Bus>)` enables the direct
 `vibook.create_autocmd`, `del_autocmd`, `create_augroup`, `del_augroup_by_id`,
-`del_augroup_by_name`, `get_autocmds` and `clear_autocmds` APIs. The default host
+`del_augroup_by_name`, `get_autocmds`, `clear_autocmds` and `exec_autocmds` APIs. The default host
 constructor retains the legacy API. The application module still uses that
-constructor; application events and the native Ex frontend are not connected yet.
-`exec_autocmds` is a subsequent integration step.
+constructor; application events and the application Ex adapter are not connected yet.
 
 Definitions accept native event strings/lists, groups, patterns or a buffer,
 commands or Lua/named callbacks, and once/nested/description attributes. Listings
@@ -288,3 +288,45 @@ all supported event classifications, and `capture_modelines.lua` captures the
 modeline matrix. `check_autocmd_exec.lua` runs the same payload/order/modeline
 assertions used by Rust tests. Run captures with the isolated headless Neovim
 setup described above; generated expectations must remain reproducible.
+
+## Synchronous Ex frontend
+
+A context whose observer exposes the shared autocmd bus accepts `autocmd`,
+`augroup` and `doautocmd`, including their normal abbreviations. For example,
+construct it with `Context::with_observer(&mut workspace, &bus)`. Registration,
+queries and explicit dispatch share the Lua API's registry. Ex records have no
+API id. The bus retains the selected Ex group across calls. Ex group deletion
+keeps existing handlers under `--Deleted--`; API deletion removes handlers, and
+both reject deletion of the current group. Clear operations use the selected
+group by default; unqualified listings and explicit dispatch include all groups.
+
+Ex validates the entire event list before mutating or dispatching. Definitions
+support ordinary patterns, buffer selectors, `++once`, `++nested` and legacy
+`nested`. Bang replacement works per expanded pattern. A definition consumes the
+rest of its line, including bars; other supported commands accept bar/newline
+chains and comments. Long runs of comments are parsed iteratively. Listings
+provide event/group/pattern/action content; script provenance and native Lua
+function display numbers are not modeled.
+
+Ex dispatch stops at the first failing handler and returns an already reported
+error. API dispatch keeps its existing continue-and-diagnose behavior. OptionSet
+follows the active Ex boundary while retaining automatic nesting restrictions.
+`doautocmd <nomodeline>` skips the shared modeline phase; otherwise modelines run
+after matching handlers, including after a handler failure.
+
+`vibook.cmd(string)` executes the supported commands inline in a live context.
+The existing `vibook.buf` text/cursor accessors also follow that context, including
+saved accessor functions and nested callbacks. Outside a context they retain
+the legacy snapshot behavior. Entry rejects pending legacy text writes, and
+scope restoration preserves completed writes and current-buffer changes on error.
+
+Core services include `set`, `enew[!]`, numeric `buffer[!]`, file naming,
+`edit[!]` and `write[!]`. They retain canonical documents and existing undo,
+readonly and external-conflict behavior. New file targets use exclusive creation
+unless forced. `edit!` preserves a loaded hidden buffer and reloads only the current
+buffer. IO completes before the next Lua statement. Filename expansions, writing a different named buffer's contents to
+another path, ranges and a full Vimscript command language remain S11 work;
+unsupported forms fail explicitly. Force-write filesystem limitations described
+above remain unchanged. The application driver still uses the legacy module
+host/input adapters; connecting this shared bus and these services to that driver
+and lifecycle events is the next integration step.

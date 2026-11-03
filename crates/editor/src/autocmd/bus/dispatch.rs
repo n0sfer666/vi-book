@@ -31,7 +31,7 @@ impl Bus {
         group: GroupFilter,
         source: Source,
     ) -> usize {
-        if source == Source::Automatic
+        if source.automatic()
             && self
                 .frames
                 .borrow()
@@ -97,6 +97,7 @@ impl Bus {
                 group: row.attributes.group,
                 occurrence,
             };
+            let errors_before = cx.error_count();
             match row.action.run(cx, &invocation) {
                 Ok(true) => {
                     let mut state = self.state.borrow_mut();
@@ -104,8 +105,20 @@ impl Bus {
                     state.compiled.remove(&key);
                 }
                 Ok(false) => {}
-                Err(Failure::Reported) => {}
-                Err(Failure::Message(error)) => cx.record_error(error),
+                Err(Failure::Reported) => {
+                    if source.stops_on_error() {
+                        break;
+                    }
+                }
+                Err(Failure::Message(error)) => {
+                    cx.record_error(error);
+                    if source.stops_on_error() {
+                        break;
+                    }
+                }
+            }
+            if source.stops_on_error() && cx.error_count() != errors_before {
+                break;
             }
         }
         called
@@ -113,6 +126,10 @@ impl Bus {
 }
 
 impl Observer for Bus {
+    fn autocmd_bus(&self) -> Option<&Bus> {
+        Some(self)
+    }
+
     fn option_set(&self, cx: &Context<'_>, option: &OptionSet) -> Result<(), String> {
         let event = EventName::parse("OptionSet").map_err(|error| error.to_string())?;
         let name = option.name.as_str().to_string();
@@ -126,7 +143,16 @@ impl Observer for Bus {
             },
         );
         occurrence.option = Some(option.clone());
-        self.dispatch(cx, &occurrence, GroupFilter::All, Source::Automatic);
+        self.dispatch(
+            cx,
+            &occurrence,
+            GroupFilter::All,
+            if cx.executing_ex() {
+                Source::AutomaticEx
+            } else {
+                Source::Automatic
+            },
+        );
         Ok(())
     }
 }
