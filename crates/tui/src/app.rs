@@ -30,6 +30,7 @@ use v_ide_view::Depth;
 
 pub struct App {
     pub workspace: Workspace,
+    pub(crate) autocmd: crate::autocmd::State,
     pub modules: Modules,
     pub ui: UiState,
     pub read_states: HashMap<(WindowId, DocId), ReadState>,
@@ -62,6 +63,7 @@ pub fn run() -> Result<(), Error> {
     let (cwd, open) = launch::target(arg.as_deref())?;
     let mut app = App::new(Document::new(""));
     app.workspace.set_cwd(cwd);
+    app.begin_startup();
     requests::startup(&mut app);
     app.load_config();
     if let Some(rel) = open {
@@ -70,6 +72,7 @@ pub fn run() -> Result<(), Error> {
         #[cfg(feature = "vault")]
         app.start_without_file();
     }
+    app.finish_startup();
     let mut term = Term::new(app.color_depth);
     term.enter()?;
     app.event_loop(&mut term)
@@ -79,6 +82,7 @@ impl App {
     pub fn new(doc: Document) -> Self {
         Self {
             workspace: Workspace::new(doc),
+            autocmd: crate::autocmd::State::default(),
             modules: Modules::new(vec![
                 MarkdownModule::registration(),
                 #[cfg(feature = "vault")]

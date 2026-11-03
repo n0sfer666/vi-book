@@ -7,6 +7,7 @@ use v_ide_editor::{
 
 pub(super) struct Observer {
     bus: Rc<Bus>,
+    booting: bool,
     #[cfg(feature = "lua")]
     host: Option<Rc<v_ide_lua::host::PluginHost>>,
 }
@@ -14,6 +15,7 @@ impl Observer {
     pub fn new(_app: &App, bus: Rc<Bus>) -> Self {
         Self {
             bus,
+            booting: _app.autocmd.booting,
             #[cfg(feature = "lua")]
             host: _app
                 .modules
@@ -27,7 +29,11 @@ impl Observe for Observer {
         Some(self.bus.as_ref())
     }
     fn option_set(&self, cx: &Context<'_>, event: &OptionSet) -> Result<(), String> {
-        self.bus.option_set(cx, event)
+        if self.booting {
+            Ok(())
+        } else {
+            self.bus.option_set(cx, event)
+        }
     }
     fn command(&self, _cx: &Context<'_>, _input: &str) -> Option<Result<(), Error>> {
         #[cfg(feature = "lua")]

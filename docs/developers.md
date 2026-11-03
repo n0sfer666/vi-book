@@ -344,6 +344,12 @@ Lua entry discards only its own queued intents, preserving its caller's queue an
 applied text/option changes. Nested Ex execution has a 32-call host stack guard;
 the ten-level autocmd limit and Lua budgets remain independent.
 
+Application startup wraps configuration and the initial open with
+`begin_startup`/`finish_startup`. It emits the initial `BufEnter` and `VimEnter`
+once, and suppresses `OptionSet` through both handlers. Startup callback errors
+are reported while startup completes. Synthetic `App::new` callers retain live
+option events unless they explicitly begin startup.
+
 The application emits `QuitPre` and `ExitPre` before checking unsaved changes
 for `:q`; `:q!` bypasses that check. Successful shutdown emits `VimLeavePre`
 and `VimLeave` once. `:wq` saves before the quit events and retains its successful
