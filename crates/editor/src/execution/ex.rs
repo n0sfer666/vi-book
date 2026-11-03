@@ -17,6 +17,10 @@ impl Drop for Active<'_> {
 }
 
 impl Context<'_> {
+    pub fn supports(input: &str) -> bool {
+        lex::take(input).is_some_and(|(command, _)| command.kind != Kind::Unknown)
+    }
+
     pub(super) fn execute_ex(&self, mut input: &str) -> Result<(), Error> {
         self.ex_depth.set(self.ex_depth.get() + 1);
         let _active = Active(&self.ex_depth);

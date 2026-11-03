@@ -228,7 +228,9 @@ as the other captures and verify that repeated capture is byte-identical.
 `vibook.create_autocmd`, `del_autocmd`, `create_augroup`, `del_augroup_by_id`,
 `del_augroup_by_name`, `get_autocmds`, `clear_autocmds` and `exec_autocmds` APIs. The default host
 constructor retains the legacy API. The application module still uses that
-constructor; application events and the application Ex adapter are not connected yet.
+constructor for standalone embedders. The application enables the native bus and
+runs owned module actions outside the module registry borrow. Automatic lifecycle
+and frequent event emitters remain a subsequent integration step.
 
 Definitions accept native event strings/lists, groups, patterns or a buffer,
 commands or Lua/named callbacks, and once/nested/description attributes. Listings
@@ -327,6 +329,9 @@ unless forced. `edit!` preserves a loaded hidden buffer and reloads only the cur
 buffer. IO completes before the next Lua statement. Filename expansions, writing a different named buffer's contents to
 another path, ranges and a full Vimscript command language remain S11 work;
 unsupported forms fail explicitly. Force-write filesystem limitations described
-above remain unchanged. The application driver still uses the legacy module
-host/input adapters; connecting this shared bus and these services to that driver
-and lifecycle events is the next integration step.
+above remain unchanged. The application runs configuration, plugin commands and legacy hooks with owned
+Lua hosts and a live context. Explicit events and OptionSet share its native bus.
+The application Ex adapter accepts these frontends, and current-buffer changes
+restore the window view. Standalone module callers retain their request-based
+interface. Automatic lifecycle, read/write and frequent event emitters are the
+next integration step.

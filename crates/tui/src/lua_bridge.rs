@@ -30,28 +30,37 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
         let activated = app.modules.activate(&app.workspace, "lua");
         requests::apply(app, activated);
     }
-    let Some(lua) = app.modules.get::<LuaModule>() else {
+    let Some(host) = app
+        .modules
+        .get::<LuaModule>()
+        .and_then(LuaModule::owned_host)
+    else {
         return;
     };
     let warning = resolved.as_mut().and_then(|(_, warning)| warning.take());
-    if let Some(host) = lua.host() {
-        host.set_options(v_ide_editor::options::Snapshot::capture(&app.workspace));
-    }
-    let errors = lua.load_config(resolved);
-    let changes = lua
-        .host()
-        .map(PluginHost::take_option_changes)
-        .unwrap_or_default();
-    for (access, change) in changes {
-        match app.workspace.apply_option(access, &change) {
-            Ok(_) => app.sync_timeout(),
-            Err(error) => app.ui.set_message(error.to_string()),
+    let mut errors = Vec::new();
+    let mut failed = false;
+    if let Some((path, _)) = resolved
+        && let Ok(script) = std::fs::read_to_string(path)
+    {
+        let result = crate::core_exec::with_context(app, |cx| host.load_with_context(cx, &script));
+        failed = result.is_err();
+        if let Err(error) = result
+            && !error.is_reported()
+        {
+            errors.push(format!("config error: {error}"));
         }
     }
+    drop((
+        host.take_creates(),
+        host.take_opens(),
+        host.take_external_opens(),
+    ));
+    app.sync_timeout();
     if let Some(warning) = warning.filter(|_| app.ui.message.is_empty()) {
         app.ui.set_message(warning.to_string());
     }
-    let failed = !errors.is_empty();
+    let failed = failed || !errors.is_empty();
     if let Some(error) = errors.into_iter().next_back() {
         app.ui.set_message(error);
     }

@@ -44,6 +44,9 @@ fn execute(app: &mut App, command: &str) -> bool {
     if let Some(success) = crate::set_exec::execute(app, command) {
         return success;
     }
+    if let Some(success) = crate::core_exec::execute(app, command) {
+        return success;
+    }
     match command {
         "w" => return save(app, false),
         "w!" => return save(app, true),

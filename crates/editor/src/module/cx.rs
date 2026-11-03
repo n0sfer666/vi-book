@@ -6,14 +6,23 @@ use crate::options::{Access, Change, Snapshot};
 use crate::workspace::Workspace;
 
 pub struct Cx<'a> {
+    bus: Rc<crate::autocmd::Bus>,
+    live: bool,
     ws: &'a Workspace,
     requests: Vec<Request>,
     vault: Option<Rc<dyn VaultQuery>>,
 }
 
 impl<'a> Cx<'a> {
-    pub(crate) fn new(ws: &'a Workspace, vault: Option<Rc<dyn VaultQuery>>) -> Self {
+    pub(crate) fn new(
+        ws: &'a Workspace,
+        vault: Option<Rc<dyn VaultQuery>>,
+        bus: Rc<crate::autocmd::Bus>,
+        live: bool,
+    ) -> Self {
         Self {
+            bus,
+            live,
             ws,
             requests: Vec::new(),
             vault,
@@ -22,6 +31,16 @@ impl<'a> Cx<'a> {
 
     pub(crate) fn into_parts(self) -> (Vec<Request>, Option<Rc<dyn VaultQuery>>) {
         (self.requests, self.vault)
+    }
+
+    pub fn autocmd_bus(&self) -> Rc<crate::autocmd::Bus> {
+        self.bus.clone()
+    }
+    pub fn execution_enabled(&self) -> bool {
+        self.live
+    }
+    pub fn execute(&mut self, action: super::Action) {
+        self.requests.push(Request::Execute(action));
     }
 
     pub fn provide_vault(&mut self, vault: Rc<dyn VaultQuery>) {

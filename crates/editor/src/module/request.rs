@@ -7,6 +7,7 @@ use crate::workspace::{DocId, WindowId};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
     Open(PathBuf),
+    Execute(super::Action),
     Message(String),
     Pick {
         items: Vec<String>,

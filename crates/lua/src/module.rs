@@ -1,5 +1,8 @@
+mod live;
+
 use std::fs;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 use v_ide_editor::module::{Cx, Event, Manifest, Module, Registration, Trigger};
 
@@ -18,7 +21,7 @@ static MANIFEST: Manifest = Manifest {
 };
 
 pub struct LuaModule {
-    host: Option<PluginHost>,
+    host: Option<Rc<PluginHost>>,
 }
 
 impl LuaModule {
@@ -30,7 +33,11 @@ impl LuaModule {
     }
 
     pub fn host(&self) -> Option<&PluginHost> {
-        self.host.as_ref()
+        self.host.as_deref()
+    }
+
+    pub fn owned_host(&self) -> Option<Rc<PluginHost>> {
+        self.host.clone()
     }
 
     pub fn load_config(&self, resolved: Option<(PathBuf, Option<&'static str>)>) -> Vec<String> {
@@ -117,8 +124,14 @@ fn take(host: &PluginHost) -> (Vec<String>, Vec<String>, Vec<String>) {
 
 impl Module for LuaModule {
     fn activate(&mut self, cx: &mut Cx<'_>) -> Result<(), String> {
-        let host = PluginHost::new().map_err(|err| format!("plugin init error: {err}"))?;
-        for (name, source) in defaults::ALL {
+        let host = if cx.execution_enabled() {
+            PluginHost::new_with_bus(cx.autocmd_bus())
+        } else {
+            PluginHost::new()
+        }
+        .map_err(|err| format!("plugin init error: {err}"))?;
+        let live = cx.execution_enabled();
+        for (name, source) in defaults::ALL.iter().filter(|_| !live) {
             if let Err(err) = host.load(source) {
                 cx.message(format!("default plugin '{name}' error: {err}"));
             }
@@ -127,7 +140,12 @@ impl Module for LuaModule {
         if let Some(vault) = cx.vault() {
             host.set_vault(vault);
         }
-        self.host = Some(host);
+        self.host = Some(Rc::new(host));
+        if cx.execution_enabled()
+            && let Some(action) = self.prepare(cx, live::Call::Initialize)
+        {
+            cx.execute(action);
+        }
         Ok(())
     }
 
@@ -148,10 +166,22 @@ impl Module for LuaModule {
         }
     }
 
+    fn prepare_command(
+        &self,
+        cx: &Cx<'_>,
+        name: &str,
+        _args: &str,
+    ) -> Option<v_ide_editor::module::Action> {
+        self.prepare(cx, live::Call::Command(name.into()))
+    }
+    fn prepare_event(&self, cx: &Cx<'_>, ev: &Event) -> Option<v_ide_editor::module::Action> {
+        self.prepare(cx, live::Call::Event(ev.clone()))
+    }
+
     fn commands(&self) -> Vec<String> {
         self.host
             .as_ref()
-            .map(PluginHost::command_names)
+            .map(|host| host.command_names())
             .unwrap_or_default()
     }
 }

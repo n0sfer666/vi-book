@@ -87,7 +87,8 @@ impl App {
                 NotebookModule::registration(),
                 #[cfg(feature = "lua")]
                 LuaModule::registration(),
-            ]),
+            ])
+            .with_execution(),
             ui: UiState::new(),
             read_states: HashMap::new(),
             quit: false,

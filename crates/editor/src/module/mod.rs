@@ -1,5 +1,6 @@
 use std::any::Any;
 
+mod action;
 mod cx;
 mod entry;
 mod event;
@@ -10,6 +11,7 @@ mod request;
 mod trigger;
 mod vault_query;
 
+pub use action::Action;
 pub use cx::Cx;
 pub use event::Event;
 pub use manifest::Manifest;
@@ -24,9 +26,26 @@ pub trait Module: Any {
     fn command(&mut self, cx: &mut Cx<'_>, name: &str, args: &str) -> Result<(), String>;
     fn event(&mut self, cx: &mut Cx<'_>, ev: &Event);
 
+    fn prepare_command(&self, _cx: &Cx<'_>, _name: &str, _args: &str) -> Option<Action> {
+        None
+    }
+    fn prepare_event(&self, _cx: &Cx<'_>, _event: &Event) -> Option<Action> {
+        None
+    }
+
     fn tick(&mut self, _cx: &mut Cx<'_>) {}
 
     fn commands(&self) -> Vec<String> {
         Vec::new()
+    }
+}
+
+pub(crate) fn deliver(module: &mut dyn Module, cx: &mut Cx<'_>, event: &Event) {
+    if cx.execution_enabled()
+        && let Some(action) = module.prepare_event(cx, event)
+    {
+        cx.execute(action);
+    } else {
+        module.event(cx, event);
     }
 }

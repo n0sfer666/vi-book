@@ -50,22 +50,29 @@ pub(crate) fn intercepts(app: &mut App, ev: Event) -> bool {
     let mut opened = false;
     nested(app, "event", ev.name(), |app| {
         let requests = app.modules.event(&app.workspace, &ev);
-        opened = requests
-            .iter()
-            .any(|r| matches!(r, Request::Open(_) | Request::OpenExternal(_)));
-        apply(app, requests);
+        opened = crate::messages::batch(app, |app| apply_inner(app, requests));
     });
     opened
 }
 
 pub fn apply(app: &mut App, requests: Vec<Request>) {
-    crate::messages::batch(app, |app| apply_inner(app, requests));
+    crate::messages::batch(app, |app| {
+        apply_inner(app, requests);
+    });
 }
 
-fn apply_inner(app: &mut App, requests: Vec<Request>) {
+fn apply_inner(app: &mut App, requests: Vec<Request>) -> bool {
+    let mut opened = false;
     for request in requests {
         match request {
-            Request::Open(path) => open(app, &path),
+            Request::Open(path) => {
+                opened = true;
+                open(app, &path);
+            }
+            Request::Execute(action) => {
+                let requests = crate::core_exec::with_context(app, |cx| action.run(cx));
+                opened |= apply_inner(app, requests);
+            }
             Request::Message(msg) => app.ui.set_message(msg),
             Request::Pick { items, command } => {
                 app.ui.picker = Some(Picker::new(items, &command));
@@ -86,13 +93,17 @@ fn apply_inner(app: &mut App, requests: Vec<Request>) {
                 Ok(_) => app.sync_timeout(),
                 Err(error) => app.ui.set_message(error.to_string()),
             },
-            Request::OpenExternal(rel) => open_external(app, &rel),
+            Request::OpenExternal(rel) => {
+                opened = true;
+                open_external(app, &rel);
+            }
             Request::Command(line) => {
                 let name = line.split(' ').next().unwrap_or_default().to_owned();
                 nested(app, "command", &name, |app| command_line::run(app, &line));
             }
         }
     }
+    opened
 }
 
 fn nested(app: &mut App, kind: &str, name: &str, run: impl FnOnce(&mut App)) {

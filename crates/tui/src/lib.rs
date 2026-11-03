@@ -10,6 +10,7 @@ pub mod clip_sync;
 pub mod clipboard;
 pub mod command_line;
 pub mod config_path;
+mod core_exec;
 pub mod cursor;
 pub mod disk_mark;
 pub mod disk_message;

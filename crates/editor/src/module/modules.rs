@@ -7,6 +7,8 @@ use crate::module::{Cx, Event, Module, Registration, Request, VaultQuery};
 use crate::workspace::Workspace;
 
 pub struct Modules {
+    bus: Rc<crate::autocmd::Bus>,
+    live: bool,
     entries: Vec<Entry>,
     last: HashMap<&'static str, Event>,
     vault: Option<Rc<dyn VaultQuery>>,
@@ -15,10 +17,20 @@ pub struct Modules {
 impl Modules {
     pub fn new(registrations: Vec<Registration>) -> Self {
         Self {
+            bus: Rc::new(crate::autocmd::Bus::new(false)),
+            live: false,
             entries: registrations.into_iter().map(Entry::new).collect(),
             last: HashMap::new(),
             vault: None,
         }
+    }
+
+    pub fn with_execution(mut self) -> Self {
+        self.live = true;
+        self
+    }
+    pub fn autocmd_bus(&self) -> Rc<crate::autocmd::Bus> {
+        self.bus.clone()
     }
 
     pub fn get<T: Module>(&self) -> Option<&T> {
@@ -54,19 +66,23 @@ impl Modules {
             .position(|e| e.declares(name))
             .or_else(|| self.entries.iter().position(|e| e.provides(name)))?;
         let entry = &mut self.entries[index];
-        let mut cx = Cx::new(ws, self.vault.clone());
+        let mut cx = Cx::new(ws, self.vault.clone(), self.bus.clone(), self.live);
         if let Some(err) = entry.failure() {
             cx.message(err);
-        } else if let Some(module) = entry.active(&mut cx, &self.last)
-            && let Err(err) = module.command(&mut cx, name, args)
-        {
-            cx.message(err);
+        } else if let Some(module) = entry.active(&mut cx, &self.last) {
+            if cx.execution_enabled()
+                && let Some(action) = module.prepare_command(&cx, name, args)
+            {
+                cx.execute(action);
+            } else if let Err(err) = module.command(&mut cx, name, args) {
+                cx.message(err);
+            }
         }
         Some(self.finish(cx))
     }
 
     pub fn event(&mut self, ws: &Workspace, ev: &Event) -> Vec<Request> {
-        let mut cx = Cx::new(ws, self.vault.clone());
+        let mut cx = Cx::new(ws, self.vault.clone(), self.bus.clone(), self.live);
         let name = ev.name();
         for entry in self.entries.iter_mut() {
             let module = if entry.listens(name) {
@@ -77,7 +93,7 @@ impl Modules {
                 None
             };
             if let Some(module) = module {
-                module.event(&mut cx, ev);
+                super::deliver(module, &mut cx, ev);
             }
         }
         if self.entries.iter().any(|e| e.observes(name)) {
@@ -87,7 +103,7 @@ impl Modules {
     }
 
     pub fn tick(&mut self, ws: &Workspace) -> Vec<Request> {
-        let mut cx = Cx::new(ws, self.vault.clone());
+        let mut cx = Cx::new(ws, self.vault.clone(), self.bus.clone(), self.live);
         for entry in self.entries.iter_mut() {
             if let Some(module) = entry.module_mut() {
                 module.tick(&mut cx);
@@ -97,7 +113,7 @@ impl Modules {
     }
 
     fn activate_where(&mut self, ws: &Workspace, pick: impl Fn(&Entry) -> bool) -> Vec<Request> {
-        let mut cx = Cx::new(ws, self.vault.clone());
+        let mut cx = Cx::new(ws, self.vault.clone(), self.bus.clone(), self.live);
         for entry in self.entries.iter_mut().filter(|e| pick(e)) {
             entry.active(&mut cx, &self.last);
         }

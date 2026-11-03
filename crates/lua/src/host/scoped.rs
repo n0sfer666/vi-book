@@ -65,6 +65,21 @@ impl Drop for GcPause<'_> {
 }
 
 impl PluginHost {
+    pub fn call_with_context<T>(
+        &self,
+        cx: &Context<'_>,
+        run: impl FnOnce(&Self) -> Result<T, Error>,
+    ) -> Result<T, Error> {
+        let _invocation = self.rt.enter();
+        with_context(
+            &self.rt,
+            &self.bridge,
+            self.native.as_ref().map(|native| &native.state),
+            cx,
+            || run(self),
+        )
+    }
+
     pub fn load_with_context(&self, cx: &Context<'_>, script: &str) -> Result<(), Error> {
         let _invocation = self.rt.enter();
         let function = self.rt.lua().load(script).into_function()?;

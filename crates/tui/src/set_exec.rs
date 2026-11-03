@@ -1,22 +1,20 @@
-use v_ide_editor::{execution::Context, options::SetCommand};
+use v_ide_editor::options::SetCommand;
 
 use crate::app::App;
 
 pub(crate) fn execute(app: &mut App, input: &str) -> Option<bool> {
     SetCommand::parse(input)?;
-    let (result, messages) = {
-        let cx = Context::new(&mut app.workspace);
-        let result = cx.execute(input);
-        (result, cx.take_messages())
-    };
-    app.sync_timeout();
+    let (result, messages) =
+        crate::core_exec::with_context(app, |cx| (cx.execute(input), cx.take_messages()));
     for message in messages {
         app.ui.set_message(message);
     }
     match result {
         Ok(()) => Some(true),
         Err(error) => {
-            app.ui.set_message(error.to_string());
+            if !matches!(error, v_ide_editor::execution::Error::Autocmd(_)) {
+                app.ui.set_message(error.to_string());
+            }
             Some(false)
         }
     }

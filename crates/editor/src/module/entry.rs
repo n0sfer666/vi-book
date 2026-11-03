@@ -71,7 +71,7 @@ impl Entry {
             self.state = match module.activate(cx) {
                 Ok(()) => {
                     for ev in self.observed().filter_map(|name| last.get(name)) {
-                        module.event(cx, ev);
+                        super::deliver(module.as_mut(), cx, ev);
                     }
                     State::Active(module)
                 }
