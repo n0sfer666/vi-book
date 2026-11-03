@@ -1,6 +1,7 @@
 mod core;
 mod diagnostics;
 pub use diagnostics::DiagnosticCheckpoint;
+mod event;
 mod ex;
 mod io;
 mod modeline;

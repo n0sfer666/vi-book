@@ -2,6 +2,7 @@
 
 pub mod actions;
 pub mod app;
+mod autocmd;
 mod base_keymap;
 pub mod buffer;
 pub mod buffer_list;

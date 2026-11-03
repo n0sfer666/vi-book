@@ -50,14 +50,10 @@ fn execute(app: &mut App, command: &str) -> bool {
     match command {
         "w" => return save(app, false),
         "w!" => return save(app, true),
-        "q" => return quit(app, false),
-        "q!" => return quit(app, true),
+        "q" => return crate::autocmd::quit(app, false),
+        "q!" => return crate::autocmd::quit(app, true),
         "wq" => {
-            let saved = save(app, false);
-            if saved {
-                app.quit = true;
-            }
-            return saved;
+            return save(app, false) && crate::autocmd::quit(app, true);
         }
         "e!" => reload(app),
         #[cfg(all(feature = "notebook", feature = "vault"))]
@@ -143,14 +139,4 @@ fn save(app: &mut App, force: bool) -> bool {
             false
         }
     }
-}
-
-fn quit(app: &mut App, force: bool) -> bool {
-    if !force && app.any_dirty() {
-        app.ui
-            .set_message(String::from("unsaved changes (use :q! to discard)"));
-        return false;
-    }
-    app.quit = true;
-    true
 }

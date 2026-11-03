@@ -344,6 +344,13 @@ Lua entry discards only its own queued intents, preserving its caller's queue an
 applied text/option changes. Nested Ex execution has a 32-call host stack guard;
 the ten-level autocmd limit and Lua budgets remain independent.
 
+The application emits `QuitPre` and `ExitPre` before checking unsaved changes
+for `:q`; `:q!` bypasses that check. Successful shutdown emits `VimLeavePre`
+and `VimLeave` once. `:wq` saves before the quit events and retains its successful
+exit if a save hook subsequently edits the buffer. An error in a shutdown handler
+reports its diagnostic and skips later shutdown phases; it does not cancel an
+otherwise permitted exit. These events use the current buffer's absolute name.
+
 The application runs configuration, plugin commands and legacy hooks with owned
 Lua hosts and a live context. Explicit events and OptionSet share its native bus.
 The application Ex adapter accepts these frontends, and current-buffer changes
