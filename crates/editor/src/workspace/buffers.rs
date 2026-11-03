@@ -52,12 +52,7 @@ impl Workspace {
     }
 
     fn keep_previous(&mut self, old: Buffer) -> Option<DocId> {
-        let doc = &self.documents[&old.id];
-        if doc.name.is_empty()
-            && !doc.is_dirty()
-            && doc.editor.text().is_empty()
-            && !self.visible(old.id)
-        {
+        if self.discardable(old.id) && !self.visible(old.id) {
             let _ = self.forget(old.id);
             None
         } else if self.visible(old.id) {
@@ -66,6 +61,12 @@ impl Workspace {
             self.park(old);
             Some(old.id)
         }
+    }
+
+    pub(crate) fn discardable(&self, id: DocId) -> bool {
+        self.documents.get(&id).is_some_and(|doc| {
+            doc.name.is_empty() && !doc.is_dirty() && doc.editor.text().is_empty()
+        })
     }
 
     pub fn switch(&mut self, index: usize) -> Option<DocId> {

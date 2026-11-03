@@ -344,6 +344,16 @@ Lua entry discards only its own queued intents, preserving its caller's queue an
 applied text/option changes. Nested Ex execution has a 32-call host stack guard;
 the ten-level autocmd limit and Lua budgets remain independent.
 
+Buffer creation and selection through `enew`, `buffer` and the buffer picker emit
+synchronous lifecycle events. A leave handler may modify an initially empty
+buffer; its updated state determines whether it is retained and hidden.
+If `BufLeave` already selected the requested buffer, the outer command completes
+without repeating enter events. `BufWinEnter` follows the actual buffer after
+`BufEnter` handlers. Closing rechecks unsaved changes after leave handlers and
+retains new handler edits in the buffer pool instead of deleting them.
+Renaming emits `BufFilePre` with the old name and `BufFilePost` with the new name.
+If a pre handler selects another buffer, the original rename stops.
+
 Application startup wraps configuration and the initial open with
 `begin_startup`/`finish_startup`. It emits the initial `BufEnter` and `VimEnter`
 once, and suppresses `OptionSet` through both handlers. Startup callback errors

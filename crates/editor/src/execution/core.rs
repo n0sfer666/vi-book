@@ -38,8 +38,9 @@ impl Context<'_> {
             return Ok(());
         }
         let id = workspace.add(doc);
-        workspace.select(id);
-        Ok(())
+        drop(workspace);
+        self.new_document(id)?;
+        self.select_document(id)
     }
 
     pub(super) fn select_buffer(&self, input: &str) -> Result<(), Error> {
@@ -51,18 +52,7 @@ impl Context<'_> {
         let id = self
             .buffer(number)
             .ok_or_else(|| Error::Ex(format!("E86: Buffer {input} does not exist")))?;
-        let removed = {
-            let mut workspace = self.workspace.borrow_mut();
-            let old = workspace.current_id();
-            workspace.select(id);
-            workspace.doc(old).is_none().then_some(old)
-        };
-        if let Some(old) = removed
-            && let Ok(bus) = self.autocmd_bus()
-        {
-            bus.forget_buffer(old);
-        }
-        Ok(())
+        self.select_document(id)
     }
 
     pub(super) fn name_buffer(&self, input: &str) -> Result<(), Error> {
@@ -84,6 +74,11 @@ impl Context<'_> {
         if escape {
             text.push('\\');
         }
+        let id = self.workspace.borrow().current_id();
+        self.emit_event("BufFilePre", id, None)?;
+        if self.buffer(0) != Some(id) {
+            return Ok(());
+        }
         let mut workspace = self.workspace.borrow_mut();
         let path = workspace.absolute(&text);
         if workspace
@@ -96,6 +91,7 @@ impl Context<'_> {
         }
         let doc = workspace.current_mut();
         doc.rename_target(text, path);
-        Ok(())
+        drop(workspace);
+        self.emit_event("BufFilePost", id, None)
     }
 }

@@ -4,6 +4,7 @@ pub use diagnostics::DiagnosticCheckpoint;
 mod event;
 mod ex;
 mod io;
+mod lifecycle;
 mod modeline;
 mod names;
 mod option;

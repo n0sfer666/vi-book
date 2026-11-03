@@ -32,8 +32,9 @@ impl App {
             if id == self.workspace.current_id() {
                 return;
             }
-            self.switch_document(id);
-            self.note_opened();
+            if self.switch_document(id) {
+                self.note_opened();
+            }
             return;
         }
         self.load(rel);
@@ -95,30 +96,20 @@ impl App {
         }
     }
 
-    fn switch_document(&mut self, target: v_ide_editor::workspace::DocId) {
-        let window = self.workspace.active_window();
-        let id = self.workspace.current_id();
-        if target == id || self.workspace.doc(target).is_none() {
-            return;
+    fn switch_document(&mut self, target: v_ide_editor::workspace::DocId) -> bool {
+        if target == self.workspace.current_id() || self.workspace.doc(target).is_none() {
+            return false;
         }
-        let _ = self.workspace.select(target);
-        self.ui.read.left = self.ui.left;
-        let state = std::mem::take(&mut self.ui.read);
-        if self.workspace.doc(id).is_some() {
-            self.read_states.insert((window, id), state);
+        let result = crate::core_exec::with_context(self, |cx| cx.select_document(target));
+        if let Err(error) = result {
+            if !matches!(error, v_ide_editor::execution::Error::Autocmd(_)) {
+                self.ui.set_message(error.to_string());
+            }
+            return false;
         }
-        let state = self
-            .read_states
-            .remove(&(window, self.workspace.current_id()));
-        let state = state.unwrap_or_else(|| {
-            let mut state = crate::read_state::ReadState::new();
-            state.view = self.initial_view();
-            state
-        });
-        self.ui.read = state;
-        self.ui.left = self.ui.read.left;
         #[cfg(feature = "notebook")]
         self.history.visit(&self.workspace.current().name);
+        true
     }
 
     pub fn close_buffer(&mut self, idx: usize) {
@@ -166,6 +157,12 @@ impl App {
     }
 
     fn drop_buffer(&mut self, idx: usize) {
+        if self.is_buffer_dirty(idx + 1) {
+            self.ui.set_message(String::from(
+                "unsaved changes (write with :w or force-close)",
+            ));
+            return;
+        }
         if let Some(buf) = self.workspace.remove(idx) {
             self.read_states.retain(|(_, id), _| *id != buf.id);
         }
