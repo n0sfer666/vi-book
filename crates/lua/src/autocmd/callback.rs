@@ -80,8 +80,12 @@ impl LuaCallback {
     }
 }
 
-impl Callback for LuaCallback {
-    fn run(&self, cx: &Context<'_>, invocation: &Invocation<'_>) -> Result<bool, String> {
+impl LuaCallback {
+    fn call(
+        &self,
+        cx: &Context<'_>,
+        invocation: &Invocation<'_>,
+    ) -> Result<bool, crate::error::Error> {
         scoped::with_context(
             &self.state.rt,
             &self.state.bridge,
@@ -89,7 +93,24 @@ impl Callback for LuaCallback {
             cx,
             || self.invoke(cx, invocation).map_err(Into::into),
         )
-        .map_err(|error| error.to_string())
+    }
+}
+impl Callback for LuaCallback {
+    fn run(&self, cx: &Context<'_>, invocation: &Invocation<'_>) -> Result<bool, String> {
+        self.call(cx, invocation).map_err(|error| error.to_string())
+    }
+    fn run_checked(
+        &self,
+        cx: &Context<'_>,
+        invocation: &Invocation<'_>,
+    ) -> Result<bool, v_ide_editor::autocmd::Failure> {
+        self.call(cx, invocation).map_err(|error| {
+            if error.is_reported() {
+                v_ide_editor::autocmd::Failure::Reported
+            } else {
+                v_ide_editor::autocmd::Failure::Message(error.to_string())
+            }
+        })
     }
 
     fn function(&self) -> Option<FunctionRef> {

@@ -7,6 +7,10 @@ use super::{FunctionRef, Invocation};
 pub trait Callback {
     fn run(&self, cx: &Context<'_>, invocation: &Invocation<'_>) -> Result<bool, String>;
 
+    fn run_checked(&self, cx: &Context<'_>, invocation: &Invocation<'_>) -> Result<bool, Failure> {
+        self.run(cx, invocation).map_err(Failure::Message)
+    }
+
     fn function(&self) -> Option<FunctionRef> {
         None
     }
@@ -31,7 +35,8 @@ pub enum Action {
     Callback(Rc<dyn Callback>),
 }
 
-pub(super) enum Failure {
+#[derive(Debug)]
+pub enum Failure {
     Reported,
     Message(String),
 }
@@ -69,7 +74,7 @@ impl Action {
                         error => Failure::Message(error.to_string()),
                     })
             }
-            Self::Callback(callback) => callback.run(cx, invocation).map_err(Failure::Message),
+            Self::Callback(callback) => callback.run_checked(cx, invocation),
         }
     }
 }

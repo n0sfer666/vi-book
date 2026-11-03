@@ -21,6 +21,6 @@ pub use model::{Attributes, AutocmdId, Filter, GroupFilter, GroupId, Record, Rec
 pub use pattern::{Pattern, PatternError, patterns};
 pub use registry::Registry;
 
-pub use action::{Action, Callback};
+pub use action::{Action, Callback, Failure};
 pub use bus::Bus;
 pub use occurrence::{Invocation, Names, Occurrence, Source};
