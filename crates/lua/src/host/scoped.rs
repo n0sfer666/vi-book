@@ -113,6 +113,14 @@ pub(crate) fn with_context<R>(
         )
         .into());
     }
+    let pending = {
+        let state = bridge.borrow();
+        (
+            state.creates.len(),
+            state.opens.len(),
+            state.external_opens.len(),
+        )
+    };
     let lua = rt.lua();
     let mut gc = GcPause::new(lua);
     let api: Table = lua.globals().raw_get("vibook")?;
@@ -161,9 +169,16 @@ pub(crate) fn with_context<R>(
         drop(restore);
         Ok(result)
     });
+    let result = result.map_err(Error::from).and_then(|result| result);
+    if result.is_err() {
+        let mut state = bridge.borrow_mut();
+        state.creates.truncate(pending.0);
+        state.opens.truncate(pending.1);
+        state.external_opens.truncate(pending.2);
+    }
     snapshot(bridge, cx);
     drop(gc);
-    result?
+    result
 }
 
 fn snapshot(bridge: &Shared, cx: &Context<'_>) {

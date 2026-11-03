@@ -1,3 +1,5 @@
+mod observer;
+
 use crate::app::App;
 use v_ide_editor::execution::{Context, Error};
 
@@ -27,10 +29,25 @@ pub(crate) fn with_context<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T
 }
 
 pub(crate) fn with_navigation<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T) -> (T, bool) {
+    run_context(app, run, true)
+}
+
+#[cfg(feature = "lua")]
+pub(crate) fn config_context<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T) -> T {
+    run_context(app, run, false).0
+}
+
+fn run_context<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T, drain: bool) -> (T, bool) {
     let old = app.workspace.current_id();
     let bus = app.modules.autocmd_bus();
+    let observer = observer::Observer::new(app, bus);
+    #[cfg(feature = "lua")]
+    let host = app
+        .modules
+        .get::<v_ide_lua::module::LuaModule>()
+        .and_then(v_ide_lua::module::LuaModule::owned_host);
     let (result, messages, navigated) = {
-        let cx = Context::with_observer(&mut app.workspace, bus.as_ref());
+        let cx = Context::with_observer(&mut app.workspace, &observer);
         (run(&cx), cx.take_messages(), cx.navigated())
     };
     reconcile(app, old);
@@ -38,7 +55,32 @@ pub(crate) fn with_navigation<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -
     for message in messages {
         app.ui.set_message(message);
     }
-    (result, navigated || old != app.workspace.current_id())
+    let navigated = navigated || old != app.workspace.current_id();
+    if !drain {
+        return (result, navigated);
+    }
+    #[cfg(feature = "lua")]
+    if let Some(host) = host {
+        use v_ide_editor::module::Request;
+        let mut requests: Vec<_> = host
+            .take_creates()
+            .into_iter()
+            .map(|name| Request::Command(format!("new {name}")))
+            .collect();
+        requests.extend(
+            host.take_opens()
+                .into_iter()
+                .map(|path| Request::Open(app.workspace.cwd().join(path))),
+        );
+        requests.extend(
+            host.take_external_opens()
+                .into_iter()
+                .map(Request::OpenExternal),
+        );
+        let opened = crate::requests::apply_navigation(app, requests);
+        return (result, navigated || opened);
+    }
+    (result, navigated)
 }
 
 fn reconcile(app: &mut App, old: v_ide_editor::workspace::DocId) {

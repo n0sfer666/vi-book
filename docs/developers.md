@@ -337,6 +337,13 @@ above remain unchanged. Synchronous buffer navigation from a legacy `follow_link
 the link, including reopening the current buffer. The builtin resolver then keeps
 the hook's navigation result.
 
+Registered Lua plugin commands also resolve inline from `vibook.cmd` and Ex
+autocmd bodies. Native callbacks drain legacy open/create intents at the outer
+application boundary; configuration still discards these intents. A failed nested
+Lua entry discards only its own queued intents, preserving its caller's queue and
+applied text/option changes. Nested Ex execution has a 32-call host stack guard;
+the ten-level autocmd limit and Lua budgets remain independent.
+
 The application runs configuration, plugin commands and legacy hooks with owned
 Lua hosts and a live context. Explicit events and OptionSet share its native bus.
 The application Ex adapter accepts these frontends, and current-buffer changes

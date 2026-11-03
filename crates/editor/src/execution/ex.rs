@@ -22,6 +22,11 @@ impl Context<'_> {
     }
 
     pub(super) fn execute_ex(&self, mut input: &str) -> Result<(), Error> {
+        if self.ex_depth.get() >= 32 {
+            return Err(Error::Ex(
+                "C stack overflow: command nesting limit exceeded".into(),
+            ));
+        }
         self.ex_depth.set(self.ex_depth.get() + 1);
         let _active = Active(&self.ex_depth);
         while let Some((command, rest)) = lex::take(input) {
@@ -89,6 +94,10 @@ impl Context<'_> {
             Kind::File => self.name_buffer(command.args),
             Kind::Edit => self.edit_buffer(command.args, command.bang),
             Kind::Write => self.write_buffer(command.args, command.bang),
+            Kind::Unknown => self
+                .observer
+                .and_then(|observer| observer.command(self, command.raw))
+                .unwrap_or_else(|| Err(Error::Command(command.raw.into()))),
             _ => Err(Error::Command(command.raw.into())),
         }
     }

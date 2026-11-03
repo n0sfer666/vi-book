@@ -56,9 +56,11 @@ pub(crate) fn intercepts(app: &mut App, ev: Event) -> bool {
 }
 
 pub fn apply(app: &mut App, requests: Vec<Request>) {
-    crate::messages::batch(app, |app| {
-        apply_inner(app, requests);
-    });
+    apply_navigation(app, requests);
+}
+
+pub(crate) fn apply_navigation(app: &mut App, requests: Vec<Request>) -> bool {
+    crate::messages::batch(app, |app| apply_inner(app, requests))
 }
 
 fn apply_inner(app: &mut App, requests: Vec<Request>) -> bool {

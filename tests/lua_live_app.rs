@@ -95,3 +95,25 @@ fn app_ex_and_native_lua_use_one_bus_and_buffer_switches_restore_ui_state() {
     assert_eq!(app.ui.read.top, 11);
     assert_eq!(app.ui.left, 7);
 }
+
+#[test]
+fn autocmd_commands_resolve_plugin_commands_inline_and_native_open_intents_are_applied() {
+    let root = common::scratch("native-inline-command");
+    std::fs::write(root.join("b.md"), "opened").unwrap();
+    let mut app = App::new(Document::new("seed"));
+    app.workspace.set_cwd(root);
+    common::load_lua(
+        &mut app,
+        "native-inline-command",
+        r#"
+   vibook.command('inner',function()vibook.buf.set_text('inner')end)
+   vibook.create_autocmd('User',{pattern='Inline',command='inner'})
+   vibook.create_autocmd('User',{pattern='Open',callback=function()vibook.open('b.md')end})
+   vibook.command('outer',function()vibook.cmd('doautocmd <nomodeline> User Inline');assert(vibook.buf.get_text()=='inner')end)
+ "#,
+    );
+    command_line::run(&mut app, "outer");
+    assert_eq!(app.workspace.current().editor.text(), "inner");
+    command_line::run(&mut app, "doautocmd <nomodeline> User Open");
+    assert_eq!(app.workspace.current().editor.text(), "opened");
+}
