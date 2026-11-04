@@ -3,12 +3,16 @@ mod diagnostics;
 pub use diagnostics::DiagnosticCheckpoint;
 mod event;
 mod ex;
+mod filename;
 mod io;
 mod lifecycle;
 mod modeline;
 mod names;
+mod notification;
 mod option;
 mod set;
+mod write;
+pub use notification::Notification;
 
 use std::cell::{Cell, RefCell};
 
@@ -44,6 +48,7 @@ pub struct Context<'a> {
     modeline_active: Cell<bool>,
     ex_depth: Cell<usize>,
     messages: RefCell<Vec<String>>,
+    events: RefCell<Vec<Notification>>,
     errors: Cell<usize>,
     last_error: RefCell<String>,
 }
@@ -59,6 +64,7 @@ impl<'a> Context<'a> {
             modeline_active: Cell::new(false),
             ex_depth: Cell::new(0),
             messages: RefCell::new(Vec::new()),
+            events: RefCell::new(Vec::new()),
             errors: Cell::new(0),
             last_error: RefCell::new(String::new()),
         }

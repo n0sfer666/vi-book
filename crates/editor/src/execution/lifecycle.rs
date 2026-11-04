@@ -76,7 +76,7 @@ impl Context<'_> {
         Ok(None)
     }
 
-    fn activate_document(&self, target: DocId) {
+    pub(super) fn activate_document(&self, target: DocId) {
         let old = self.workspace.borrow().current_id();
         self.workspace.borrow_mut().select(target);
         if self.buffer_number(old).is_none()

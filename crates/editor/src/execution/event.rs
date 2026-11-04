@@ -5,6 +5,16 @@ use crate::{
 };
 
 impl Context<'_> {
+    pub(super) fn emit_io(&self, event: &str, id: DocId) -> Result<(), Error> {
+        let name = self
+            .workspace
+            .borrow()
+            .doc(id)
+            .map(|doc| doc.name.clone())
+            .unwrap_or_default();
+        self.emit_event(event, id, (!name.is_empty()).then_some(name.as_str()))
+    }
+
     pub fn emit_event(
         &self,
         name: &str,

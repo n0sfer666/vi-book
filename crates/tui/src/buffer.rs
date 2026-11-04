@@ -28,14 +28,20 @@ impl App {
     }
 
     pub fn open_rel(&mut self, rel: &str) {
+        self.open_rel_with_navigation(rel);
+    }
+
+    pub(crate) fn open_rel_with_navigation(&mut self, rel: &str) -> bool {
+        let old = self.workspace.current_id();
         if let Some(id) = self.workspace.find_path(&self.workspace.absolute(rel)) {
-            if id == self.workspace.current_id() {
-                return;
+            if id == old {
+                return true;
             }
-            if self.switch_document(id) {
+            let (switched, navigated) = self.switch_document(id);
+            if switched {
                 self.note_opened();
             }
-            return;
+            return navigated;
         }
         self.load(rel);
         if self.workspace.current().name == rel {
@@ -46,7 +52,9 @@ impl App {
             if let Some(doc) = self.workspace.doc_mut(id) {
                 doc.mark_saved();
             }
+            return true;
         }
+        false
     }
 
     fn note_opened(&mut self) {
@@ -96,20 +104,21 @@ impl App {
         }
     }
 
-    fn switch_document(&mut self, target: v_ide_editor::workspace::DocId) -> bool {
+    fn switch_document(&mut self, target: v_ide_editor::workspace::DocId) -> (bool, bool) {
         if target == self.workspace.current_id() || self.workspace.doc(target).is_none() {
-            return false;
+            return (false, false);
         }
-        let result = crate::core_exec::with_context(self, |cx| cx.select_document(target));
+        let (result, effects) =
+            crate::core_exec::with_outcome(self, |cx| cx.select_document(target));
         if let Err(error) = result {
             if !matches!(error, v_ide_editor::execution::Error::Autocmd(_)) {
                 self.ui.set_message(error.to_string());
             }
-            return false;
+            return (false, effects.navigated);
         }
         #[cfg(feature = "notebook")]
         self.history.visit(&self.workspace.current().name);
-        true
+        (true, true)
     }
 
     pub fn close_buffer(&mut self, idx: usize) {

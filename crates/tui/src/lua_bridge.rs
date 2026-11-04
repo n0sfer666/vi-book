@@ -40,10 +40,11 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
     let warning = resolved.as_mut().and_then(|(_, warning)| warning.take());
     let mut errors = Vec::new();
     let mut failed = false;
+    let mut events = Vec::new();
     if let Some((path, _)) = resolved
         && let Ok(script) = std::fs::read_to_string(path)
     {
-        let (result, reported) = crate::core_exec::config_context(app, |cx| {
+        let ((result, reported), deferred) = crate::core_exec::config_context(app, |cx| {
             let checkpoint = cx.diagnostic_checkpoint();
             let result = host.load_with_context(cx, &script);
             let reported = result
@@ -52,6 +53,7 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
                 .is_some_and(|error| error.is_reported_since(checkpoint));
             (result, reported)
         });
+        events = deferred;
         failed = result.is_err();
         if let Err(error) = result
             && !reported
@@ -74,6 +76,7 @@ fn load_config_inner(app: &mut App, mut resolved: Option<(PathBuf, Option<&'stat
     }
     apply_opts(app, failed);
     install_keymaps(app, failed);
+    let _ = crate::core_exec::finish_events(app, events);
 }
 
 fn host(modules: &Modules) -> Option<&PluginHost> {

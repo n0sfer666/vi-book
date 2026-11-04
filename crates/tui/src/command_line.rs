@@ -6,7 +6,6 @@ use crate::panel::Panel;
 use crate::{actions, disk_message, requests};
 use v_ide_editor::Error;
 use v_ide_editor::disk::{DiskMark, Reaction};
-use v_ide_editor::module::Event;
 use v_ide_keys::{Code, Key, Mods};
 
 pub fn handle(app: &mut App, key: Key) {
@@ -125,15 +124,18 @@ fn save(app: &mut App, force: bool) -> bool {
             .set_message(disk_message::message(&doc.name, Reaction::Conflict));
         return false;
     }
-    let result = if force { doc.save_force() } else { doc.save() };
-    match result {
-        Ok(()) => {
-            app.ui.set_message(String::from("written"));
-            if let Some(path) = app.workspace.current().path.clone() {
-                requests::emit(app, Event::NoteSave(path));
+    let result = crate::core_exec::with_after(
+        app,
+        |cx| cx.write_current(force),
+        |app, result| {
+            if result.is_ok() {
+                app.ui.set_message(String::from("written"));
             }
-            true
-        }
+        },
+    );
+    match result {
+        Ok(()) => true,
+        Err(v_ide_editor::execution::Error::Autocmd(_)) => false,
         Err(err) => {
             app.ui.set_message(format!("save failed: {err}"));
             false

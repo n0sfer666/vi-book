@@ -3,7 +3,6 @@ use std::io::ErrorKind;
 use super::{Context, Error};
 use crate::{
     Error as FileError,
-    disk::DiskMark,
     document::Document,
     options::{Access, Name},
 };
@@ -16,7 +15,7 @@ impl Context<'_> {
             let path = if input.is_empty() {
                 doc.path.clone().ok_or(FileError::NoPath)?
             } else {
-                workspace.absolute(&filename(input)?)
+                workspace.absolute(&super::filename::parse(input)?)
             };
             let existing = workspace.find_path(&path);
             (path, existing, workspace.current_id(), doc.is_dirty())
@@ -67,7 +66,7 @@ impl Context<'_> {
         doc.name = if input.is_empty() {
             String::new()
         } else {
-            filename(input)?
+            super::filename::parse(input)?
         };
         doc.options.set(
             Name::Modeline,
@@ -84,72 +83,4 @@ impl Context<'_> {
         }
         Ok(())
     }
-
-    pub(super) fn write_buffer(&self, input: &str, force: bool) -> Result<(), Error> {
-        if !input.is_empty() {
-            let workspace = self.workspace.borrow();
-            let path = workspace.absolute(&filename(input)?);
-            if workspace
-                .current()
-                .path
-                .as_ref()
-                .is_some_and(|current| *current != path)
-            {
-                return Err(Error::Ex(
-                    "writing another file is not supported yet".into(),
-                ));
-            }
-            let unnamed = workspace.current().path.is_none();
-            drop(workspace);
-            if unnamed {
-                self.name_buffer(input)?;
-            }
-        }
-        let mut workspace = self.workspace.borrow_mut();
-        let doc = workspace.current_mut();
-        if !force && !doc.new_name {
-            doc.check_disk();
-        }
-        if !force && doc.disk_mark() == Some(DiskMark::Changed) {
-            return Err(Error::Ex(
-                "file changed on disk (use :w! to override)".into(),
-            ));
-        }
-        if force {
-            doc.save_force()?;
-        } else {
-            doc.save()?;
-        }
-        Ok(())
-    }
-}
-
-fn filename(input: &str) -> Result<String, Error> {
-    if input.starts_with(['%', '#'])
-        || ["<afile>", "<amatch>", "<abuf>"]
-            .iter()
-            .any(|token| input.contains(token))
-    {
-        return Err(Error::Ex(
-            "filename expansions are not supported yet".into(),
-        ));
-    }
-    let mut out = String::new();
-    let mut escape = false;
-    for ch in input.chars() {
-        if escape {
-            out.push(ch);
-            escape = false;
-        } else if ch == '\\' {
-            escape = true;
-        } else if matches!(ch, ' ' | '\t') {
-            return Err(Error::Ex("E172: Only one file name allowed".into()));
-        } else {
-            out.push(ch);
-        }
-    }
-    if escape {
-        out.push('\\');
-    }
-    Ok(out)
 }

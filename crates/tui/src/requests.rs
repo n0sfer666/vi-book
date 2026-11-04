@@ -10,6 +10,26 @@ use v_ide_editor::path::rel_path;
 
 const MAX_DEPTH: usize = 16;
 
+#[derive(Default)]
+pub(crate) struct Outcome {
+    pub intercepted: bool,
+    pub navigated: bool,
+}
+
+impl Outcome {
+    pub fn merge(&mut self, other: Self) {
+        self.intercepted |= other.intercepted;
+        self.navigated |= other.navigated;
+    }
+
+    pub fn navigation(changed: bool) -> Self {
+        Self {
+            intercepted: changed,
+            navigated: changed,
+        }
+    }
+}
+
 pub fn startup(app: &mut App) {
     let requests = app.modules.startup(&app.workspace);
     apply(app, requests);
@@ -47,35 +67,38 @@ pub fn emit(app: &mut App, ev: Event) {
 }
 
 pub(crate) fn intercepts(app: &mut App, ev: Event) -> bool {
-    let mut opened = false;
+    emit_outcome(app, ev).intercepted
+}
+
+pub(crate) fn emit_outcome(app: &mut App, ev: Event) -> Outcome {
+    let mut outcome = Outcome::default();
     nested(app, "event", ev.name(), |app| {
         let requests = app.modules.event(&app.workspace, &ev);
-        opened = crate::messages::batch(app, |app| apply_inner(app, requests));
+        outcome = apply_outcome(app, requests);
     });
-    opened
+    outcome
 }
 
 pub fn apply(app: &mut App, requests: Vec<Request>) {
-    apply_navigation(app, requests);
+    apply_outcome(app, requests);
 }
 
-pub(crate) fn apply_navigation(app: &mut App, requests: Vec<Request>) -> bool {
+pub(crate) fn apply_outcome(app: &mut App, requests: Vec<Request>) -> Outcome {
     crate::messages::batch(app, |app| apply_inner(app, requests))
 }
 
-fn apply_inner(app: &mut App, requests: Vec<Request>) -> bool {
-    let mut opened = false;
+fn apply_inner(app: &mut App, requests: Vec<Request>) -> Outcome {
+    let mut outcome = Outcome::default();
     for request in requests {
         match request {
             Request::Open(path) => {
-                opened = true;
-                open(app, &path);
+                outcome.intercepted = true;
+                outcome.navigated |= open(app, &path);
             }
             Request::Execute(action) => {
-                let (requests, navigated) =
-                    crate::core_exec::with_navigation(app, |cx| action.run(cx));
-                opened |= navigated;
-                opened |= apply_inner(app, requests);
+                let (requests, effects) = crate::core_exec::with_outcome(app, |cx| action.run(cx));
+                outcome.merge(effects);
+                outcome.merge(apply_inner(app, requests));
             }
             Request::Message(msg) => app.ui.set_message(msg),
             Request::Pick { items, command } => {
@@ -86,7 +109,7 @@ fn apply_inner(app: &mut App, requests: Vec<Request>) -> bool {
                 rows,
                 command,
             } => list(app, &title, rows, &command),
-            Request::Emit(ev) => emit(app, ev),
+            Request::Emit(ev) => outcome.navigated |= emit_outcome(app, ev).navigated,
             Request::SetText(text) => set_text(app, &text),
             Request::SetOption {
                 doc,
@@ -98,16 +121,19 @@ fn apply_inner(app: &mut App, requests: Vec<Request>) -> bool {
                 Err(error) => app.ui.set_message(error.to_string()),
             },
             Request::OpenExternal(rel) => {
-                opened = true;
+                outcome.intercepted = true;
                 open_external(app, &rel);
             }
             Request::Command(line) => {
                 let name = line.split(' ').next().unwrap_or_default().to_owned();
+                let before = (app.workspace.active_window(), app.workspace.current_id());
                 nested(app, "command", &name, |app| command_line::run(app, &line));
+                outcome.navigated |=
+                    before != (app.workspace.active_window(), app.workspace.current_id());
             }
         }
     }
-    opened
+    outcome
 }
 
 fn nested(app: &mut App, kind: &str, name: &str, run: impl FnOnce(&mut App)) {
@@ -144,7 +170,7 @@ pub(crate) fn open_external(app: &mut App, rel: &str) {
     }
 }
 
-fn open(app: &mut App, path: &Path) {
+fn open(app: &mut App, path: &Path) -> bool {
     let rel = rel_path(app.workspace.cwd(), path);
-    app.open_rel(&rel);
+    app.open_rel_with_navigation(&rel)
 }

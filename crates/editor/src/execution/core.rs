@@ -59,39 +59,54 @@ impl Context<'_> {
         if input.is_empty() {
             return Err(Error::Ex("file without a name is not supported yet".into()));
         }
-        let mut text = String::new();
-        let mut escape = false;
-        for ch in input.chars() {
-            if escape {
-                text.push(ch);
-                escape = false;
-            } else if ch == '\\' {
-                escape = true;
-            } else {
-                text.push(ch);
-            }
-        }
-        if escape {
-            text.push('\\');
-        }
+        let text = unescape_name(input);
         let id = self.workspace.borrow().current_id();
         self.emit_event("BufFilePre", id, None)?;
         if self.buffer(0) != Some(id) {
             return Ok(());
         }
+        self.rename_buffer(id, &text)?;
+        self.emit_event("BufFilePost", id, None)
+    }
+
+    pub(super) fn rename_buffer(
+        &self,
+        id: crate::workspace::DocId,
+        text: &str,
+    ) -> Result<(), Error> {
         let mut workspace = self.workspace.borrow_mut();
-        let path = workspace.absolute(&text);
+        let path = workspace.absolute(text);
         if workspace
             .find_path(&path)
-            .is_some_and(|id| id != workspace.current_id())
+            .is_some_and(|existing| existing != id)
         {
             return Err(Error::Ex(
                 "E95: Buffer with this name already exists".into(),
             ));
         }
-        let doc = workspace.current_mut();
-        doc.rename_target(text, path);
-        drop(workspace);
-        self.emit_event("BufFilePost", id, None)
+        let doc = workspace
+            .doc_mut(id)
+            .ok_or_else(|| Error::Ex("E201: Autocommands changed buffer".into()))?;
+        doc.rename_target(text.to_owned(), path);
+        Ok(())
     }
+}
+
+fn unescape_name(input: &str) -> String {
+    let mut text = String::new();
+    let mut escape = false;
+    for ch in input.chars() {
+        if escape {
+            text.push(ch);
+            escape = false;
+        } else if ch == '\\' {
+            escape = true;
+        } else {
+            text.push(ch);
+        }
+    }
+    if escape {
+        text.push('\\');
+    }
+    text
 }

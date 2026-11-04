@@ -344,6 +344,17 @@ Lua entry discards only its own queued intents, preserving its caller's queue an
 applied text/option changes. Nested Ex execution has a 32-call host stack guard;
 the ten-level autocmd limit and Lua budgets remain independent.
 
+Writes deliver synchronous `BufWritePre`/`BufWritePost` callbacks through the
+same application bus. Pre handlers may change the text written to disk; post
+handlers run after the saved boundary and can leave the buffer dirty. A pre
+failure cancels the write. Temporary buffer navigation in `BufWritePre` restores
+the original buffer for writing and retains edits made to other buffers. The
+first write assigns the name before the write callbacks and emits only the two
+write events. Changing the file name in `BufWritePre` is rejected. A post
+failure leaves the completed write intact.
+Successful disk writes notify legacy `note_save` hooks once, including inline
+Lua writes and writes whose post handler fails.
+
 Buffer creation and selection through `enew`, `buffer` and the buffer picker emit
 synchronous lifecycle events. A leave handler may modify an initially empty
 buffer; its updated state determines whether it is retained and hidden.

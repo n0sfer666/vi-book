@@ -1,6 +1,7 @@
 mod buffer;
 mod buffers;
 mod doc_id;
+mod event_scope;
 mod identity;
 mod options;
 mod views;
@@ -10,6 +11,7 @@ mod windows;
 
 pub use buffer::{Buffer, BufferRef};
 pub use doc_id::DocId;
+pub use event_scope::EventScope;
 pub use window::{Window, WindowRef};
 pub use window_id::WindowId;
 
