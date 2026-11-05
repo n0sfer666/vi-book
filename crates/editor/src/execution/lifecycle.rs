@@ -15,6 +15,17 @@ impl Context<'_> {
         self.emit_event("BufWinEnter", current, None)
     }
 
+    pub(super) fn enter_read_document(&self, id: DocId, startup: bool) -> Result<(), Error> {
+        if !startup {
+            self.emit_event("BufEnter", id, None)?;
+        }
+        if self.buffer(0) == Some(id) {
+            self.process_modelines();
+        }
+        let current = self.workspace.borrow().current_id();
+        self.emit_event("BufWinEnter", current, None)
+    }
+
     pub(super) fn leave_for(&self, id: DocId) -> Result<bool, Error> {
         let old = self.workspace.borrow().current_id();
         if old == id {

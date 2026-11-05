@@ -67,7 +67,7 @@ pub fn run() -> Result<(), Error> {
     requests::startup(&mut app);
     app.load_config();
     if let Some(rel) = open {
-        app.open_rel(&rel);
+        app.open_initial_rel(&rel);
     } else {
         #[cfg(feature = "vault")]
         app.start_without_file();

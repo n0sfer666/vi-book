@@ -31,7 +31,15 @@ impl App {
         self.open_rel_with_navigation(rel);
     }
 
+    pub fn open_initial_rel(&mut self, rel: &str) -> bool {
+        self.open_rel_with_navigation_mode(rel, true)
+    }
+
     pub(crate) fn open_rel_with_navigation(&mut self, rel: &str) -> bool {
+        self.open_rel_with_navigation_mode(rel, false)
+    }
+
+    fn open_rel_with_navigation_mode(&mut self, rel: &str, startup: bool) -> bool {
         let old = self.workspace.current_id();
         if let Some(id) = self.workspace.find_path(&self.workspace.absolute(rel)) {
             if id == old {
@@ -43,18 +51,27 @@ impl App {
             }
             return navigated;
         }
-        self.load(rel);
+        let (result, effects) =
+            crate::core_exec::with_outcome(self, |cx| cx.open_existing_path(rel, startup));
+        if let Err(error) = result {
+            if !matches!(error, v_ide_editor::execution::Error::Autocmd(_)) {
+                self.ui.set_message(format!("open failed: {error}"));
+            }
+            return effects.navigated || old != self.workspace.current_id();
+        }
+        let id = self.workspace.current_id();
         if self.workspace.current().name == rel {
-            let id = self.workspace.current_id();
+            self.ui.picker = None;
+            self.ui.menu = None;
             #[cfg(feature = "notebook")]
             self.history.visit(rel);
+            let already_dirty = self.workspace.current().is_dirty();
             self.note_opened();
-            if let Some(doc) = self.workspace.doc_mut(id) {
+            if !already_dirty && let Some(doc) = self.workspace.doc_mut(id) {
                 doc.mark_saved();
             }
-            return true;
         }
-        false
+        effects.navigated || old != self.workspace.current_id()
     }
 
     fn note_opened(&mut self) {

@@ -6,6 +6,7 @@ use crate::panel::Panel;
 use crate::{actions, disk_message, requests};
 use v_ide_editor::Error;
 use v_ide_editor::disk::{DiskMark, Reaction};
+use v_ide_editor::execution::Error as ExecError;
 use v_ide_keys::{Code, Key, Mods};
 
 pub fn handle(app: &mut App, key: Key) {
@@ -103,15 +104,30 @@ fn toggle_tree(app: &mut App) {
 }
 
 fn reload(app: &mut App) {
-    let doc = app.workspace.current_mut();
-    app.ui.set_message(match doc.reload() {
-        Ok(()) => disk_message::message(&doc.name, Reaction::Reload),
-        Err(Error::Io(err)) if err.kind() == ErrorKind::NotFound => match doc.disk_mark() {
-            Some(DiskMark::Deleted) => disk_message::message(&doc.name, Reaction::Vanished),
-            _ => disk_message::missing(&doc.name),
+    let id = app.workspace.current_id();
+    let _ = crate::core_exec::with_after(
+        app,
+        |cx| cx.reload_current(),
+        |app, result| {
+            let Some(doc) = app.workspace.doc(id) else {
+                return;
+            };
+            let message = match result {
+                Ok(()) => disk_message::message(&doc.name, Reaction::Reload),
+                Err(ExecError::File(Error::Io(err))) if err.kind() == ErrorKind::NotFound => {
+                    match doc.disk_mark() {
+                        Some(DiskMark::Deleted) => {
+                            disk_message::message(&doc.name, Reaction::Vanished)
+                        }
+                        _ => disk_message::missing(&doc.name),
+                    }
+                }
+                Err(ExecError::Autocmd(_)) => return,
+                Err(error) => format!("reload failed: {error}"),
+            };
+            app.ui.set_message(message);
         },
-        Err(err) => format!("reload failed: {err}"),
-    });
+    );
 }
 
 fn save(app: &mut App, force: bool) -> bool {

@@ -36,6 +36,31 @@ pub(crate) fn with_outcome<T>(app: &mut App, run: impl FnOnce(&Context<'_>) -> T
     (result, outcome)
 }
 
+pub(crate) fn with_buffer_context<T>(
+    app: &mut App,
+    target: v_ide_editor::workspace::DocId,
+    run: impl FnOnce(&Context<'_>) -> T,
+) -> (Option<T>, Outcome) {
+    let previous = app.workspace.current_id();
+    let Some(scope) = app.workspace.enter_event_scope(target) else {
+        return (None, Outcome::default());
+    };
+    if previous != target {
+        reconcile(app, previous);
+    }
+    let (result, mut outcome) = with_outcome(app, run);
+    let explicit_navigation = outcome.navigated;
+    if app
+        .workspace
+        .finish_event_scope(scope, explicit_navigation)
+        .is_some()
+    {
+        reconcile(app, target);
+    }
+    outcome.merge(Outcome::navigation(previous != app.workspace.current_id()));
+    (Some(result), outcome)
+}
+
 #[cfg(feature = "lua")]
 pub(crate) fn config_context<T>(
     app: &mut App,

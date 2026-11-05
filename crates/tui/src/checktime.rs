@@ -1,5 +1,6 @@
 use crate::app::App;
-use crate::disk_message;
+use crate::{core_exec, disk_message};
+use v_ide_editor::{disk::Reaction, document::DiskCheck, execution::Error};
 
 pub fn run(app: &mut App) -> bool {
     let mut events = Vec::new();
@@ -17,10 +18,34 @@ pub fn run(app: &mut App) -> bool {
             continue;
         };
         let before = (doc.disk_mark(), doc.readonly());
-        if let Some(reaction) = doc.check_disk() {
-            events.push((doc.name.clone(), reaction));
+        let reaction = match doc.prepare_disk_check() {
+            DiskCheck::Done(reaction) => reaction,
+            DiskCheck::Reload(reload) => {
+                let (result, effects) =
+                    core_exec::with_buffer_context(app, id, |cx| cx.reload_disk(id, reload));
+                changed = true;
+                if effects.navigated {
+                    break;
+                }
+                match result {
+                    Some(Ok(reaction)) => reaction,
+                    Some(Err(Error::Autocmd(_))) | None => None,
+                    Some(Err(error)) => {
+                        app.ui.set_message(format!("reload failed: {error}"));
+                        None
+                    }
+                }
+            }
+        };
+        if let Some(reaction) = reaction {
+            changed |= reaction == Reaction::Reload;
+            if let Some(doc) = app.workspace.doc(id) {
+                events.push((doc.name.clone(), reaction));
+            }
         }
-        changed |= (doc.disk_mark(), doc.readonly()) != before;
+        if let Some(doc) = app.workspace.doc(id) {
+            changed |= (doc.disk_mark(), doc.readonly()) != before;
+        }
     }
     if let Some(text) = disk_message::summary(&events) {
         app.ui.set_message(text);

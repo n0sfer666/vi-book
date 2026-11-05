@@ -21,6 +21,17 @@ pub struct Document {
     mark: Option<DiskMark>,
 }
 
+pub enum DiskCheck {
+    Done(Option<Reaction>),
+    Reload(DiskReload),
+}
+
+pub struct DiskReload {
+    stamp: Stamp,
+    pub(crate) keep_readonly: bool,
+    text: String,
+}
+
 impl Document {
     pub fn new(text: &str) -> Self {
         let editor = Editor::new(text);
@@ -83,6 +94,12 @@ impl Document {
     }
 
     pub fn reload(&mut self) -> Result<(), Error> {
+        self.reload_with_suffix("")?;
+        self.detect_readonly(false);
+        Ok(())
+    }
+
+    pub(crate) fn reload_with_suffix(&mut self, suffix: &str) -> Result<(), Error> {
         let path = self.path.as_ref().ok_or(Error::NoPath)?;
         let stamp = Stamp::of(path).ok();
         let text = match file::read(path) {
@@ -94,48 +111,86 @@ impl Document {
             Err(err) => return Err(err),
         };
         self.stamp = stamp;
-        self.detect_readonly(false);
-        self.take(&text);
+        self.take(&append_suffix(text, suffix));
         Ok(())
     }
 
     pub fn check_disk(&mut self) -> Option<Reaction> {
-        let path = self.path.as_ref()?;
+        match self.prepare_disk_check() {
+            DiskCheck::Done(reaction) => reaction,
+            DiskCheck::Reload(reload) => {
+                self.detect_readonly(reload.keep_readonly);
+                self.apply_disk_reload(reload, "");
+                Some(Reaction::Reload)
+            }
+        }
+    }
+
+    pub fn prepare_disk_check(&mut self) -> DiskCheck {
+        let Some(path) = self.path.as_ref() else {
+            return DiskCheck::Done(None);
+        };
         let stamp = match Stamp::of(path) {
             Ok(stamp) => stamp,
-            Err(err) if err.kind() == ErrorKind::NotFound => return self.vanish(),
-            Err(_) => return None,
+            Err(err) if err.kind() == ErrorKind::NotFound => return DiskCheck::Done(self.vanish()),
+            Err(_) => return DiskCheck::Done(None),
         };
-        let same_mode = self.stamp.is_some_and(|old| old.same_mode(stamp));
-        let stale = self.mark == Some(DiskMark::Changed) && !self.is_dirty();
-        if self.stamp == Some(stamp) && !stale {
-            return None;
-        }
-        if !self.is_dirty() && !self.editor.idle_normal() {
-            return None;
+        let keep_readonly = self.stamp.is_some_and(|old| old.same_mode(stamp));
+        let dirty = self.is_dirty();
+        let stale = self.mark == Some(DiskMark::Changed) && !dirty;
+        if (self.stamp == Some(stamp) && !stale) || (!dirty && !self.editor.idle_normal()) {
+            return DiskCheck::Done(None);
         }
         let text = match file::read(path) {
             Ok(text) => text,
-            Err(Error::Io(err)) if err.kind() == ErrorKind::NotFound => return self.vanish(),
+            Err(Error::Io(err)) if err.kind() == ErrorKind::NotFound => {
+                return DiskCheck::Done(self.vanish());
+            }
             Err(_) => {
                 self.stamp = Some(stamp);
-                return self.conflict();
+                return DiskCheck::Done(self.conflict());
             }
         };
-        self.stamp = Some(stamp);
         if text == self.saved_text {
-            if !self.is_dirty() {
-                self.detect_readonly(same_mode);
+            self.stamp = Some(stamp);
+            if !dirty {
+                self.detect_readonly(keep_readonly);
             }
             self.mark = None;
-            None
-        } else if self.is_dirty() {
-            self.conflict()
+            DiskCheck::Done(None)
+        } else if dirty {
+            self.stamp = Some(stamp);
+            DiskCheck::Done(self.conflict())
         } else {
-            self.detect_readonly(same_mode);
-            self.take(&text);
-            Some(Reaction::Reload)
+            DiskCheck::Reload(DiskReload {
+                stamp,
+                keep_readonly,
+                text,
+            })
         }
+    }
+
+    pub(crate) fn finish_disk_reload(
+        &mut self,
+        reload: DiskReload,
+        suffix: &str,
+    ) -> Result<(), Error> {
+        let path = self.path.as_ref().ok_or(Error::NoPath)?;
+        if Stamp::of(path).ok() != Some(reload.stamp) {
+            return self.reload_with_suffix(suffix);
+        }
+        self.apply_disk_reload(reload, suffix);
+        Ok(())
+    }
+
+    pub(crate) fn skip_disk_reload(&mut self, reload: DiskReload) {
+        self.stamp = Some(reload.stamp);
+        self.mark = None;
+    }
+
+    fn apply_disk_reload(&mut self, reload: DiskReload, suffix: &str) {
+        self.stamp = Some(reload.stamp);
+        self.take(&append_suffix(reload.text, suffix));
     }
 
     pub fn disk_mark(&self) -> Option<DiskMark> {
@@ -157,7 +212,19 @@ impl Document {
         }
     }
 
-    fn detect_readonly(&mut self, keep: bool) {
+    pub(crate) fn suspend_text_for_read(&mut self) -> (Editor, String) {
+        (
+            std::mem::replace(&mut self.editor, Editor::new("")),
+            std::mem::take(&mut self.saved_text),
+        )
+    }
+
+    pub(crate) fn restore_text_after_read(&mut self, (editor, saved_text): (Editor, String)) {
+        self.editor = editor;
+        self.saved_text = saved_text;
+    }
+
+    pub(crate) fn detect_readonly(&mut self, keep: bool) {
         let detected = self.path.as_deref().is_some_and(file::readonly);
         let value = detected || (keep && self.readonly());
         self.options.set(Name::Readonly, Value::Bool(value));
@@ -183,4 +250,14 @@ impl Document {
         self.mark = Some(DiskMark::Deleted);
         Some(Reaction::Vanished)
     }
+}
+
+fn append_suffix(mut text: String, suffix: &str) -> String {
+    if !suffix.is_empty() {
+        if !text.is_empty() && !text.ends_with('\n') {
+            text.push('\n');
+        }
+        text.push_str(suffix);
+    }
+    text
 }

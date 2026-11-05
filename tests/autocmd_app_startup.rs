@@ -90,3 +90,36 @@ fn synthetic_app_configuration_retains_live_option_events_without_begin_startup(
     command_line::run(&mut app, "Capture");
     assert_eq!(app.workspace.current().editor.text(), "OptionSet,VimEnter");
 }
+
+#[test]
+fn first_cli_read_finishes_modeline_and_window_entry_before_startup_enter() {
+    let root = common::scratch("startup-first-read-phases");
+    let path = root.join("a.md");
+    fs::write(&path, "disk\n# vim: set ro:").unwrap();
+    let mut app = App::new(Document::new(""));
+    app.workspace.set_cwd(root);
+    app.begin_startup();
+    common::load_lua(
+        &mut app,
+        "startup-first-read-phases",
+        r#"
+   vibook.o.modeline=true
+   local trace={}
+   vibook.create_autocmd({'BufReadPre','FileType','BufReadPost','BufWinEnter','BufEnter','VimEnter'},{callback=function(e)
+     if e.event=='BufReadPre' then assert(not vibook.o.readonly) end
+     if e.event=='BufReadPost' then assert(not vibook.o.readonly) end
+     if e.event=='BufWinEnter' or e.event=='BufEnter' or e.event=='VimEnter' then assert(vibook.o.readonly) end
+     trace[#trace+1]=e.event
+   end})
+   vibook.command('Capture',function()vibook.buf.set_text(table.concat(trace,','))end)
+ "#,
+    );
+    app.open_initial_rel("a.md");
+    assert!(app.workspace.current().readonly());
+    app.finish_startup();
+    command_line::run(&mut app, "Capture");
+    assert_eq!(
+        app.workspace.current().editor.text(),
+        "BufReadPre,FileType,BufReadPost,BufWinEnter,BufEnter,VimEnter"
+    );
+}
