@@ -61,6 +61,9 @@ impl App {
         }
         let id = self.workspace.current_id();
         if self.workspace.current().name == rel {
+            if startup && old == id {
+                self.ui.read.view = self.initial_view();
+            }
             self.ui.picker = None;
             self.ui.menu = None;
             #[cfg(feature = "notebook")]
@@ -70,6 +73,7 @@ impl App {
             if !already_dirty && let Some(doc) = self.workspace.doc_mut(id) {
                 doc.mark_saved();
             }
+            return true;
         }
         effects.navigated || old != self.workspace.current_id()
     }

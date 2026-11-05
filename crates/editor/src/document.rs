@@ -17,6 +17,7 @@ pub struct Document {
     pub(crate) options: Values,
     pub(crate) new_name: bool,
     saved_text: String,
+    read_tick: u64,
     stamp: Option<Stamp>,
     mark: Option<DiskMark>,
 }
@@ -38,6 +39,7 @@ impl Document {
         Self {
             options: Values::default(),
             saved_text: editor.text(),
+            read_tick: 0,
             editor,
             path: None,
             name: String::new(),
@@ -205,6 +207,15 @@ impl Document {
         self.saved_text = self.editor.text();
     }
 
+    pub fn read_tick(&self) -> u64 {
+        self.read_tick
+    }
+
+    pub(crate) fn mark_read(&mut self) {
+        self.mark_saved();
+        self.read_tick = self.editor.change_tick();
+    }
+
     pub fn filetype(&self) -> Option<&'static str> {
         match &self.path {
             Some(path) => filetype::detect(path),
@@ -212,16 +223,21 @@ impl Document {
         }
     }
 
-    pub(crate) fn suspend_text_for_read(&mut self) -> (Editor, String) {
+    pub(crate) fn suspend_text_for_read(&mut self) -> (Editor, String, u64) {
         (
             std::mem::replace(&mut self.editor, Editor::new("")),
             std::mem::take(&mut self.saved_text),
+            std::mem::take(&mut self.read_tick),
         )
     }
 
-    pub(crate) fn restore_text_after_read(&mut self, (editor, saved_text): (Editor, String)) {
+    pub(crate) fn restore_text_after_read(
+        &mut self,
+        (editor, saved_text, read_tick): (Editor, String, u64),
+    ) {
         self.editor = editor;
         self.saved_text = saved_text;
+        self.read_tick = read_tick;
     }
 
     pub(crate) fn detect_readonly(&mut self, keep: bool) {
@@ -234,7 +250,7 @@ impl Document {
         self.new_name = false;
         self.editor.replace_all(text);
         self.mark = None;
-        self.mark_saved();
+        self.mark_read();
     }
 
     fn conflict(&mut self) -> Option<Reaction> {

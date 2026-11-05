@@ -56,6 +56,7 @@ pub struct App {
 }
 
 const TICK: Duration = Duration::from_millis(100);
+const MAX_INPUT_BATCH: usize = 128;
 const INSERT_ESCAPE: &str = "jj";
 
 pub fn run() -> Result<(), Error> {
@@ -80,9 +81,11 @@ pub fn run() -> Result<(), Error> {
 
 impl App {
     pub fn new(doc: Document) -> Self {
+        let workspace = Workspace::new(doc);
+        let autocmd = crate::autocmd::State::new(&workspace);
         Self {
-            workspace: Workspace::new(doc),
-            autocmd: crate::autocmd::State::default(),
+            workspace,
+            autocmd,
             modules: Modules::new(vec![
                 MarkdownModule::registration(),
                 #[cfg(feature = "vault")]
@@ -133,11 +136,17 @@ impl App {
                 term.draw(&frame)?;
             }
             stale = event::poll(self.poll_wait())?;
-            if stale
-                && let Event::Key(key) = event::read()?
-                && key.kind == KeyEventKind::Press
-            {
-                self.handle(key);
+            if stale {
+                for _ in 0..MAX_INPUT_BATCH {
+                    if let Event::Key(key) = event::read()?
+                        && key.kind == KeyEventKind::Press
+                    {
+                        key_feed::feed_queued(self, key);
+                    }
+                    if self.quit || !event::poll(Duration::ZERO)? {
+                        break;
+                    }
+                }
             }
             if self.ui.pager.is_none()
                 && self
@@ -149,6 +158,7 @@ impl App {
                 stale = true;
             }
             stale |= requests::tick(self);
+            stale |= crate::autocmd::flush(self);
             if let Some(path) = self.external_request.take() {
                 stale = true;
                 if let Some(editor) = self.external_editor() {

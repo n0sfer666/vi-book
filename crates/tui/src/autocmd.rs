@@ -1,9 +1,24 @@
-use crate::app::App;
+mod input;
 
-#[derive(Default)]
+use crate::app::App;
+use v_ide_editor::workspace::Workspace;
+
+pub(crate) use input::{editor_key, flush};
+
 pub(crate) struct State {
+    input: input::Input,
     pub booting: bool,
     started: bool,
+}
+
+impl State {
+    pub fn new(workspace: &Workspace) -> Self {
+        Self {
+            input: input::Input::new(workspace),
+            booting: false,
+            started: false,
+        }
+    }
 }
 
 impl App {

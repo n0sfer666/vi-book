@@ -9,18 +9,26 @@ pub fn freshest<'a>(system: &'a str, last_synced: &str) -> Option<&'a str> {
 
 pub fn editor_key(app: &mut App, key: Key) {
     inject_paste(app, key);
+    let buffer = app.workspace.current_id();
     let before = app.workspace.current().editor.clip_yank_version();
-    app.workspace.current_mut().editor.handle_key(key);
-    if app.workspace.current().editor.clip_yank_version() != before {
-        sync_out(app);
+    crate::autocmd::editor_key(app, key);
+    if let Some(doc) = app.workspace.doc(buffer)
+        && doc.editor.clip_yank_version() != before
+        && let Some(text) = doc.editor.yanked()
+    {
+        write_clipboard(app, text);
     }
 }
 
 pub fn sync_out(app: &mut App) {
     if let Some(text) = app.workspace.current().editor.yanked() {
-        app.last_clip = text.clone();
-        clipboard::set(&text);
+        write_clipboard(app, text);
     }
+}
+
+fn write_clipboard(app: &mut App, text: String) {
+    clipboard::set(&text);
+    app.last_clip = text;
 }
 
 fn inject_paste(app: &mut App, key: Key) {

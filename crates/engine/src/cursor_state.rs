@@ -1,4 +1,4 @@
-use crate::{Editor, Mode, desired_col::DesiredCol};
+use crate::{Editor, desired_col::DesiredCol};
 use v_ide_text::{Position, tracked_position::TrackedPosition};
 
 #[derive(Debug)]
@@ -22,13 +22,7 @@ impl Editor {
     }
 
     pub fn restore_cursor_state(&mut self, state: &CursorState) {
-        let position = state.position();
-        self.cursor = if self.mode == Mode::Insert {
-            let line = position.line.min(self.buffer.line_count() - 1);
-            Position::new(line, position.col.min(self.buffer.line_len(line)))
-        } else {
-            self.buffer.clamp_normal(position)
-        };
+        self.set_cursor(state.position());
         self.desired = state.desired;
     }
 }

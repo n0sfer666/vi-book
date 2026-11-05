@@ -7,6 +7,7 @@ use crate::tracked_position::{Positions, TrackedPosition};
 
 pub struct Buffer {
     rope: Rope,
+    change_tick: u64,
     positions: Positions,
 }
 
@@ -14,8 +15,13 @@ impl Buffer {
     pub fn new(text: &str) -> Self {
         Self {
             rope: Rope::from_str(text),
+            change_tick: 0,
             positions: Positions::default(),
         }
+    }
+
+    pub fn change_tick(&self) -> u64 {
+        self.change_tick
     }
 
     pub fn text(&self) -> String {
@@ -95,6 +101,9 @@ impl Buffer {
     pub fn insert(&mut self, at: usize, text: &str) {
         let position = self.char_to_pos(at);
         self.rope.insert(at, text);
+        if !text.is_empty() {
+            self.change_tick = self.change_tick.wrapping_add(1);
+        }
         self.positions
             .split(position, text.bytes().filter(|&byte| byte == b'\n').count());
     }
@@ -102,6 +111,9 @@ impl Buffer {
     pub fn remove(&mut self, range: Range<usize>) {
         let start = self.char_to_pos(range.start);
         let end = self.char_to_pos(range.end);
+        if !range.is_empty() {
+            self.change_tick = self.change_tick.wrapping_add(1);
+        }
         self.rope.remove(range);
         self.positions.remove(start, end);
     }
@@ -111,6 +123,9 @@ impl Buffer {
     }
 
     pub(crate) fn replace_raw(&mut self, at: usize, removed: usize, inserted: &str) {
+        if removed > 0 || !inserted.is_empty() {
+            self.change_tick = self.change_tick.wrapping_add(1);
+        }
         if removed > 0 {
             self.rope.remove(at..at + removed);
         }

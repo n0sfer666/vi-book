@@ -20,6 +20,7 @@ pub struct Editor {
     pub(crate) registers: Registers,
     pub(crate) history: History,
     pub(crate) insert_edits: Vec<Edit>,
+    pub(crate) insert_undo_deferred: bool,
     pub(crate) visual_anchor: Position,
     pub(crate) search: SearchState,
 }
@@ -35,9 +36,14 @@ impl Editor {
             registers: Registers::default(),
             history: History::default(),
             insert_edits: Vec::new(),
+            insert_undo_deferred: false,
             visual_anchor: Position::default(),
             search: SearchState::default(),
         }
+    }
+
+    pub fn change_tick(&self) -> u64 {
+        self.buffer.change_tick()
     }
 
     pub fn text(&self) -> String {
@@ -60,7 +66,12 @@ impl Editor {
     }
 
     pub fn set_cursor(&mut self, pos: Position) {
-        self.cursor = self.buffer.clamp_normal(pos);
+        self.cursor = if self.mode == Mode::Insert {
+            let line = pos.line.min(self.buffer.line_count() - 1);
+            Position::new(line, pos.col.min(self.buffer.line_len(line)))
+        } else {
+            self.buffer.clamp_normal(pos)
+        };
         self.sync_desired();
     }
 
@@ -137,9 +148,12 @@ impl Editor {
         }
         let edit = Edit::replacement(0, old, text.to_string());
         edit.apply(&mut self.buffer);
-        self.commit(vec![edit]);
-        self.cursor = self.buffer.clamp_normal(self.cursor);
-        self.sync_desired();
+        if self.mode == Mode::Insert || self.insert_undo_deferred {
+            self.insert_edits.push(edit);
+        } else {
+            self.commit(vec![edit]);
+        }
+        self.set_cursor(self.cursor);
     }
 
     pub fn idle_normal(&self) -> bool {

@@ -12,6 +12,11 @@ const MAX_STEPS: usize = 100_000;
 const RECURSIVE: &str = "E223: Recursive mapping";
 
 pub fn feed(app: &mut App, event: KeyEvent) {
+    feed_queued(app, event);
+    crate::autocmd::flush(app);
+}
+
+pub(crate) fn feed_queued(app: &mut App, event: KeyEvent) {
     let Some(stroke) = event_map::to_stroke(event) else {
         return;
     };
@@ -26,6 +31,7 @@ pub fn feed(app: &mut App, event: KeyEvent) {
 
 pub fn timeout(app: &mut App, now: Instant) {
     drain(app, now);
+    crate::autocmd::flush(app);
 }
 
 fn drain(app: &mut App, now: Instant) {

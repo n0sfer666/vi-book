@@ -244,7 +244,7 @@ impl Context<'_> {
         let result = self.emit_io(event, id);
         let mut workspace = self.workspace.borrow_mut();
         if workspace.current_id() == id {
-            workspace.current_mut().mark_saved();
+            workspace.current_mut().mark_read();
         }
         result
     }

@@ -53,7 +53,7 @@ pub fn open_above(ed: &mut Editor) {
 pub fn handle(ed: &mut Editor, key: Key) {
     let line = ed.cursor.line;
     match (key.mods(), key.code()) {
-        (Mods::NONE, Code::Esc) => finalize(ed),
+        (Mods::NONE, Code::Esc) | (Mods::CTRL, Code::Char('c')) => finalize(ed),
         (Mods::NONE, Code::Char(c)) => insert_text(ed, c.to_string()),
         (Mods::NONE, Code::Enter) => insert_text(ed, "\n".into()),
         (Mods::NONE, Code::Tab) => insert_text(ed, "\t".into()),
@@ -111,7 +111,42 @@ fn finalize(ed: &mut Editor) {
         ed.cursor.col -= 1;
     }
     ed.cursor = ed.buffer.clamp_normal(ed.cursor);
-    let edits = std::mem::take(&mut ed.insert_edits);
-    ed.commit(edits);
+    if !ed.insert_undo_deferred {
+        ed.commit_insert_undo();
+    }
     ed.sync_desired();
+}
+
+impl Editor {
+    pub fn pause_insert_entry(&mut self) {
+        self.mode = Mode::Normal;
+        self.defer_insert_undo();
+    }
+
+    pub fn finish_insert_entry(&mut self, resume_here: bool) {
+        if resume_here {
+            self.mode = Mode::Insert;
+            self.insert_undo_deferred = false;
+        } else {
+            self.mode = Mode::Normal;
+            self.set_cursor(self.cursor);
+            self.commit_insert_undo();
+        }
+    }
+
+    pub fn defer_insert_undo(&mut self) {
+        self.insert_undo_deferred = true;
+    }
+
+    pub fn commit_insert_undo(&mut self) {
+        self.insert_undo_deferred = false;
+        let edits = std::mem::take(&mut self.insert_edits);
+        self.commit(edits);
+    }
+
+    pub fn start_insert_here(&mut self) {
+        if self.mode != Mode::Insert {
+            insert_here(self);
+        }
+    }
 }

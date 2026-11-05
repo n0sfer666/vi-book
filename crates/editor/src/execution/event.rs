@@ -49,6 +49,16 @@ impl Context<'_> {
         self.dispatch_names(event, buffer, names)
     }
 
+    pub fn emit_insert_change(&self, buffer: DocId) -> Result<(), Error> {
+        let result = self.emit_event("TextChangedI", buffer, None);
+        let mut workspace = self.workspace.borrow_mut();
+        let cursor = workspace.current().editor.cursor();
+        if workspace.select_service(buffer) {
+            workspace.current_mut().editor.set_cursor(cursor);
+        }
+        result
+    }
+
     fn dispatch_names(&self, event: EventName, buffer: DocId, names: Names) -> Result<(), Error> {
         let Some(bus) = self.observer.and_then(|observer| observer.autocmd_bus()) else {
             return Ok(());
