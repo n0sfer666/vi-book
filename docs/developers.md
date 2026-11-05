@@ -139,8 +139,8 @@ extracts scalar case-equivalence groups and lower/upper/printable ranges into
 Run captures with headless Neovim (`-u NONE -i NONE -n -l`) from the repository,
 with HOME, XDG directories and NVIM_LOG_FILE isolated under its `target` directory.
 Repeat captures must produce identical files; do not edit expected data by hand.
-The native Lua host and synchronous Ex context share these selectors; application
-event integration remains pending.
+The native Lua host, synchronous Ex context and application events share these
+selectors.
 
 ## Synchronous editor context
 
@@ -161,8 +161,7 @@ apply legacy pending option writes to their original target before entering a li
 context; entry rejects unflushed writes without changing the workspace or queue.
 Nested VM
 entries share the outer instruction budget; a new outer invocation resets it.
-The native autocmd frontends share this context; connecting the application
-driver and lifecycle events remains a subsequent integration step.
+The native autocmd frontends and application event driver share this context.
 
 ## Autocmd execution and payloads
 
@@ -191,8 +190,7 @@ backward-only edges. Deep values and shared children do not cause recursive drop
 Strings and dictionary keys retain bytes; scalar numbers, nulls, arrays,
 dictionaries and opaque VM function references have distinct variants. The VM owns
 function values and must resolve and validate their runtime/function IDs while a
-payload is dispatched. The native Lua host retains these owners through dispatch;
-application event integration remains pending.
+payload is dispatched. The native Lua host retains these owners through dispatch.
 
 ## Lua payload conversion
 
@@ -231,10 +229,9 @@ as the other captures and verify that repeated capture is byte-identical.
 `PluginHost::new_with_bus(Rc<editor::autocmd::Bus>)` enables the direct
 `vibook.create_autocmd`, `del_autocmd`, `create_augroup`, `del_augroup_by_id`,
 `del_augroup_by_name`, `get_autocmds`, `clear_autocmds` and `exec_autocmds` APIs. The default host
-constructor retains the legacy API. The application module still uses that
-constructor for standalone embedders. The application enables the native bus and
-runs owned module actions outside the module registry borrow. Automatic lifecycle
-and frequent event emitters remain a subsequent integration step.
+constructor retains the legacy API for standalone module callers. The application
+enables the native bus and runs owned module actions outside the module registry
+borrow.
 
 Definitions accept native event strings/lists, groups, patterns or a buffer,
 commands or Lua/named callbacks, and once/nested/description attributes. Listings
@@ -284,9 +281,9 @@ The parser supports vi/vim/Vim/ex markers, native version comparisons against
 801 (the Neovim reference's Vim version), colon-separated settings and terminated
 `set`/`se` forms. It applies the editor's supported options with local scope and
 OptionSet notifications. Unknown options and invalid settings produce diagnostics,
-preserve the valid prefix and stop subsequent modelines. Modelines execute no Ex
-commands; list/reset-all commands are rejected. This does not implement options
-outside the current option registry or enable automatic processing on file reads.
+preserve the valid prefix and stop subsequent modelines. Modelines accept changes
+to individual options in the current registry. The application also processes
+them during file reads.
 
 File-event callback matches use absolute names; User, FileType and the other
 native non-file events retain literal matches. `capture_exec_names.lua` captures
@@ -382,5 +379,38 @@ The application runs configuration, plugin commands and legacy hooks with owned
 Lua hosts and a live context. Explicit events and OptionSet share its native bus.
 The application Ex adapter accepts these frontends, and current-buffer changes
 restore the window view. Standalone module callers retain their request-based
-interface. Automatic lifecycle, read/write and frequent event emitters are the
-next integration step.
+interface.
+
+## Automatic application events
+
+A regular successful load or explicit reread runs `BufReadPre` and `BufReadPost`
+in the target document, with `FileType` between them when a file type is detected.
+Post-read edits become the saved baseline when the target is still current after
+`BufReadPost`. Modelines run between `BufEnter` and `BufWinEnter` when the read
+target remains current. The first CLI read processes modelines before
+`BufWinEnter`, then startup delivers `BufEnter` and `VimEnter`. Opening a new
+named file through synchronous Ex emits `BufNewFile`, preceded by `FileType`
+when a file type is detected.
+
+For an automatic reload that completes with the target still current, the app
+runs `BufReadPre`, `BufReadPost` and any detected `FileType`, then restores the
+cursor and processes modelines. This applies to eligible hidden documents as
+well as visible ones. Hidden reads use a temporary target context and restore
+the previous view when handlers leave the selection alone. The disk check
+preserves dirty buffers and an active Read selection.
+
+Splitting and focusing panes emits window events against stable window IDs.
+A named split enters the window before opening its file. A successful close
+of the last view of a buffer emits `BufWinLeave` and `BufHidden`. If a late close
+handler reports an error, the app closes the clean pane and stops subsequent
+event delivery. The normal removal sequence includes `BufUnload`, `BufDelete`
+and `BufWipeout`. The registry clears buffer-local handlers once the document is
+removed. The app rechecks for unsaved edits after callbacks.
+
+The app observes input after a drain of queued keys or a mapping. `CursorMoved`
+precedes `TextChanged`, and `CursorMovedI` precedes `TextChangedI`. Insert
+transition handlers see the cursor at their phase, and their edits participate
+in the Insert undo transaction. Escape delivers `InsertLeavePre` and
+`InsertLeave`. Ctrl-C returns to Normal directly. `CursorMovedI` navigation
+continues Insert in the selected document. Synchronous `TextChangedI` navigation
+runs in the callback and then returns to the original Insert document.
