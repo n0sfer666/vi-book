@@ -139,67 +139,37 @@ impl App {
     }
 
     pub fn close_buffer(&mut self, idx: usize) {
-        if self.is_buffer_dirty(idx) {
-            self.ui.set_message(String::from(
-                "unsaved changes (write with :w or force-close)",
-            ));
-            return;
-        }
-        if idx == 0 {
-            if self.workspace.pool().is_empty() {
-                self.blank_active();
-                #[cfg(feature = "vault")]
-                self.open_picker();
-            } else {
-                let closing = self.workspace.current_id();
-                self.switch_to_buffer(0);
-                let index = self
-                    .workspace
-                    .pool()
-                    .iter()
-                    .position(|buffer| buffer.id == closing);
-                if let Some(index) = index {
-                    self.drop_buffer(index);
-                }
-            }
+        let current = self.workspace.current_id();
+        let pool = self.workspace.pool();
+        let id = if idx == 0 {
+            current
+        } else if let Some(buffer) = pool.get(idx - 1) {
+            buffer.id
         } else {
-            self.drop_buffer(idx - 1);
+            return;
+        };
+        #[cfg(any(feature = "vault", feature = "notebook"))]
+        let last = idx == 0 && pool.is_empty();
+        let result = crate::core_exec::with_context(self, |cx| cx.close_document(id));
+        if self.workspace.doc(id).is_none() {
+            self.read_states.retain(|(_, doc), _| *doc != id);
+        }
+        if let Err(error) = &result
+            && !matches!(error, v_ide_editor::execution::Error::Autocmd(_))
+        {
+            self.ui.set_message(error.to_string());
+        }
+        #[cfg(feature = "notebook")]
+        if result.is_ok() && idx == 0 && !last && current != self.workspace.current_id() {
+            self.history.visit(&self.workspace.current().name);
+        }
+        #[cfg(feature = "vault")]
+        if result.is_ok() && last {
+            self.open_picker();
         }
     }
 
     pub fn any_dirty(&self) -> bool {
         self.workspace.documents().any(|(_, doc)| doc.is_dirty())
-    }
-
-    fn is_buffer_dirty(&self, idx: usize) -> bool {
-        if idx == 0 {
-            self.workspace.current().is_dirty()
-        } else {
-            self.workspace
-                .pool()
-                .get(idx - 1)
-                .is_some_and(|b| b.doc.is_dirty())
-        }
-    }
-
-    fn drop_buffer(&mut self, idx: usize) {
-        if self.is_buffer_dirty(idx + 1) {
-            self.ui.set_message(String::from(
-                "unsaved changes (write with :w or force-close)",
-            ));
-            return;
-        }
-        if let Some(buf) = self.workspace.remove(idx) {
-            self.read_states.retain(|(_, id), _| *id != buf.id);
-        }
-    }
-
-    fn blank_active(&mut self) {
-        let old = self.workspace.replace(Document::new(""));
-        let _ = self.workspace.forget(old.id);
-        self.ui.read.top = 0;
-        self.ui.left = 0;
-        self.ui.read.read_cursor = (0, 0);
-        self.ui.read.read_cache = None;
     }
 }

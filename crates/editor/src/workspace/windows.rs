@@ -1,4 +1,4 @@
-use super::{Buffer, Window, WindowId, Workspace};
+use super::{Buffer, DocId, Window, WindowId, Workspace};
 use std::collections::HashMap;
 
 impl Workspace {
@@ -41,14 +41,34 @@ impl Workspace {
         self.restore_view();
     }
 
+    pub(crate) fn window_buffer(&self, id: WindowId) -> Option<DocId> {
+        self.windows
+            .iter()
+            .find(|window| window.id == id)
+            .map(|window| window.buf.id)
+    }
+
     #[must_use]
     pub fn close_window(&mut self) -> Option<Window> {
+        self.close_window_by_id(self.active_window())
+    }
+
+    #[must_use]
+    pub fn close_window_by_id(&mut self, id: WindowId) -> Option<Window> {
         if self.windows.len() <= 1 {
             return None;
         }
+        let index = self.windows.iter().position(|window| window.id == id)?;
         self.save_view();
-        let closed = self.windows.remove(self.active);
-        self.active = self.active.min(self.windows.len() - 1);
+        let closed = self.windows.remove(index);
+        if index < self.active {
+            self.active -= 1;
+        } else {
+            self.active = self.active.min(self.windows.len() - 1);
+        }
+        if let Some(options) = closed.options.get(&closed.buf.id) {
+            self.last_options.insert(closed.buf.id, options.clone());
+        }
         self.park(closed.buf);
         self.restore_view();
         Some(closed)
@@ -60,15 +80,18 @@ impl Workspace {
         let kept = self.windows.remove(self.active);
         self.active = 0;
         let closed = std::mem::replace(&mut self.windows, vec![kept]);
-        for window in &closed {
-            if let Some(options) = window.options.get(&window.buf.id) {
-                self.last_options.insert(window.buf.id, options.clone());
-            }
-        }
+        self.remember_closed_options(&closed);
         for window in closed.iter().rev() {
             self.park(window.buf);
         }
         self.restore_view();
         closed
+    }
+    pub fn remember_closed_options(&mut self, closed: &[Window]) {
+        for window in closed {
+            if let Some(options) = window.options.get(&window.buf.id) {
+                self.last_options.insert(window.buf.id, options.clone());
+            }
+        }
     }
 }
